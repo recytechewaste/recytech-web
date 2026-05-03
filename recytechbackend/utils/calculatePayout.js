@@ -1,12 +1,12 @@
 const ExchangeRate = require('../models/ExchangeRate');
 
 /**
- * Calculate payout amount based on waste type and weight
+ * Calculate payout amount based on waste type and quantity
  * @param {string} wasteType - Type of waste (e.g., "Electronics", "Battery")
- * @param {number} weight - Weight in kilograms
+ * @param {number} quantity - Number of items/units
  * @returns {object} { amount: number, success: boolean, message: string }
  */
-async function calculatePayoutAmount(wasteType, weight) {
+async function calculatePayoutAmount(wasteType, quantity = 1) {
     try {
         // Validate inputs
         if (!wasteType || typeof wasteType !== 'string') {
@@ -17,20 +17,11 @@ async function calculatePayoutAmount(wasteType, weight) {
             };
         }
 
-        if (!weight || typeof weight !== 'number' || weight < 0) {
+        if (!Number.isFinite(quantity) || quantity < 1) {
             return {
                 amount: 0,
                 success: false,
-                message: 'Invalid weight provided'
-            };
-        }
-
-        // If weight is 0, payout is 0
-        if (weight === 0) {
-            return {
-                amount: 0,
-                success: true,
-                message: 'Zero weight - no payout'
+                message: 'Invalid quantity provided'
             };
         }
 
@@ -48,8 +39,18 @@ async function calculatePayoutAmount(wasteType, weight) {
             };
         }
 
-        // Calculate payout: weight x rate per kg
-        const payout = weight * exchangeRate.ratePerKg;
+        const rate = exchangeRate.ratePerItem ?? exchangeRate.ratePerKg;
+
+        if (!Number.isFinite(rate) || rate < 0) {
+            return {
+                amount: 0,
+                success: false,
+                message: `No valid item rate found for waste type: ${wasteType}`
+            };
+        }
+
+        // Calculate payout: quantity x rate per item
+        const payout = quantity * rate;
 
         // Round to 2 decimal places (cents)
         const roundedPayout = Math.round(payout * 100) / 100;
@@ -57,8 +58,8 @@ async function calculatePayoutAmount(wasteType, weight) {
         return {
             amount: roundedPayout,
             success: true,
-            message: `Payout calculated: ${weight}kg x PHP ${exchangeRate.ratePerKg}/kg = PHP ${roundedPayout}`,
-            exchangeRate: exchangeRate.ratePerKg
+            message: `Payout calculated: ${quantity} item(s) x PHP ${rate}/item = PHP ${roundedPayout}`,
+            exchangeRate: rate
         };
     } catch (error) {
         console.error('Error calculating payout:', error);

@@ -30,6 +30,7 @@ app.use('/api/residents', require('./recytechbackend/routes/residentRoutes'));
 app.use('/api/exchange-rates', require('./recytechbackend/routes/exchangeRateRoutes'));
 app.use('/api/transactions', require('./recytechbackend/routes/transactionRoutes'));
 app.use('/api/recycling-centers', require('./recytechbackend/routes/recyclingCenterRoutes'));
+app.use('/api/analytics', require('./recytechbackend/routes/analyticsRoutes'));
 
 // Define Ports
 const PORT = process.env.PORT || 5000;

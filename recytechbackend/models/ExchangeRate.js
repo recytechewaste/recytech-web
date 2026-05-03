@@ -8,16 +8,20 @@ const exchangeRateSchema = mongoose.Schema({
         trim: true,
         example: "Electronics, Plastics, Battery, Metal, Paper"
     },
+    ratePerItem: {
+        type: Number,
+        min: 0,
+        description: "Price in PHP per item/unit"
+    },
     ratePerKg: {
         type: Number,
-        required: true,
-        min: 0, // Rate must be non-negative
-        description: "Price in PHP per kilogram"
+        min: 0,
+        description: "Legacy price in PHP per kilogram"
     },
     description: {
         type: String,
         required: false,
-        example: "Payment for recycled electronic waste"
+        example: "Payment per recycled electronic item"
     },
     isActive: {
         type: Boolean,

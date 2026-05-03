@@ -2,23 +2,13 @@ import { useEffect, useState } from 'react';
 import api from '../api/client';
 import Sidebar from './Sidebar';
 import styles from '../styles/RequestManagement.module.css';
-import { Check, X } from 'lucide-react'; 
-
-const WASTE_CATEGORIES = [
-    "Large Appliances",
-    "Small Appliances",
-    "Screens & Monitors",
-    "IT & Telecommunications",
-    "Consumer Electronics",
-    "Batteries & Power Cells",
-    "Lighting Equipment",
-    "Cables & Accessories"
-];
+import { Check, Eye, X } from 'lucide-react';
 
 const RequestManagement = () => {
     const [requests, setRequests] = useState([]);
     const [filteredRequests, setFilteredRequests] = useState([]);
     const [collectors, setCollectors] = useState([]);
+    const [wasteCategories, setWasteCategories] = useState([]);
     const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, completed: 0 });
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
@@ -43,10 +33,12 @@ const RequestManagement = () => {
         try {
             const reqData = await api.get('/requests');
             const colData = await api.get('/collectors');
+            const rateData = await api.get('/exchange-rates');
             
             setRequests(reqData.data);
             setFilteredRequests(reqData.data);
             setCollectors(colData.data);
+            setWasteCategories((rateData.data.rates || []).map(rate => rate.wasteType));
 
             // Calculate Stats for the Cards
             const total = reqData.data.length;
@@ -179,7 +171,7 @@ const RequestManagement = () => {
                             onChange={(e) => setFilters({...filters, wasteType: e.target.value})}
                         >
                             <option value="">All Categories</option>
-                            {WASTE_CATEGORIES.map((cat) => (
+                            {wasteCategories.map((cat) => (
                                 <option key={cat} value={cat}>{cat}</option>
                             ))}
                         </select>
@@ -233,7 +225,7 @@ const RequestManagement = () => {
                             <tr>
                                 <th className={styles.th}>Request ID</th>
                                 <th className={styles.th}>E-Waste Type</th>
-                                <th className={styles.th}>Weight</th>
+                                <th className={styles.th}>Quantity</th>
                                 <th className={styles.th}>Area</th>
                                 <th className={styles.th}>Assigned Collector</th>
                                 <th className={styles.th}>Submission Date</th>
@@ -246,21 +238,47 @@ const RequestManagement = () => {
                                 <tr key={req._id} className={styles.tr}>
                                     <td className={styles.td}>REQ-{req._id.substring(0,6).toUpperCase()}</td>
                                     <td className={styles.td}>{req.wasteType}</td>
-                                    <td className={styles.td}>{req.weight ? `${req.weight} kg` : <span style={{color: '#9ca3af', fontStyle: 'italic'}}>N/A</span>}</td>
+                                    <td className={styles.td}>{req.quantity || 1} item(s)</td>
                                     <td className={styles.td}>{req.location?.address || "Area 1"}</td>
                                     <td className={styles.td}>
                                         {req.assignedCollector ? `${req.assignedCollector.firstName} ${req.assignedCollector.lastName}` : <span style={{color: '#9ca3af', fontStyle: 'italic'}}>Unassigned</span>}
                                     </td>
                                     <td className={styles.td}>{new Date(req.createdAt).toLocaleDateString()}</td>
                                     <td className={styles.td}>{req.status}</td>
-                                    <td className={styles.td}>
-                                        <button onClick={() => setViewRequest(req)} className={styles.viewBtn}>View Details</button>
+                                    <td className={`${styles.td} ${styles.actionCell}`}>
+                                        <div className={styles.tableActions}>
+                                            <button
+                                                type="button"
+                                                title="View details"
+                                                onClick={() => setViewRequest(req)}
+                                                className={`${styles.actionBtn} ${styles.actionView}`}
+                                            >
+                                                <Eye size={14} />
+                                                <span>View</span>
+                                            </button>
                                         {req.status === 'Pending' && (
                                             <>
-                                                <button onClick={() => handleApproveClick(req)} className={styles.approveBtn}>Approve</button>
-                                                <button onClick={() => handleRejectClick(req._id)} className={styles.rejectBtn}>Reject</button>
+                                                    <button
+                                                        type="button"
+                                                        title="Approve request"
+                                                        onClick={() => handleApproveClick(req)}
+                                                        className={`${styles.actionBtn} ${styles.actionApprove}`}
+                                                    >
+                                                        <Check size={14} />
+                                                        <span>Approve</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        title="Reject request"
+                                                        onClick={() => handleRejectClick(req._id)}
+                                                        className={`${styles.actionBtn} ${styles.actionReject}`}
+                                                    >
+                                                        <X size={14} />
+                                                        <span>Reject</span>
+                                                    </button>
                                             </>
                                         )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -282,7 +300,8 @@ const RequestManagement = () => {
                                 <div className={styles.detailsSection}>
                                     <img src={viewRequest.imageUrl || "https://placehold.co/600x400"} className={styles.evidenceImage} alt="Evidence" />
                                     <div className={styles.detailRow}><strong>Resident:</strong> {viewRequest.residentName}</div>
-                                    <div className={styles.detailRow}><strong>Estimated Weight:</strong> {viewRequest.weight || 0} kg</div>
+                                    <div className={styles.detailRow}><strong>Resident Email:</strong> {viewRequest.resident?.email || viewRequest.residentEmail || 'N/A'}</div>
+                                    <div className={styles.detailRow}><strong>Quantity:</strong> {viewRequest.quantity || 1} item(s)</div>
                                     <div className={styles.detailRow}><strong>Location:</strong> {viewRequest.location?.address}</div>
                                     <div className={styles.detailRow}>
                                         <strong>Assigned To:</strong> {(() => {

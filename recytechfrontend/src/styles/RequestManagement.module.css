@@ -160,6 +160,72 @@
     vertical-align: middle;
 }
 
+.actionCell {
+    min-width: 260px;
+}
+
+.tableActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.actionBtn {
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 10px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.actionBtn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.actionView {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.actionView:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+
+.actionApprove {
+    background: #ecfdf5;
+    border-color: #bbf7d0;
+    color: #047857;
+}
+
+.actionApprove:hover {
+    background: #d1fae5;
+    border-color: #86efac;
+}
+
+.actionReject {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #dc2626;
+}
+
+.actionReject:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+}
+
 /* BUTTONS */
 .viewBtn {
     padding: 6px 12px;

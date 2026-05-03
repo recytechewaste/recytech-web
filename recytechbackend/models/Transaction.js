@@ -28,7 +28,7 @@ const transactionSchema = mongoose.Schema({
     description: {
         type: String,
         required: false,
-        example: "Payment for 2.5kg Battery recycling"
+        example: "Payment for 2 Battery recycling item(s)"
     }
 }, {
     timestamps: true

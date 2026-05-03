@@ -34,7 +34,7 @@ router.get('/', protect, admin, async (req, res) => {
 
         const transactions = await Transaction.find(query)
             .populate('resident', 'email firstName lastName walletBalance')
-            .populate('requestId', 'wasteType weight status')
+            .populate('requestId', 'wasteType quantity status')
             .skip(skip)
             .limit(limit)
             .sort({ createdAt: -1 });
@@ -84,7 +84,7 @@ router.get('/resident/:residentId', protect, admin, async (req, res) => {
         }
 
         const transactions = await Transaction.find({ resident: req.params.residentId })
-            .populate('requestId', 'wasteType weight status')
+            .populate('requestId', 'wasteType quantity status')
             .skip(skip)
             .limit(limit)
             .sort({ createdAt: -1 });

@@ -47,18 +47,19 @@ router.get('/:id', protect, admin, async (req, res) => {
 // @route   POST /api/exchange-rates
 // @access  Admin only
 router.post('/', protect, admin, async (req, res) => {
-    const { wasteType, ratePerKg, description, isActive } = req.body;
+    const { wasteType, ratePerItem, ratePerKg, description, isActive } = req.body;
+    const itemRate = ratePerItem ?? ratePerKg;
 
     // Validation
-    if (!wasteType || !ratePerKg) {
+    if (!wasteType || itemRate === undefined) {
         return res.status(400).json({
-            message: 'wasteType and ratePerKg are required'
+            message: 'wasteType and ratePerItem are required'
         });
     }
 
-    if (typeof ratePerKg !== 'number' || ratePerKg < 0) {
+    if (typeof itemRate !== 'number' || itemRate < 0) {
         return res.status(400).json({
-            message: 'ratePerKg must be a non-negative number'
+            message: 'ratePerItem must be a non-negative number'
         });
     }
 
@@ -76,7 +77,7 @@ router.post('/', protect, admin, async (req, res) => {
 
         const newRate = await ExchangeRate.create({
             wasteType: wasteType.trim(),
-            ratePerKg,
+            ratePerItem: itemRate,
             description: description || '',
             isActive: isActive !== undefined ? isActive : true
         });
@@ -102,13 +103,39 @@ router.put('/:id', protect, admin, async (req, res) => {
         }
 
         // Update allowed fields
-        if (req.body.ratePerKg !== undefined) {
-            if (typeof req.body.ratePerKg !== 'number' || req.body.ratePerKg < 0) {
+        if (req.body.wasteType !== undefined) {
+            const wasteType = req.body.wasteType.trim();
+
+            if (!wasteType) {
                 return res.status(400).json({
-                    message: 'ratePerKg must be a non-negative number'
+                    message: 'wasteType is required'
                 });
             }
-            rate.ratePerKg = req.body.ratePerKg;
+
+            const existingRate = await ExchangeRate.findOne({
+                wasteType,
+                _id: { $ne: req.params.id }
+            });
+
+            if (existingRate) {
+                return res.status(409).json({
+                    message: `Exchange rate for "${wasteType}" already exists`
+                });
+            }
+
+            rate.wasteType = wasteType;
+        }
+
+        const itemRate = req.body.ratePerItem ?? req.body.ratePerKg;
+
+        if (itemRate !== undefined) {
+            if (typeof itemRate !== 'number' || itemRate < 0) {
+                return res.status(400).json({
+                    message: 'ratePerItem must be a non-negative number'
+                });
+            }
+            rate.ratePerItem = itemRate;
+            rate.ratePerKg = undefined;
         }
 
         if (req.body.description !== undefined) {
@@ -130,23 +157,19 @@ router.put('/:id', protect, admin, async (req, res) => {
     }
 });
 
-// @desc    Delete exchange rate (soft delete - deactivate)
+// @desc    Delete exchange rate
 // @route   DELETE /api/exchange-rates/:id
 // @access  Admin only
 router.delete('/:id', protect, admin, async (req, res) => {
     try {
-        const rate = await ExchangeRate.findById(req.params.id);
+        const rate = await ExchangeRate.findByIdAndDelete(req.params.id);
 
         if (!rate) {
             return res.status(404).json({ message: 'Exchange rate not found' });
         }
 
-        // Soft delete: mark as inactive
-        rate.isActive = false;
-        await rate.save();
-
         res.json({
-            message: 'Exchange rate deactivated',
+            message: 'Exchange rate deleted',
             rate
         });
     } catch (error) {
@@ -170,13 +193,23 @@ router.post('/bulk/import', protect, admin, async (req, res) => {
         const results = [];
 
         for (const rateData of rates) {
-            const { wasteType, ratePerKg, description } = rateData;
+            const { wasteType, ratePerItem, ratePerKg, description } = rateData;
+            const itemRate = ratePerItem ?? ratePerKg;
 
-            if (!wasteType || ratePerKg === undefined) {
+            if (!wasteType || itemRate === undefined) {
                 results.push({
                     wasteType: wasteType || 'unknown',
                     status: 'error',
-                    message: 'wasteType and ratePerKg required'
+                    message: 'wasteType and ratePerItem required'
+                });
+                continue;
+            }
+
+            if (typeof itemRate !== 'number' || itemRate < 0) {
+                results.push({
+                    wasteType,
+                    status: 'error',
+                    message: 'ratePerItem must be a non-negative number'
                 });
                 continue;
             }
@@ -188,7 +221,8 @@ router.post('/bulk/import', protect, admin, async (req, res) => {
 
                 if (rate) {
                     // Update existing
-                    rate.ratePerKg = ratePerKg;
+                    rate.ratePerItem = itemRate;
+                    rate.ratePerKg = undefined;
                     if (description) rate.description = description;
                     rate.isActive = true;
                     await rate.save();
@@ -202,7 +236,7 @@ router.post('/bulk/import', protect, admin, async (req, res) => {
                     // Create new
                     rate = await ExchangeRate.create({
                         wasteType: wasteType.trim(),
-                        ratePerKg,
+                        ratePerItem: itemRate,
                         description: description || '',
                         isActive: true
                     });

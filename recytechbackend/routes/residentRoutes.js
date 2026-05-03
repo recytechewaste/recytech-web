@@ -34,6 +34,58 @@ router.get('/', protect, admin, async (req, res) => {
     }
 });
 
+// @desc    Create or reuse a temporary resident profile for mobile simulation
+// @route   POST /api/residents/temp
+// @access  Admin only
+router.post('/temp', protect, admin, async (req, res) => {
+    const { firstName, lastName, email, phone, mobileUserId } = req.body || {};
+
+    if (!firstName || !lastName) {
+        return res.status(400).json({ message: 'firstName and lastName are required' });
+    }
+
+    try {
+        const generatedEmail = email
+            ? email.trim().toLowerCase()
+            : `temp-${String(phone || `${firstName}-${lastName}-${Date.now()}`)
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '')}@recytech.local`;
+
+        let resident = await Resident.findOne({ email: generatedEmail });
+        let status = 'existing';
+
+        if (!resident) {
+            resident = await Resident.create({
+                email: generatedEmail,
+                firstName,
+                lastName,
+                phone,
+                mobileUserId,
+                source: 'Mobile Simulation',
+                isTemporary: true
+            });
+            status = 'created';
+        } else {
+            resident.firstName = firstName;
+            resident.lastName = lastName;
+            if (phone !== undefined) resident.phone = phone;
+            if (mobileUserId !== undefined) resident.mobileUserId = mobileUserId;
+            resident.source = resident.source || 'Mobile Simulation';
+            resident.isTemporary = true;
+            await resident.save();
+            status = 'updated';
+        }
+
+        res.status(status === 'created' ? 201 : 200).json({
+            message: `Temporary resident ${status}`,
+            resident
+        });
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
 // @desc    Get single resident with transaction history
 // @route   GET /api/residents/:id
 // @access  Admin only
@@ -47,7 +99,7 @@ router.get('/:id', protect, admin, async (req, res) => {
 
         // Get transaction history
         const transactions = await Transaction.find({ resident: resident._id })
-            .populate('requestId', 'wasteType weight status')
+            .populate('requestId', 'wasteType quantity status')
             .sort({ createdAt: -1 });
 
         res.json({
@@ -75,6 +127,9 @@ router.put('/:id', protect, admin, async (req, res) => {
         if (req.body.firstName) resident.firstName = req.body.firstName;
         if (req.body.lastName) resident.lastName = req.body.lastName;
         if (req.body.phone) resident.phone = req.body.phone;
+        if (req.body.mobileUserId !== undefined) resident.mobileUserId = req.body.mobileUserId;
+        if (req.body.isTemporary !== undefined) resident.isTemporary = req.body.isTemporary;
+        if (req.body.source) resident.source = req.body.source;
 
         const updatedResident = await resident.save();
         res.json(updatedResident);

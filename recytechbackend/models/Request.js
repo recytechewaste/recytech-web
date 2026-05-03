@@ -5,6 +5,11 @@ const requestSchema = mongoose.Schema({
         type: String,
         required: true
     },
+    resident: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Resident',
+        required: false
+    },
     wasteType: {
         type: String, // e.g., "Monitor", "Battery", "Phone"
         required: true
@@ -12,6 +17,11 @@ const requestSchema = mongoose.Schema({
     weight: {
         type: Number,
         default: 0
+    },
+    quantity: {
+        type: Number,
+        default: 1,
+        min: 1
     },
     wasteImage: {
         type: String, // URL to the image stored in Cloud/Firebase

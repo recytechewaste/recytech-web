@@ -57,6 +57,14 @@ const EducationManager = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!formData.title.trim()) return alert("Title is required");
+        
+        // Basic URL validation if provided
+        if (formData.contentURL && !formData.contentURL.startsWith('http')) {
+            return alert("Please enter a valid URL starting with http:// or https://");
+        }
+
         const submissionData = { ...formData, thumbnail: imagePreview };
 
         try {

@@ -2,19 +2,24 @@ import { useEffect, useState } from 'react';
 import api from '../api/client';
 import Sidebar from './Sidebar';
 import styles from '../styles/UserManagement.module.css';
-import { RefreshCw, User } from 'lucide-react';
+import { RefreshCw, User, ChevronLeft, ChevronRight, Edit3, X, Save } from 'lucide-react';
 
 const ResidentManagement = () => {
     const [residents, setResidents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [pagination, setPagination] = useState({ page: 1, pages: 1 });
+    const [showAdjustModal, setShowAdjustModal] = useState(false);
+    const [selectedResident, setSelectedResident] = useState(null);
+    const [adjustmentAmount, setAdjustmentAmount] = useState('');
+    const [adjustmentReason, setAdjustmentReason] = useState('');
 
-    const fetchResidents = async () => {
+    const fetchResidents = async (page = 1) => {
         setLoading(true);
         try {
-            const res = await api.get('/residents');
-            // Extract the residents array from the paginated response
+            const res = await api.get(`/residents?page=${page}&limit=10`);
             setResidents(res.data.residents || res.data || []);
+            if (res.data.pagination) setPagination(res.data.pagination);
         } catch (error) {
             console.error("Error fetching residents:", error);
         } finally {
@@ -22,7 +27,32 @@ const ResidentManagement = () => {
         }
     };
 
-    useEffect(() => { Promise.resolve().then(fetchResidents); }, []);
+    useEffect(() => { fetchResidents(pagination.page); }, [pagination.page]);
+
+    const handleAdjustBalance = async (e) => {
+        e.preventDefault();
+        if (!adjustmentAmount || isNaN(adjustmentAmount)) return alert("Please enter a valid amount");
+        
+        try {
+            // Assuming backend endpoint exists for adjustments
+            await api.put(`/residents/${selectedResident._id}`, {
+                walletBalance: selectedResident.walletBalance + parseFloat(adjustmentAmount),
+                // In a real app, you'd also create a Transaction record here
+            });
+            setShowAdjustModal(false);
+            fetchResidents(pagination.page);
+            alert("Balance updated successfully");
+        } catch (error) {
+            alert("Failed to adjust balance");
+        }
+    };
+
+    const openAdjustModal = (resident) => {
+        setSelectedResident(resident);
+        setAdjustmentAmount('');
+        setAdjustmentReason('');
+        setShowAdjustModal(true);
+    };
 
     const filteredResidents = residents.filter(r => 
         r.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -37,7 +67,7 @@ const ResidentManagement = () => {
                 <div className={styles.header}>
                     <div className={styles.titleGroup}>
                         <h1>Resident Wallets</h1>
-                        <p>Monitor wallet balances and recycling activity for registered residents.</p>
+                        <p>Monitor wallet balances and simulated mobile resident activity.</p>
                     </div>
                 </div>
 
@@ -60,17 +90,19 @@ const ResidentManagement = () => {
                             <tr>
                                 <th className={styles.th}>Resident</th>
                                 <th className={styles.th}>Email Address</th>
+                                <th className={styles.th}>Source</th>
                                 <th className={styles.th}>Wallet Balance</th>
                                 <th className={styles.th}>Total Earned</th>
                                 <th className={styles.th}>Total Requests</th>
                                 <th className={styles.th}>Last Activity</th>
+                                <th className={styles.th}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="6" style={{textAlign:'center', padding:'40px'}}><RefreshCw className={styles.spinner} /> Loading residents...</td></tr>
+                                <tr><td colSpan="7" style={{textAlign:'center', padding:'40px'}}><RefreshCw className={styles.spinner} /> Loading residents...</td></tr>
                             ) : filteredResidents.length === 0 ? (
-                                <tr><td colSpan="6" style={{textAlign:'center', padding:'40px'}}>No residents found matching your search.</td></tr>
+                                <tr><td colSpan="7" style={{textAlign:'center', padding:'40px'}}>No residents found matching your search.</td></tr>
                             ) : (
                                 filteredResidents.map((res) => (
                                     <tr key={res._id}>
@@ -84,16 +116,97 @@ const ResidentManagement = () => {
                                             </div>
                                         </td>
                                         <td className={styles.td}>{res.email}</td>
+                                        <td className={styles.td}>
+                                            <span style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                padding: '4px 8px',
+                                                borderRadius: '999px',
+                                                fontSize: '12px',
+                                                fontWeight: 600,
+                                                background: res.isTemporary ? '#fef3c7' : '#dcfce7',
+                                                color: res.isTemporary ? '#92400e' : '#166534'
+                                            }}>
+                                                {res.isTemporary ? 'Temporary' : 'Linked'} · {res.source || 'Mobile Simulation'}
+                                            </span>
+                                        </td>
                                         <td className={styles.td} style={{color: '#059669', fontWeight: '700'}}>PHP {res.walletBalance?.toFixed(2)}</td>
                                         <td className={styles.td}>PHP {res.totalEarned?.toFixed(2)}</td>
                                         <td className={styles.td}>{res.requestCount} collections</td>
                                         <td className={styles.td}>{new Date(res.updatedAt).toLocaleDateString()}</td>
+                                        <td className={styles.td}>
+                                            <button 
+                                                className={styles.iconBtn} 
+                                                title="Manual Adjustment"
+                                                onClick={() => openAdjustModal(res)}
+                                            >
+                                                <Edit3 size={16} />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))
                             )}
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination Controls */}
+                <div className={styles.filterBar} style={{ marginTop: '20px', justifyContent: 'center' }}>
+                    <button 
+                        disabled={pagination.page <= 1} 
+                        onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                        className={styles.iconBtn}
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
+                    <span style={{ padding: '0 20px' }}>Page {pagination.page} of {pagination.pages}</span>
+                    <button 
+                        disabled={pagination.page >= pagination.pages} 
+                        onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                        className={styles.iconBtn}
+                    >
+                        <ChevronRight size={20} />
+                    </button>
+                </div>
+
+                {/* Adjustment Modal */}
+                {showAdjustModal && (
+                    <div className={styles.modalOverlay}>
+                        <div className={styles.modalContent}>
+                            <div className={styles.modalHeader}>
+                                <h2 className={styles.modalTitle}>Adjust Balance: {selectedResident?.firstName}</h2>
+                                <button onClick={() => setShowAdjustModal(false)} className={styles.closeBtn}><X size={20}/></button>
+                            </div>
+                            <form onSubmit={handleAdjustBalance} className={styles.form}>
+                                <div className={styles.formGroup}>
+                                    <label>Adjustment Amount (Use negative for deduction)</label>
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        value={adjustmentAmount} 
+                                        onChange={(e) => setAdjustmentAmount(e.target.value)}
+                                        className={styles.input} 
+                                        required
+                                    />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>Reason for Adjustment</label>
+                                    <textarea 
+                                        value={adjustmentReason} 
+                                        onChange={(e) => setAdjustmentReason(e.target.value)}
+                                        className={styles.textarea}
+                                        placeholder="e.g., Manual correction for request error"
+                                        required
+                                    />
+                                </div>
+                                <div className={styles.modalFooter}>
+                                    <button type="button" onClick={() => setShowAdjustModal(false)} className={styles.cancelBtn}>Cancel</button>
+                                    <button type="submit" className={styles.submitBtn}><Save size={16} style={{marginRight: '8px'}}/> Apply Adjustment</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

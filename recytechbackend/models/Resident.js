@@ -21,6 +21,23 @@ const residentSchema = mongoose.Schema({
         type: String,
         required: false
     },
+    source: {
+        type: String,
+        enum: ['Mobile Simulation', 'Mobile App', 'Web', 'Imported'],
+        default: 'Mobile Simulation',
+        description: "Where this resident profile came from"
+    },
+    isTemporary: {
+        type: Boolean,
+        default: true,
+        description: "Temporary profile used until mobile accounts are integrated"
+    },
+    mobileUserId: {
+        type: String,
+        required: false,
+        trim: true,
+        description: "Future link to the mobile app account/user ID"
+    },
     walletBalance: {
         type: Number,
         default: 0,

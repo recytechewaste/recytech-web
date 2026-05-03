@@ -2,19 +2,20 @@ import { useEffect, useState } from 'react';
 import api from '../api/client';
 import Sidebar from './Sidebar';
 import styles from '../styles/UserManagement.module.css';
-import { RefreshCw, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { RefreshCw, ArrowUpRight, ArrowDownLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const PayoutHistory = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [pagination, setPagination] = useState({ page: 1, pages: 1 });
 
-    const fetchTransactions = async () => {
+    const fetchTransactions = async (page = 1) => {
         setLoading(true);
         try {
-            const res = await api.get('/transactions');
-            // Expecting data in { transactions: [...] } format based on typical CRUD response
+            const res = await api.get(`/transactions?page=${page}&limit=10`);
             setTransactions(res.data.transactions || res.data || []);
+            if (res.data.pagination) setPagination(res.data.pagination);
         } catch (error) {
             console.error("Error fetching transactions:", error);
         } finally {
@@ -22,7 +23,7 @@ const PayoutHistory = () => {
         }
     };
 
-    useEffect(() => { Promise.resolve().then(fetchTransactions); }, []);
+    useEffect(() => { fetchTransactions(pagination.page); }, [pagination.page]);
 
     const filteredTransactions = transactions.filter(t => 
         t.resident?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -91,12 +92,31 @@ const PayoutHistory = () => {
                                         </td>
                                         <td className={styles.td} style={{fontWeight: '700'}}>PHP {tx.amount?.toFixed(2)}</td>
                                         <td className={styles.td} style={{maxWidth: '250px', fontSize: '13px'}}>{tx.description}</td>
-                                        <td className={styles.td}><code style={{fontSize: '11px', background: '#f3f4f6', padding: '2px 4px', borderRadius: '4px'}}>{tx.requestId || tx._id}</code></td>
+                                        <td className={styles.td}><code style={{fontSize: '11px', background: '#f3f4f6', padding: '2px 4px', borderRadius: '4px'}}>{tx.requestId?._id || tx.requestId || tx._id}</code></td>
                                     </tr>
                                 ))
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Pagination Controls */}
+                <div className={styles.filterBar} style={{ marginTop: '20px', justifyContent: 'center' }}>
+                    <button 
+                        disabled={pagination.page <= 1} 
+                        onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                        className={styles.iconBtn}
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
+                    <span style={{ padding: '0 20px' }}>Page {pagination.page} of {pagination.pages}</span>
+                    <button 
+                        disabled={pagination.page >= pagination.pages} 
+                        onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                        className={styles.iconBtn}
+                    >
+                        <ChevronRight size={20} />
+                    </button>
                 </div>
             </div>
         </div>

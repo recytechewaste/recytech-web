@@ -21,7 +21,14 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 };
 
 const Dashboard = () => {
-    const [stats, setStats] = useState({ pending: 0, active: 0, completed: 0, newUsers: 0, total: 0, totalWeight: 0, engagement: 0 });
+    const [stats, setStats] = useState({
+        pending: 0,
+        completed: 0,
+        completionRate: 0,
+        totalItems: 0,
+        totalPayout: 0,
+        totalResidents: 0
+    });
     const [roleData, setRoleData] = useState([]);
     const [categoryData, setCategoryData] = useState([]);
     const [monthlyData, setMonthlyData] = useState([]);
@@ -30,62 +37,23 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const reqData = await api.get('/requests');
-                
-                const pending = reqData.data.filter(r => r.status === 'Pending').length;
-                const active = reqData.data.filter(r => r.status === 'Approved').length;
-                const completed = reqData.data.filter(r => r.status === 'Completed').length;
-                const total = reqData.data.length;
+                const { data } = await api.get('/analytics/dashboard');
+                const requestStats = data.summary?.requests || {};
+                const payoutStats = data.summary?.payouts || {};
+                const residentStats = data.summary?.residents || {};
 
-                // Calculate total weight of completed requests
-                const totalWeight = reqData.data.filter(r => r.status === 'Completed').reduce((sum, r) => sum + (parseFloat(r.weight) || 0), 0);
-                
-                // Get recent activity (last 5 requests, sorted by creation date)
-                const sortedRequests = [...reqData.data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                setRecentActivity(sortedRequests.slice(0, 5));
-
-                // Process Monthly Weights
-                const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                const weightMap = reqData.data.reduce((acc, req) => {
-                    if (req.status === 'Completed') {
-                        const m = months[new Date(req.createdAt).getMonth()];
-                        acc[m] = (acc[m] || 0) + (parseFloat(req.weight) || 0);
-                    }
-                    return acc;
-                }, {});
-                setMonthlyData(months.map(m => ({ name: m, weight: weightMap[m] || 0 })));
-
-                // Process Category Distribution for Pie Chart
-                const categoryCounts = {};
-                reqData.data.forEach(r => { categoryCounts[r.wasteType] = (categoryCounts[r.wasteType] || 0) + 1; });
-                setCategoryData(Object.keys(categoryCounts).map(key => ({ name: key, value: categoryCounts[key] })));
-
-                const userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')) : null;
-                let usersThisMonth = 0;
-                let activeUsers = 0;
-
-                if (userInfo && userInfo.token && userInfo.role === 'Super Admin') {
-                    const userRes = await api.get('/users', { params: { includeCollectors: true } }); // Fetch all users for dashboard analytics
-                    const users = userRes.data;
-                    
-                    const roleCounts = users.reduce((acc, user) => {
-                        const role = user.role || 'Staff';
-                        acc[role] = (acc[role] || 0) + 1;
-                        return acc;
-                    }, {});
-
-                    setRoleData(Object.keys(roleCounts).map(name => ({ name, value: roleCounts[name] })));
-
-                    const thirtyDaysAgo = new Date();
-                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-                    usersThisMonth = users.filter(u => new Date(u.createdAt) >= thirtyDaysAgo).length;
-
-                    const sevenDaysAgo = new Date();
-                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                    activeUsers = users.filter(u => u.lastLogin && new Date(u.lastLogin) >= sevenDaysAgo).length;
-                }
-
-                setStats({ pending, active, completed, total, newUsers: usersThisMonth, totalWeight, engagement: usersThisMonth > 0 ? Math.round((activeUsers / usersThisMonth) * 100) : 0 });
+                setStats({
+                    pending: requestStats.pendingRequests || 0,
+                    completed: requestStats.completedRequests || 0,
+                    completionRate: requestStats.completionRate || 0,
+                    totalItems: requestStats.totalCompletedItems || 0,
+                    totalPayout: payoutStats.totalPayout || 0,
+                    totalResidents: residentStats.totalResidents || 0
+                });
+                setMonthlyData(data.monthlyTrends || []);
+                setCategoryData(data.categoryDistribution || []);
+                setRoleData(data.roleDistribution || []);
+                setRecentActivity(data.recentRequests || []);
             } catch (error) { console.error("Error fetching stats", error); }
         };
         fetchStats();
@@ -104,7 +72,7 @@ const Dashboard = () => {
                 {/* METRICS SECTION */}
                 <div className={styles.sectionContainer}>
                     <h2 className={styles.sectionHeaderLeft}>E-Waste Metrics</h2>
-                    <p className={styles.sectionSubHeaderLeft}>Real-time processing and collection stats.</p>
+                    <p className={styles.sectionSubHeaderLeft}>Processing and collection stats.</p>
 
                     <div className={styles.metricsLayout}>
                         {/* Left Column: Stats Cards */}
@@ -114,16 +82,16 @@ const Dashboard = () => {
                                 <h3>{stats.pending}</h3>
                             </div>
                             <div className={styles.metricCard}>
-                                <span>Total E-Waste Recycled</span>
-                                <h3>{stats.totalWeight.toLocaleString()} kg</h3>
+                                <span>Total E-Waste Items</span>
+                                <h3>{stats.totalItems.toLocaleString()}</h3>
                             </div>
                             <div className={styles.metricCard}>
-                                <span>User Engagement</span>
-                                <h3>{stats.engagement}%</h3>
+                                <span>Total Payout Released</span>
+                                <h3>PHP {stats.totalPayout.toLocaleString()}</h3>
                             </div>
-                            <div className={`${styles.metricCard} ${stats.newUsers >= 10 ? styles.successCard : ''}`}>
-                                <span>New Users This Month</span>
-                                <h3>{stats.newUsers}</h3>
+                            <div className={`${styles.metricCard} ${stats.completionRate >= 70 ? styles.successCard : ''}`}>
+                                <span>Completion Rate</span>
+                                <h3>{stats.completionRate}%</h3>
                             </div>
                         </div>
 
@@ -135,7 +103,7 @@ const Dashboard = () => {
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
                                     <YAxis axisLine={false} tickLine={false} fontSize={12} />
                                     <Tooltip cursor={{fill: '#f3f4f6'}} />
-                                    <Bar dataKey="weight" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={30} />
+                                    <Bar dataKey="items" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={30} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
