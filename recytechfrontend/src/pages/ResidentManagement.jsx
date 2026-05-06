@@ -13,6 +13,7 @@ const ResidentManagement = () => {
     const [selectedResident, setSelectedResident] = useState(null);
     const [adjustmentAmount, setAdjustmentAmount] = useState('');
     const [adjustmentReason, setAdjustmentReason] = useState('');
+    const [message, setMessage] = useState('');
 
     const fetchResidents = async (page = 1) => {
         setLoading(true);
@@ -31,19 +32,24 @@ const ResidentManagement = () => {
 
     const handleAdjustBalance = async (e) => {
         e.preventDefault();
-        if (!adjustmentAmount || isNaN(adjustmentAmount)) return alert("Please enter a valid amount");
+        if (!adjustmentAmount || isNaN(adjustmentAmount)) {
+            setMessage("Please enter a valid amount");
+            return;
+        }
         
         try {
-            // Assuming backend endpoint exists for adjustments
             await api.put(`/residents/${selectedResident._id}`, {
                 walletBalance: selectedResident.walletBalance + parseFloat(adjustmentAmount),
-                // In a real app, you'd also create a Transaction record here
             });
-            setShowAdjustModal(false);
-            fetchResidents(pagination.page);
-            alert("Balance updated successfully");
+            setMessage("Balance updated successfully");
+            await fetchResidents(pagination.page); // Await to ensure update
+            setTimeout(() => {
+                setShowAdjustModal(false);
+                setMessage('');
+            }, 2000); // Close modal after 2 seconds
         } catch (error) {
-            alert("Failed to adjust balance");
+            console.error("Error adjusting balance:", error);
+            setMessage("Failed to adjust balance");
         }
     };
 
@@ -51,6 +57,7 @@ const ResidentManagement = () => {
         setSelectedResident(resident);
         setAdjustmentAmount('');
         setAdjustmentReason('');
+        setMessage('');
         setShowAdjustModal(true);
     };
 
@@ -177,6 +184,18 @@ const ResidentManagement = () => {
                                 <h2 className={styles.modalTitle}>Adjust Balance: {selectedResident?.firstName}</h2>
                                 <button onClick={() => setShowAdjustModal(false)} className={styles.closeBtn}><X size={20}/></button>
                             </div>
+                            {message && (
+                                <div style={{
+                                    padding: '10px',
+                                    margin: '10px 0',
+                                    borderRadius: '4px',
+                                    backgroundColor: message.includes('successfully') ? '#d4edda' : '#f8d7da',
+                                    color: message.includes('successfully') ? '#155724' : '#721c24',
+                                    border: `1px solid ${message.includes('successfully') ? '#c3e6cb' : '#f5c6cb'}`
+                                }}>
+                                    {message}
+                                </div>
+                            )}
                             <form onSubmit={handleAdjustBalance} className={styles.form}>
                                 <div className={styles.formGroup}>
                                     <label>Adjustment Amount (Use negative for deduction)</label>

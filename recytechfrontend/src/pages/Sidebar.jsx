@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from '../styles/Sidebar.module.css';
 import { 
@@ -15,12 +15,28 @@ import {
     BookOpen,
     Coins,
     Users2,
-    History
+    History,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 
 const Sidebar = ({ activePage }) => {
     const navigate = useNavigate();
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(() => localStorage.getItem('sidebarCollapsed') === 'true');
+    const menuRef = useRef(null);
+
+    // Restore scroll position on mount
+    useEffect(() => {
+        const savedScroll = localStorage.getItem('sidebarScrollPos');
+        if (savedScroll && menuRef.current) {
+            menuRef.current.scrollTop = parseInt(savedScroll, 10);
+        }
+    }, []);
+
+    const handleScroll = (e) => {
+        localStorage.setItem('sidebarScrollPos', e.target.scrollTop);
+    };
     
     // Get user info and role from localStorage
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
@@ -29,6 +45,12 @@ const Sidebar = ({ activePage }) => {
     const handleLogout = () => {
         localStorage.removeItem('userInfo');
         navigate('/login');
+    };
+
+    const toggleSidebar = () => {
+        const nextState = !isCollapsed;
+        setIsCollapsed(nextState);
+        localStorage.setItem('sidebarCollapsed', String(nextState));
     };
 
     const menuItems = [
@@ -50,29 +72,44 @@ const Sidebar = ({ activePage }) => {
 
     return (
         <>
-            <div className={styles.sidebar}>
+            <div className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
+                <button
+                    type="button"
+                    className={styles.collapseBtn}
+                    onClick={toggleSidebar}
+                    title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                    aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                >
+                    {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                </button>
+
                 <div className={styles.logoContainer}>
                     <div className={styles.logoIcon}><Recycle size={20} /></div>
                     <span className={styles.logoText}>RecyTech</span>
                 </div>
 
-                <ul className={styles.menu}>
+                <ul className={styles.menu} ref={menuRef} onScroll={handleScroll}>
                     {filteredItems.map((item) => (
                         <li 
                             key={item.name} 
                             className={activePage === item.name ? styles.menuItemActive : styles.menuItem}
                             onClick={() => navigate(item.path)}
+                            title={isCollapsed ? item.name : undefined}
                         >
                             <div className={styles.iconWrapper}>{item.icon}</div>
-                            {item.name}
+                            <span className={styles.menuLabel}>{item.name}</span>
                         </li>
                     ))}
                 </ul>
 
                 <div className={styles.logoutContainer}>
-                    <button className={styles.logoutBtn} onClick={() => setShowLogoutModal(true)}>
-                        <LogOut size={18} style={{marginRight: '8px', display: 'inline-block', verticalAlign: 'middle'}}/>
-                        Log Out
+                    <button
+                        className={styles.logoutBtn}
+                        onClick={() => setShowLogoutModal(true)}
+                        title={isCollapsed ? 'Log Out' : undefined}
+                    >
+                        <LogOut size={18}/>
+                        <span className={styles.logoutText}>Log Out</span>
                     </button>
                 </div>
             </div>

@@ -41,6 +41,10 @@ const requestSchema = mongoose.Schema({
         ref: 'Collector', // Links this request to a specific Collector
         required: false
     },
+    scheduledAt: {
+        type: Date,
+        required: false
+    },
     residentEmail: {
         type: String, // Email to link request to resident account
         required: false // Optional for anonymous submissions

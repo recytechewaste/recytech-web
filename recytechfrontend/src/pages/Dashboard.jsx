@@ -33,6 +33,7 @@ const Dashboard = () => {
     const [categoryData, setCategoryData] = useState([]);
     const [monthlyData, setMonthlyData] = useState([]);
     const [recentActivity, setRecentActivity] = useState([]);
+    const [predictiveInsights, setPredictiveInsights] = useState({});
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -54,6 +55,7 @@ const Dashboard = () => {
                 setCategoryData(data.categoryDistribution || []);
                 setRoleData(data.roleDistribution || []);
                 setRecentActivity(data.recentRequests || []);
+                setPredictiveInsights(data.predictiveAnalytics || {});
             } catch (error) { console.error("Error fetching stats", error); }
         };
         fetchStats();
@@ -106,6 +108,63 @@ const Dashboard = () => {
                                     <Bar dataKey="items" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={30} />
                                 </BarChart>
                             </ResponsiveContainer>
+                        </div>
+                    </div>
+                </div>
+
+                {/* PREDICTIVE ANALYTICS SECTION */}
+                <div className={styles.sectionContainer}>
+                    <h2 className={styles.sectionHeaderLeft}>Predictive Insights</h2>
+                    <p className={styles.sectionSubHeaderLeft}>Predictive analytics and forecasting.</p>
+
+                    <div className={styles.metricsLayout}>
+                        {/* Left Column: Predictive Metrics */}
+                        <div className={styles.statsColumn}>
+                            <div className={`${styles.metricCard} ${predictiveInsights.insights?.trendDirection === 'Increasing' ? styles.successCard : predictiveInsights.insights?.trendDirection === 'Decreasing' ? styles.dangerCard : ''}`}>
+                                <span>Trend Direction</span>
+                                <h3>{predictiveInsights.insights?.trendDirection || 'N/A'}</h3>
+                            </div>
+                            <div className={styles.metricCard}>
+                                <span>Prediction Confidence</span>
+                                <h3>{predictiveInsights.insights?.predictionConfidence || 0}%</h3>
+                            </div>
+                            <div className={`${styles.metricCard} ${predictiveInsights.insights?.seasonalityDetected ? styles.warningCard : ''}`}>
+                                <span>Seasonal Patterns</span>
+                                <h3>{predictiveInsights.insights?.seasonalityDetected ? 'Detected' : 'None'}</h3>
+                            </div>
+                            <div className={`${styles.metricCard} ${predictiveInsights.insights?.outlierCount > 0 ? styles.dangerCard : styles.successCard}`}>
+                                <span>Outlier Months</span>
+                                <h3>{predictiveInsights.insights?.outlierCount || 0}</h3>
+                            </div>
+                        </div>
+
+                        {/* Right Column: Correlation Analysis */}
+                        <div className={styles.chartCard}>
+                            <h3 className={styles.cardTitle}>Correlation Analysis</h3>
+                            <div style={{ padding: '20px', textAlign: 'center' }}>
+                                <div style={{ fontSize: '48px', marginBottom: '10px' }}>
+                                    📊
+                                </div>
+                                <p style={{ margin: '10px 0', fontSize: '14px', color: '#6B7280' }}>
+                                    Request-Completion Correlation
+                                </p>
+                                <h3 style={{
+                                    fontSize: '24px',
+                                    margin: '10px 0',
+                                    color: Math.abs(predictiveInsights.correlation?.requestCompletionCorrelation || 0) > 0.7 ? '#10B981' :
+                                           Math.abs(predictiveInsights.correlation?.requestCompletionCorrelation || 0) > 0.3 ? '#F59E0B' : '#EF4444'
+                                }}>
+                                    {predictiveInsights.correlation?.strength || 'N/A'} ({(predictiveInsights.correlation?.requestCompletionCorrelation || 0).toFixed(2)})
+                                </h3>
+                                <p style={{ fontSize: '12px', color: '#9CA3AF' }}>
+                                    {Math.abs(predictiveInsights.correlation?.requestCompletionCorrelation || 0) > 0.7 ?
+                                        'Strong relationship between requests and completions' :
+                                        Math.abs(predictiveInsights.correlation?.requestCompletionCorrelation || 0) > 0.3 ?
+                                        'Moderate relationship detected' :
+                                        'Weak or no relationship found'
+                                    }
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>

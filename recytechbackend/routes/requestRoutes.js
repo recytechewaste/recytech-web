@@ -128,7 +128,30 @@ router.put('/:id', protect, async (req, res) => {
 
         if (request) {
             const newStatus = req.body.status || request.status;
-            
+            const newAssignedCollector = req.body.assignedCollector || request.assignedCollector;
+            const newScheduledAt = req.body.scheduledAt ? new Date(req.body.scheduledAt) : request.scheduledAt;
+
+            if (req.body.scheduledAt && isNaN(newScheduledAt.getTime())) {
+                return res.status(400).json({ message: 'Invalid scheduled date/time provided.' });
+            }
+
+            if (newStatus === 'Approved' && newAssignedCollector && !newScheduledAt) {
+                return res.status(400).json({ message: 'A scheduled date and time is required when approving a request and assigning a collector.' });
+            }
+
+            if (newAssignedCollector && newScheduledAt) {
+                const conflictRequest = await Request.findOne({
+                    _id: { $ne: request._id },
+                    assignedCollector: newAssignedCollector,
+                    scheduledAt: newScheduledAt,
+                    status: { $in: ['Pending', 'Approved', 'In-Transit'] }
+                });
+
+                if (conflictRequest) {
+                    return res.status(400).json({ message: 'Schedule conflict detected: the selected collector already has another pickup at the same date and time.' });
+                }
+            }
+
             // Handle payout when request is marked as Completed
             if (newStatus === 'Completed' && request.status !== 'Completed' && !request.paymentProcessed) {
                 try {
@@ -175,7 +198,8 @@ router.put('/:id', protect, async (req, res) => {
                         request.status = newStatus;
                         request.resident = resident._id;
                         request.residentEmail = resident.email;
-                        request.assignedCollector = req.body.assignedCollector || request.assignedCollector;
+                        request.assignedCollector = newAssignedCollector;
+                        request.scheduledAt = newScheduledAt;
                         
                         const updatedRequest = await request.save();
                         
@@ -193,7 +217,8 @@ router.put('/:id', protect, async (req, res) => {
                         console.warn(`Payout calculation failed for request ${request._id}: ${payoutResult.message}`);
                         
                         request.status = newStatus;
-                        request.assignedCollector = req.body.assignedCollector || request.assignedCollector;
+                        request.assignedCollector = newAssignedCollector;
+                        request.scheduledAt = newScheduledAt;
                         request.monetaryValue = 0;
                         request.paymentProcessed = false; // Don't mark as processed if calculation failed
                         
@@ -209,7 +234,8 @@ router.put('/:id', protect, async (req, res) => {
                     
                     // Still update status but without payment
                     request.status = newStatus;
-                    request.assignedCollector = req.body.assignedCollector || request.assignedCollector;
+                    request.assignedCollector = newAssignedCollector;
+                    request.scheduledAt = newScheduledAt;
                     request.monetaryValue = 0;
                     
                     const updatedRequest = await request.save();
@@ -223,7 +249,8 @@ router.put('/:id', protect, async (req, res) => {
             
             // Standard update (no payout processing)
             request.status = newStatus;
-            request.assignedCollector = req.body.assignedCollector || request.assignedCollector;
+            request.assignedCollector = newAssignedCollector;
+            request.scheduledAt = newScheduledAt;
             
             const updatedRequest = await request.save();
             res.json(updatedRequest);

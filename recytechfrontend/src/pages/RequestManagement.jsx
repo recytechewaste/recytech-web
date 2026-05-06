@@ -18,6 +18,9 @@ const RequestManagement = () => {
     const [viewRequest, setViewRequest] = useState(null);
     const [selectedRequest, setSelectedRequest] = useState(null); // For Approval
     const [selectedCollector, setSelectedCollector] = useState('');
+    const [selectedScheduleDate, setSelectedScheduleDate] = useState('');
+    const [selectedScheduleTime, setSelectedScheduleTime] = useState('');
+    const [scheduleConflict, setScheduleConflict] = useState('');
     const [showAssignmentModal, setShowAssignmentModal] = useState(false);
     const [rejectingRequestId, setRejectingRequestId] = useState(null);
 
@@ -92,30 +95,57 @@ const RequestManagement = () => {
     };
 
     // --- Action Handlers ---
+    const resetAssignmentForm = () => {
+        setSelectedCollector('');
+        setSelectedScheduleDate('');
+        setSelectedScheduleTime('');
+        setScheduleConflict('');
+    };
+
     const handleApproveClick = (req) => {
         setSelectedRequest(req);
         if (viewRequest) setViewRequest(null);
+
+        if (req.scheduledAt) {
+            const dt = new Date(req.scheduledAt);
+            setSelectedScheduleDate(dt.toISOString().substring(0, 10));
+            setSelectedScheduleTime(dt.toTimeString().substring(0, 5));
+        } else {
+            setSelectedScheduleDate('');
+            setSelectedScheduleTime('');
+        }
+
+        setSelectedCollector(req.assignedCollector?._id || '');
+        setScheduleConflict('');
     };
 
     const confirmAssignment = () => {
         if (!selectedCollector) return alert("Please select a collector");
+        if (!selectedScheduleDate || !selectedScheduleTime) return alert("Please select a scheduled date and time.");
+        if (scheduleConflict) return alert(scheduleConflict);
         setShowAssignmentModal(true);
     };
 
     const executeAssignment = async () => {
         try {
+            const scheduledAt = `${selectedScheduleDate}T${selectedScheduleTime}`;
             await api.put(`/requests/${selectedRequest._id}`, {
                 status: 'Approved',
-                assignedCollector: selectedCollector
+                assignedCollector: selectedCollector,
+                scheduledAt
             });
             setSuccessTitle("Request Approved");
-            setSuccessMessage("The pickup request has been successfully approved and assigned to the selected collector.");
+            setSuccessMessage("The pickup request has been successfully approved, assigned, and scheduled.");
             setShowSuccessModal(true);
             setShowAssignmentModal(false);
             setSelectedRequest(null);
-            setSelectedCollector('');
+            resetAssignmentForm();
             fetchData();
-        } catch (error) { console.error(error); }
+        } catch (error) {
+            console.error(error);
+            const message = error.response?.data?.message || 'Unable to approve the request.';
+            alert(message);
+        }
     };
 
     const confirmReject = async () => {
@@ -128,6 +158,23 @@ const RequestManagement = () => {
             fetchData();
         } catch (error) { console.error(error); }
     };
+
+    useEffect(() => {
+        if (!selectedCollector || !selectedScheduleDate || !selectedScheduleTime || !selectedRequest) {
+            setScheduleConflict('');
+            return;
+        }
+
+        const scheduledAt = new Date(`${selectedScheduleDate}T${selectedScheduleTime}`);
+        const hasConflict = requests.some((r) => {
+            if (!r.assignedCollector || !r.scheduledAt || r._id === selectedRequest._id) return false;
+            if (r.assignedCollector._id !== selectedCollector) return false;
+            const otherTime = new Date(r.scheduledAt);
+            return otherTime.getTime() === scheduledAt.getTime() && ['Pending', 'Approved', 'In-Transit'].includes(r.status);
+        });
+
+        setScheduleConflict(hasConflict ? 'Selected collector already has another request at the same scheduled date and time.' : '');
+    }, [selectedCollector, selectedScheduleDate, selectedScheduleTime, requests, selectedRequest]);
 
     const handleRejectClick = (id) => {
         setRejectingRequestId(id);
@@ -228,6 +275,7 @@ const RequestManagement = () => {
                                 <th className={styles.th}>Quantity</th>
                                 <th className={styles.th}>Area</th>
                                 <th className={styles.th}>Assigned Collector</th>
+                                <th className={styles.th}>Pickup Schedule</th>
                                 <th className={styles.th}>Submission Date</th>
                                 <th className={styles.th}>Status</th>
                                 <th className={styles.th}>Actions</th>
@@ -243,6 +291,7 @@ const RequestManagement = () => {
                                     <td className={styles.td}>
                                         {req.assignedCollector ? `${req.assignedCollector.firstName} ${req.assignedCollector.lastName}` : <span style={{color: '#9ca3af', fontStyle: 'italic'}}>Unassigned</span>}
                                     </td>
+                                    <td className={styles.td}>{req.scheduledAt ? new Date(req.scheduledAt).toLocaleString() : <span style={{color: '#9ca3af', fontStyle: 'italic'}}>Not scheduled</span>}</td>
                                     <td className={styles.td}>{new Date(req.createdAt).toLocaleDateString()}</td>
                                     <td className={styles.td}>{req.status}</td>
                                     <td className={`${styles.td} ${styles.actionCell}`}>
@@ -323,6 +372,7 @@ const RequestManagement = () => {
                                         </>
                                     )}
                                     <div className={styles.detailRow}><strong>Status:</strong> {viewRequest.status}</div>
+                                    <div className={styles.detailRow}><strong>Pickup Schedule:</strong> {viewRequest.scheduledAt ? new Date(viewRequest.scheduledAt).toLocaleString() : 'Not scheduled'}</div>
                                 </div>
                                 <div className={styles.mapSection}>
                                     <iframe 
@@ -366,8 +416,29 @@ const RequestManagement = () => {
                                     <option key={c._id} value={c._id}>{`${c.firstName} ${c.lastName}`} ({c.vehiclePlate})</option>
                                 ))}
                             </select>
+                            <div className={styles.filterGroup} style={{marginBottom: '18px'}}>
+                                <label className={styles.label}>Scheduled Date</label>
+                                <input
+                                    type="date"
+                                    className={styles.input}
+                                    value={selectedScheduleDate}
+                                    onChange={(e) => setSelectedScheduleDate(e.target.value)}
+                                />
+                            </div>
+                            <div className={styles.filterGroup} style={{marginBottom: '18px'}}>
+                                <label className={styles.label}>Scheduled Time</label>
+                                <input
+                                    type="time"
+                                    className={styles.input}
+                                    value={selectedScheduleTime}
+                                    onChange={(e) => setSelectedScheduleTime(e.target.value)}
+                                />
+                            </div>
+                            {scheduleConflict && (
+                                <div style={{color: '#b91c1c', marginBottom: '16px'}}>{scheduleConflict}</div>
+                            )}
                             <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px'}}>
-                                <button onClick={() => setSelectedRequest(null)} className={styles.viewBtn}>Cancel</button>
+                                <button onClick={() => { setSelectedRequest(null); resetAssignmentForm(); }} className={styles.viewBtn}>Cancel</button>
                                 <button onClick={confirmAssignment} className={styles.approveBtn}>Assign</button>
                             </div>
                         </div>
