@@ -97,7 +97,6 @@ const ResidentManagement = () => {
                             <tr>
                                 <th className={styles.th}>Resident</th>
                                 <th className={styles.th}>Email Address</th>
-                                <th className={styles.th}>Source</th>
                                 <th className={styles.th}>Wallet Balance</th>
                                 <th className={styles.th}>Total Earned</th>
                                 <th className={styles.th}>Total Requests</th>
@@ -123,20 +122,6 @@ const ResidentManagement = () => {
                                             </div>
                                         </td>
                                         <td className={styles.td}>{res.email}</td>
-                                        <td className={styles.td}>
-                                            <span style={{
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                padding: '4px 8px',
-                                                borderRadius: '999px',
-                                                fontSize: '12px',
-                                                fontWeight: 600,
-                                                background: res.isTemporary ? '#fef3c7' : '#dcfce7',
-                                                color: res.isTemporary ? '#92400e' : '#166534'
-                                            }}>
-                                                {res.isTemporary ? 'Temporary' : 'Linked'} · {res.source || 'Mobile Simulation'}
-                                            </span>
-                                        </td>
                                         <td className={styles.td} style={{color: '#059669', fontWeight: '700'}}>PHP {res.walletBalance?.toFixed(2)}</td>
                                         <td className={styles.td}>PHP {res.totalEarned?.toFixed(2)}</td>
                                         <td className={styles.td}>{res.requestCount} collections</td>

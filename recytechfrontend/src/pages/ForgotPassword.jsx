@@ -20,9 +20,12 @@ const ForgotPassword = () => {
         setMessage('');
 
         try {
-            // Placeholder for your API call
             await api.post('/auth/forgot-password', { email });
-            setMessage('Instructions have been sent to your email.');
+            setMessage('PIN has been sent to your email! Redirecting...');
+            
+            setTimeout(() => {
+                navigate('/verify-pin', { state: { email } });
+            }, 1500);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to send reset instructions.');
         } finally {

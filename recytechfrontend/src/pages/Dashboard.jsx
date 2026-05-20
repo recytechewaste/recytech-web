@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
 import Sidebar from './Sidebar';
+import SchedulingPanel from './SchedulingPanel';
 import styles from '../styles/Dashboard.module.css';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 
@@ -168,6 +169,8 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </div>
+
+                <SchedulingPanel />
 
                 {/* 2. PIE CHARTS SECTION */}
                 <div className={styles.chartsGrid}>

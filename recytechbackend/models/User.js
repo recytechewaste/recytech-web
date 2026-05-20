@@ -30,6 +30,14 @@ const userSchema = mongoose.Schema({
     lastLogin: {
         type: Date,
         default: null
+    },
+    resetPin: {
+        type: String,
+        default: null
+    },
+    resetPinExpiry: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true
