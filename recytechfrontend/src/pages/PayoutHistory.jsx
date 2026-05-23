@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
-import Sidebar from './Sidebar';
+import Sidebar from '../components/Sidebar';
 import styles from '../styles/UserManagement.module.css';
 import { RefreshCw, ArrowUpRight, ArrowDownLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 

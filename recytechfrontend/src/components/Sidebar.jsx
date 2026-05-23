@@ -59,7 +59,7 @@ const Sidebar = ({ activePage }) => {
         { name: 'User Management', icon: <Users size={20} />, path: '/users', roles: ['Super Admin'] },
         { name: 'Collector Management', icon: <Truck size={20} />, path: '/collectors', roles: ['Admin', 'Super Admin'] },
         { name: 'Requests Summary', icon: <ClipboardList size={20} />, path: '/requests-summary' },
-        { name: 'Resident Wallets', icon: <Users2 size={20} />, path: '/residents', roles: ['Admin', 'Super Admin'] },
+        { name: 'Mobile Residents', icon: <Users2 size={20} />, path: '/residents', roles: ['Admin', 'Super Admin'] },
         { name: 'Exchange Rates', icon: <Coins size={20} />, path: '/exchange-rates', roles: ['Admin', 'Super Admin'] },
         { name: 'Payout History', icon: <History size={20} />, path: '/transactions', roles: ['Admin', 'Super Admin'] },
         { name: 'Educational Content', icon: <BookOpen size={20} />, path: '/education', roles: ['Staff', 'Admin', 'Super Admin'] },

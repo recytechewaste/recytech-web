@@ -29,7 +29,7 @@ app.use('/api/education', require('./recytechbackend/routes/educationRoutes'));
 app.use('/api/residents', require('./recytechbackend/routes/residentRoutes'));
 app.use('/api/exchange-rates', require('./recytechbackend/routes/exchangeRateRoutes'));
 app.use('/api/transactions', require('./recytechbackend/routes/transactionRoutes'));
-app.use('/api/recycling-centers', require('./recytechbackend/routes/recyclingCenterRoutes'));
+//app.use('/api/recycling-centers', require('./recytechbackend/routes/recyclingCenterRoutes'));
 app.use('/api/analytics', require('./recytechbackend/routes/analyticsRoutes'));
 app.use('/api/scheduling', require('./recytechbackend/routes/schedulingRoutes'));
 

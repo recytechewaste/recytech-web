@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Sidebar from './Sidebar';
+import Sidebar from '../components/Sidebar';
 
 const Settings = () => {
     const [profilePic, setProfilePic] = useState(null);

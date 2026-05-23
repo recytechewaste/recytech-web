@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
-import Sidebar from './Sidebar';
+import Sidebar from '../components/Sidebar';
 import styles from '../styles/RequestsSummary.module.css';
 import { FileText, Clock, CheckCircle, Truck, TrendingUp, AlertCircle } from 'lucide-react';
 

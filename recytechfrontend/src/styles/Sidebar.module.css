@@ -13,12 +13,11 @@
     top: 0;             /* Stick to the top edge */
     z-index: 50;        /* Ensure it stays above other content if overlaps happen */
     transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    /* Fix for absolute positioned children */
-    position: relative;
+    overflow: visible;
 }
 
 .collapsed {
-    width: 80px;
+    width: 96px;
 }
 
 .logoContainer {
@@ -55,10 +54,10 @@
 
 .collapseBtn {
     position: absolute;
-    right: -10px; /* Positions the arrow right on the border line */
+    right: -14px; /* Positions the control on the border line */
     top: 40px;
     transform: translateY(-50%);
-    width: 20px;
+    width: 28px;
     height: 40px; /* Taller hit area for easier clicking */
     background: white;
     border: 1px solid #e5e7eb;
@@ -69,8 +68,9 @@
     cursor: pointer;
     z-index: 100;
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 4px;
+    border-radius: 999px;
     padding: 0;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
 }
 
 .collapseBtn:hover {
@@ -115,13 +115,13 @@
 }
 
 .menuItem:hover {
-    background-color: #e5e7eb; /* Slight hover effect */
-    color: #111827;
+    background-color: #e0ecff;
+    color: #1d4ed8;
 }
 
 .menuItemActive {
-    background-color: #e5e7eb; /* Active background */
-    color: #111827; /* Active text color */
+    background-color: #dbeafe;
+    color: #1d4ed8;
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -197,7 +197,7 @@
 }
 
 .collapsed .menu {
-    padding: 0 12px;
+    padding: 0 16px;
 }
 
 .collapsed .menuItem,

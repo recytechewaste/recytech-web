@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
-import Sidebar from './Sidebar';
+import Sidebar from '../components/Sidebar';
 import styles from '../styles/EducationManager.module.css';
 import { 
     Plus, Search, Edit2, Trash2, X, Filter, 

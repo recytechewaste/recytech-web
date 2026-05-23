@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
-import Sidebar from './Sidebar';
+import Sidebar from '../components/Sidebar';
 import styles from '../styles/EducationManager.module.css'; // Reusing layout styles
 import { Plus, Edit2, X, Save, RefreshCw, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 

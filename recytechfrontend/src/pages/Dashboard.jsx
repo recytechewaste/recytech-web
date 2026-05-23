@@ -1,25 +1,12 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
-import Sidebar from './Sidebar';
-import SchedulingPanel from './SchedulingPanel';
+import Sidebar from '../components/Sidebar';
+import DistributionCharts from '../features/dashboard/DistributionCharts';
+import EWasteMetrics from '../features/dashboard/EWasteMetrics';
+import PredictiveInsights from '../features/dashboard/PredictiveInsights';
+import RecentRequestsTable from '../features/dashboard/RecentRequestsTable';
+import SchedulingPanel from '../features/scheduling/SchedulingPanel';
 import styles from '../styles/Dashboard.module.css';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-
-const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#EF4444'];
-
-const RADIAN = Math.PI / 180;
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-    // Calculate the position for the label (middle of the slice)
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-    return (
-        <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight="600">
-            {`${(percent * 100).toFixed(0)}%`}
-        </text>
-    );
-};
 
 const Dashboard = () => {
     const [stats, setStats] = useState({
@@ -57,8 +44,11 @@ const Dashboard = () => {
                 setRoleData(data.roleDistribution || []);
                 setRecentActivity(data.recentRequests || []);
                 setPredictiveInsights(data.predictiveAnalytics || {});
-            } catch (error) { console.error("Error fetching stats", error); }
+            } catch (error) {
+                console.error('Error fetching stats', error);
+            }
         };
+
         fetchStats();
     }, []);
 
@@ -72,199 +62,11 @@ const Dashboard = () => {
                     <p className={styles.subTitle}>Welcome back, Super Admin. Here is your operational overview.</p>
                 </div>
 
-                {/* METRICS SECTION */}
-                <div className={styles.sectionContainer}>
-                    <h2 className={styles.sectionHeaderLeft}>E-Waste Metrics</h2>
-                    <p className={styles.sectionSubHeaderLeft}>Processing and collection stats.</p>
-
-                    <div className={styles.metricsLayout}>
-                        {/* Left Column: Stats Cards */}
-                        <div className={styles.statsColumn}>
-                            <div className={`${styles.metricCard} ${stats.pending >= 10 ? styles.dangerCard : stats.pending >= 5 ? styles.warningCard : ''}`}>
-                                <span>Pending Review</span>
-                                <h3>{stats.pending}</h3>
-                            </div>
-                            <div className={styles.metricCard}>
-                                <span>Total E-Waste Items</span>
-                                <h3>{stats.totalItems.toLocaleString()}</h3>
-                            </div>
-                            <div className={styles.metricCard}>
-                                <span>Total Payout Released</span>
-                                <h3>PHP {stats.totalPayout.toLocaleString()}</h3>
-                            </div>
-                            <div className={`${styles.metricCard} ${stats.completionRate >= 70 ? styles.successCard : ''}`}>
-                                <span>Completion Rate</span>
-                                <h3>{stats.completionRate}%</h3>
-                            </div>
-                        </div>
-
-                        {/* Right Column: Monthly Trends */}
-                        <div className={styles.chartCard}>
-                            <h3 className={styles.cardTitle}>Monthly Collection Volume</h3>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={monthlyData}>
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
-                                    <YAxis axisLine={false} tickLine={false} fontSize={12} />
-                                    <Tooltip cursor={{fill: '#f3f4f6'}} />
-                                    <Bar dataKey="items" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={30} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-                </div>
-
-                {/* PREDICTIVE ANALYTICS SECTION */}
-                <div className={styles.sectionContainer}>
-                    <h2 className={styles.sectionHeaderLeft}>Predictive Insights</h2>
-                    <p className={styles.sectionSubHeaderLeft}>Predictive analytics and forecasting.</p>
-
-                    <div className={styles.metricsLayout}>
-                        {/* Left Column: Predictive Metrics */}
-                        <div className={styles.statsColumn}>
-                            <div className={`${styles.metricCard} ${predictiveInsights.insights?.trendDirection === 'Increasing' ? styles.successCard : predictiveInsights.insights?.trendDirection === 'Decreasing' ? styles.dangerCard : ''}`}>
-                                <span>Trend Direction</span>
-                                <h3>{predictiveInsights.insights?.trendDirection || 'N/A'}</h3>
-                            </div>
-                            <div className={styles.metricCard}>
-                                <span>Prediction Confidence</span>
-                                <h3>{predictiveInsights.insights?.predictionConfidence || 0}%</h3>
-                            </div>
-                            <div className={`${styles.metricCard} ${predictiveInsights.insights?.seasonalityDetected ? styles.warningCard : ''}`}>
-                                <span>Seasonal Patterns</span>
-                                <h3>{predictiveInsights.insights?.seasonalityDetected ? 'Detected' : 'None'}</h3>
-                            </div>
-                            <div className={`${styles.metricCard} ${predictiveInsights.insights?.outlierCount > 0 ? styles.dangerCard : styles.successCard}`}>
-                                <span>Outlier Months</span>
-                                <h3>{predictiveInsights.insights?.outlierCount || 0}</h3>
-                            </div>
-                        </div>
-
-                        {/* Right Column: Correlation Analysis */}
-                        <div className={styles.chartCard}>
-                            <h3 className={styles.cardTitle}>Correlation Analysis</h3>
-                            <div style={{ padding: '20px', textAlign: 'center' }}>
-                                <div style={{ fontSize: '48px', marginBottom: '10px' }}>
-                                    📊
-                                </div>
-                                <p style={{ margin: '10px 0', fontSize: '14px', color: '#6B7280' }}>
-                                    Request-Completion Correlation
-                                </p>
-                                <h3 style={{
-                                    fontSize: '24px',
-                                    margin: '10px 0',
-                                    color: Math.abs(predictiveInsights.correlation?.requestCompletionCorrelation || 0) > 0.7 ? '#10B981' :
-                                           Math.abs(predictiveInsights.correlation?.requestCompletionCorrelation || 0) > 0.3 ? '#F59E0B' : '#EF4444'
-                                }}>
-                                    {predictiveInsights.correlation?.strength || 'N/A'} ({(predictiveInsights.correlation?.requestCompletionCorrelation || 0).toFixed(2)})
-                                </h3>
-                                <p style={{ fontSize: '12px', color: '#9CA3AF' }}>
-                                    {Math.abs(predictiveInsights.correlation?.requestCompletionCorrelation || 0) > 0.7 ?
-                                        'Strong relationship between requests and completions' :
-                                        Math.abs(predictiveInsights.correlation?.requestCompletionCorrelation || 0) > 0.3 ?
-                                        'Moderate relationship detected' :
-                                        'Weak or no relationship found'
-                                    }
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+                <EWasteMetrics stats={stats} monthlyData={monthlyData} />
+                <PredictiveInsights predictiveInsights={predictiveInsights} />
                 <SchedulingPanel />
-
-                {/* 2. PIE CHARTS SECTION */}
-                <div className={styles.chartsGrid}>
-                    <div className={styles.chartCard}>
-                        <h3 className={styles.cardTitle}>Waste Type Distribution</h3>
-                        <span className={styles.chartSub}>Breakdown of collected e-waste categories</span>
-                        <ResponsiveContainer width="100%" height={250}>
-                            <PieChart>
-                                <Pie
-                                    data={categoryData}
-                                    cx="50%"
-                                    cy="45%"
-                                    innerRadius={45}
-                                    outerRadius={75}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                    labelLine={false}
-                                    label={renderCustomizedLabel}
-                                >
-                                    {categoryData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                                <Legend verticalAlign="bottom" height={36}/>
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-
-                    {roleData.length > 0 && (
-                        <div className={styles.chartCard}>
-                            <h3 className={styles.cardTitle}>System User Distribution</h3>
-                            <span className={styles.chartSub}>Breakdown of internal accounts by role</span>
-                            <ResponsiveContainer width="100%" height={250}>
-                                <PieChart>
-                                    <Pie
-                                        data={roleData}
-                                        cx="50%"
-                                        cy="45%"
-                                        innerRadius={45}
-                                        outerRadius={75}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                        labelLine={false}
-                                        label={renderCustomizedLabel}
-                                    >
-                                        {roleData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                    <Legend verticalAlign="bottom" height={36}/>
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    )}
-                </div>
-
-                    {/* Recent Activity Table */}
-                    <div className={styles.activityCard}>
-                        <h3 className={styles.cardTitle}>Recent Collection Requests</h3>
-                        <table className={styles.activityTable}>
-                            <thead>
-                                <tr>
-                                    <th>Resident</th>
-                                    <th>Waste Type</th>
-                                    <th>Location</th>
-                                    <th>Status</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recentActivity.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="5" className={styles.emptyActivityTd}>No recent activity.</td>
-                                    </tr>
-                                ) : (
-                                    recentActivity.map((req) => (
-                                        <tr key={req._id}>
-                                            <td>{req.residentName}</td>
-                                            <td>{req.wasteType}</td>
-                                            <td>{req.location?.address?.substring(0, 20)}...</td> {/* Truncate long addresses */}
-                                            <td>
-                                                <span className={`${styles.statusBadge} ${styles[req.status.toLowerCase().replace(/\s/g, '')]}`}>
-                                                    {req.status}
-                                                </span>
-                                            </td>
-                                            <td>{new Date(req.createdAt).toLocaleDateString()}</td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                </div>
+                <DistributionCharts categoryData={categoryData} roleData={roleData} />
+                <RecentRequestsTable requests={recentActivity} />
             </div>
         </div>
     );

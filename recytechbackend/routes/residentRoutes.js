@@ -38,7 +38,7 @@ router.get('/', protect, admin, async (req, res) => {
 // @route   POST /api/residents/temp
 // @access  Admin only
 router.post('/temp', protect, admin, async (req, res) => {
-    const { firstName, lastName, email, phone, mobileUserId } = req.body || {};
+    const { firstName, lastName, email, phone, mobileUserId, status, source, isTemporary } = req.body || {};
 
     if (!firstName || !lastName) {
         return res.status(400).json({ message: 'firstName and lastName are required' });
@@ -53,7 +53,7 @@ router.post('/temp', protect, admin, async (req, res) => {
                 .replace(/^-|-$/g, '')}@recytech.local`;
 
         let resident = await Resident.findOne({ email: generatedEmail });
-        let status = 'existing';
+        let resultStatus = 'existing';
 
         if (!resident) {
             resident = await Resident.create({
@@ -62,23 +62,25 @@ router.post('/temp', protect, admin, async (req, res) => {
                 lastName,
                 phone,
                 mobileUserId,
-                source: 'Mobile Simulation',
-                isTemporary: true
+                status: status || 'Active',
+                source: source || 'Mobile Simulation',
+                isTemporary: isTemporary !== undefined ? isTemporary : true
             });
-            status = 'created';
+            resultStatus = 'created';
         } else {
             resident.firstName = firstName;
             resident.lastName = lastName;
             if (phone !== undefined) resident.phone = phone;
             if (mobileUserId !== undefined) resident.mobileUserId = mobileUserId;
-            resident.source = resident.source || 'Mobile Simulation';
-            resident.isTemporary = true;
+            if (status !== undefined) resident.status = status;
+            resident.source = source || resident.source || 'Mobile Simulation';
+            resident.isTemporary = isTemporary !== undefined ? isTemporary : true;
             await resident.save();
-            status = 'updated';
+            resultStatus = 'updated';
         }
 
-        res.status(status === 'created' ? 201 : 200).json({
-            message: `Temporary resident ${status}`,
+        res.status(resultStatus === 'created' ? 201 : 200).json({
+            message: `Temporary resident ${resultStatus}`,
             resident
         });
     } catch (error) {
@@ -123,6 +125,25 @@ router.put('/:id', protect, admin, async (req, res) => {
         }
 
         // Allow updates to these fields only
+        if (req.body.email !== undefined) {
+            const email = req.body.email.trim().toLowerCase();
+
+            if (!email) {
+                return res.status(400).json({ message: 'Email is required' });
+            }
+
+            const existingResident = await Resident.findOne({
+                email,
+                _id: { $ne: req.params.id }
+            });
+
+            if (existingResident) {
+                return res.status(409).json({ message: 'Resident email already exists' });
+            }
+
+            resident.email = email;
+        }
+
         if (req.body.status) resident.status = req.body.status;
         if (req.body.firstName) resident.firstName = req.body.firstName;
         if (req.body.lastName) resident.lastName = req.body.lastName;

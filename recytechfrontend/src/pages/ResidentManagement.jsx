@@ -1,92 +1,167 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
-import Sidebar from './Sidebar';
+import Sidebar from '../components/Sidebar';
 import styles from '../styles/UserManagement.module.css';
-import { RefreshCw, User, ChevronLeft, ChevronRight, Edit3, X, Save } from 'lucide-react';
+import { Edit2, Plus, RefreshCw, Save, Trash2, User, X } from 'lucide-react';
+
+const emptyForm = {
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    mobileUserId: '',
+    status: 'Active',
+    source: 'Mobile Simulation',
+    isTemporary: true
+};
 
 const ResidentManagement = () => {
     const [residents, setResidents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [pagination, setPagination] = useState({ page: 1, pages: 1 });
-    const [showAdjustModal, setShowAdjustModal] = useState(false);
-    const [selectedResident, setSelectedResident] = useState(null);
-    const [adjustmentAmount, setAdjustmentAmount] = useState('');
-    const [adjustmentReason, setAdjustmentReason] = useState('');
-    const [message, setMessage] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    const [showModal, setShowModal] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [currentResidentId, setCurrentResidentId] = useState(null);
+    const [deletingResident, setDeletingResident] = useState(null);
+    const [formData, setFormData] = useState(emptyForm);
+    const [errors, setErrors] = useState({});
 
-    const fetchResidents = async (page = 1) => {
+    const fetchResidents = async () => {
         setLoading(true);
         try {
-            const res = await api.get(`/residents?page=${page}&limit=10`);
+            const res = await api.get('/residents', { params: { limit: 1000 } });
             setResidents(res.data.residents || res.data || []);
-            if (res.data.pagination) setPagination(res.data.pagination);
         } catch (error) {
-            console.error("Error fetching residents:", error);
+            console.error('Error fetching residents:', error);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => { fetchResidents(pagination.page); }, [pagination.page]);
+    useEffect(() => {
+        Promise.resolve().then(fetchResidents);
+    }, []);
 
-    const handleAdjustBalance = async (e) => {
+    const validate = () => {
+        const nextErrors = {};
+        if (!formData.firstName.trim()) nextErrors.firstName = 'First name is required';
+        if (!formData.lastName.trim()) nextErrors.lastName = 'Last name is required';
+        if (!formData.email.trim()) {
+            nextErrors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            nextErrors.email = 'Invalid email format';
+        }
+
+        setErrors(nextErrors);
+        return Object.keys(nextErrors).length === 0;
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+        if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    };
+
+    const openAddModal = () => {
+        setFormData(emptyForm);
+        setErrors({});
+        setCurrentResidentId(null);
+        setIsEditing(false);
+        setShowModal(true);
+    };
+
+    const openEditModal = (resident) => {
+        setFormData({
+            firstName: resident.firstName || '',
+            lastName: resident.lastName || '',
+            email: resident.email || '',
+            phone: resident.phone || '',
+            mobileUserId: resident.mobileUserId || '',
+            status: resident.status || 'Active',
+            source: resident.source || 'Mobile Simulation',
+            isTemporary: resident.isTemporary !== false
+        });
+        setErrors({});
+        setCurrentResidentId(resident._id);
+        setIsEditing(true);
+        setShowModal(true);
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!adjustmentAmount || isNaN(adjustmentAmount)) {
-            setMessage("Please enter a valid amount");
-            return;
-        }
-        
+        if (!validate()) return;
+
         try {
-            await api.put(`/residents/${selectedResident._id}`, {
-                walletBalance: selectedResident.walletBalance + parseFloat(adjustmentAmount),
-            });
-            setMessage("Balance updated successfully");
-            await fetchResidents(pagination.page); // Await to ensure update
-            setTimeout(() => {
-                setShowAdjustModal(false);
-                setMessage('');
-            }, 2000); // Close modal after 2 seconds
+            if (isEditing) {
+                await api.put(`/residents/${currentResidentId}`, formData);
+            } else {
+                await api.post('/residents/temp', formData);
+            }
+
+            setShowModal(false);
+            fetchResidents();
         } catch (error) {
-            console.error("Error adjusting balance:", error);
-            setMessage("Failed to adjust balance");
+            alert(error.response?.data?.message || 'Unable to save mobile resident');
         }
     };
 
-    const openAdjustModal = (resident) => {
-        setSelectedResident(resident);
-        setAdjustmentAmount('');
-        setAdjustmentReason('');
-        setMessage('');
-        setShowAdjustModal(true);
+    const confirmDelete = async () => {
+        try {
+            await api.delete(`/residents/${deletingResident._id}`, { params: { hardDelete: true } });
+            setDeletingResident(null);
+            fetchResidents();
+        } catch (error) {
+            alert(error.response?.data?.message || 'Unable to delete mobile resident');
+        }
     };
 
-    const filteredResidents = residents.filter(r => 
-        r.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.lastName?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredResidents = residents.filter((resident) => {
+        const search = searchTerm.toLowerCase();
+        const matchesSearch = (
+            resident.email?.toLowerCase().includes(search) ||
+            resident.firstName?.toLowerCase().includes(search) ||
+            resident.lastName?.toLowerCase().includes(search) ||
+            resident.phone?.toLowerCase().includes(search) ||
+            resident.mobileUserId?.toLowerCase().includes(search)
+        );
+        const matchesStatus = statusFilter ? resident.status === statusFilter : true;
+        return matchesSearch && matchesStatus;
+    });
 
     return (
         <div className={styles.container}>
-            <Sidebar activePage="Resident Wallets" />
+            <Sidebar activePage="Mobile Residents" />
             <div className={styles.main}>
                 <div className={styles.header}>
                     <div className={styles.titleGroup}>
-                        <h1>Resident Wallets</h1>
-                        <p>Monitor wallet balances and simulated mobile resident activity.</p>
+                        <h1>Mobile Resident Management</h1>
+                        <p>Manage simulated mobile app users, wallet balances, and recycling activity.</p>
+                    </div>
+                    <div className={styles.actionButtons}>
+                        <button className={styles.addBtn} onClick={openAddModal}><Plus size={16}/> Add Mobile Resident</button>
                     </div>
                 </div>
 
                 <div className={styles.filterBar}>
                     <div className={styles.searchGroup}>
-                        <input 
-                            type="text" 
-                            placeholder="Search by name or email..." 
-                            className={styles.searchInput} 
+                        <input
+                            type="text"
+                            placeholder="Search by name, email, phone, or mobile ID..."
+                            className={styles.searchInput}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
+                        <select className={styles.selectInput} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                            <option value="">All Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
                     </div>
                     <span className={styles.totalUsers}>Total Residents: {filteredResidents.length}</span>
                 </div>
@@ -96,44 +171,65 @@ const ResidentManagement = () => {
                         <thead>
                             <tr>
                                 <th className={styles.th}>Resident</th>
-                                <th className={styles.th}>Email Address</th>
+                                <th className={styles.th}>Contact</th>
+                                <th className={styles.th}>Source</th>
+                                <th className={styles.th}>Status</th>
                                 <th className={styles.th}>Wallet Balance</th>
                                 <th className={styles.th}>Total Earned</th>
-                                <th className={styles.th}>Total Requests</th>
-                                <th className={styles.th}>Last Activity</th>
+                                <th className={styles.th}>Requests</th>
                                 <th className={styles.th}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="7" style={{textAlign:'center', padding:'40px'}}><RefreshCw className={styles.spinner} /> Loading residents...</td></tr>
+                                <tr><td colSpan="8" className={styles.td} style={{textAlign:'center', padding:'40px'}}><RefreshCw className={styles.spinner} /> Loading residents...</td></tr>
                             ) : filteredResidents.length === 0 ? (
-                                <tr><td colSpan="7" style={{textAlign:'center', padding:'40px'}}>No residents found matching your search.</td></tr>
+                                <tr><td colSpan="8" className={styles.td} style={{textAlign:'center', padding:'40px'}}>No mobile residents found.</td></tr>
                             ) : (
-                                filteredResidents.map((res) => (
-                                    <tr key={res._id}>
+                                filteredResidents.map((resident) => (
+                                    <tr key={resident._id}>
                                         <td className={styles.td}>
                                             <div className={styles.userCell}>
-                                                <div className={styles.avatar} style={{backgroundColor: '#eff6ff', color: '#2563EB'}}>{res.firstName?.[0] || <User size={14}/>}</div>
+                                                <div className={styles.avatar} style={{backgroundColor: '#eff6ff', color: '#2563EB'}}>
+                                                    {resident.firstName?.[0] || <User size={14}/>}
+                                                </div>
                                                 <div className={styles.userInfo}>
-                                                    <span className={styles.userName}>{res.firstName} {res.lastName}</span>
-                                                    <span className={styles.userId}>ID: {res._id.substring(res._id.length - 4).toUpperCase()}</span>
+                                                    <span className={styles.userName}>{resident.firstName} {resident.lastName}</span>
+                                                    <span className={styles.userId}>ID: {resident.mobileUserId || resident._id.substring(resident._id.length - 4).toUpperCase()}</span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className={styles.td}>{res.email}</td>
-                                        <td className={styles.td} style={{color: '#059669', fontWeight: '700'}}>PHP {res.walletBalance?.toFixed(2)}</td>
-                                        <td className={styles.td}>PHP {res.totalEarned?.toFixed(2)}</td>
-                                        <td className={styles.td}>{res.requestCount} collections</td>
-                                        <td className={styles.td}>{new Date(res.updatedAt).toLocaleDateString()}</td>
                                         <td className={styles.td}>
-                                            <button 
-                                                className={styles.iconBtn} 
-                                                title="Manual Adjustment"
-                                                onClick={() => openAdjustModal(res)}
-                                            >
-                                                <Edit3 size={16} />
-                                            </button>
+                                            <div>{resident.email}</div>
+                                            <div style={{fontSize: '12px', color: '#6b7280'}}>{resident.phone || 'No phone'}</div>
+                                        </td>
+                                        <td className={styles.td}>
+                                            <span style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                padding: '4px 8px',
+                                                borderRadius: '999px',
+                                                fontSize: '12px',
+                                                fontWeight: 600,
+                                                background: resident.isTemporary ? '#fef3c7' : '#dcfce7',
+                                                color: resident.isTemporary ? '#92400e' : '#166534'
+                                            }}>
+                                                {resident.isTemporary ? 'Temporary' : 'Linked'} · {resident.source || 'Mobile Simulation'}
+                                            </span>
+                                        </td>
+                                        <td className={styles.td}>
+                                            <span className={resident.status === 'Active' ? styles.statusActive : styles.statusInactive}>
+                                                {resident.status || 'Active'}
+                                            </span>
+                                        </td>
+                                        <td className={styles.td} style={{color: '#059669', fontWeight: 700}}>PHP {resident.walletBalance?.toFixed(2)}</td>
+                                        <td className={styles.td}>PHP {resident.totalEarned?.toFixed(2)}</td>
+                                        <td className={styles.td}>{resident.requestCount || 0}</td>
+                                        <td className={styles.td}>
+                                            <div className={styles.actionIcons}>
+                                                <button title="Edit resident" className={styles.iconBtn} onClick={() => openEditModal(resident)}><Edit2 size={16}/></button>
+                                                <button title="Delete resident" className={styles.iconBtnDanger} onClick={() => setDeletingResident(resident)}><Trash2 size={16}/></button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -142,72 +238,80 @@ const ResidentManagement = () => {
                     </table>
                 </div>
 
-                {/* Pagination Controls */}
-                <div className={styles.filterBar} style={{ marginTop: '20px', justifyContent: 'center' }}>
-                    <button 
-                        disabled={pagination.page <= 1} 
-                        onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
-                        className={styles.iconBtn}
-                    >
-                        <ChevronLeft size={20} />
-                    </button>
-                    <span style={{ padding: '0 20px' }}>Page {pagination.page} of {pagination.pages}</span>
-                    <button 
-                        disabled={pagination.page >= pagination.pages} 
-                        onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
-                        className={styles.iconBtn}
-                    >
-                        <ChevronRight size={20} />
-                    </button>
-                </div>
-
-                {/* Adjustment Modal */}
-                {showAdjustModal && (
+                {showModal && (
                     <div className={styles.modalOverlay}>
                         <div className={styles.modalContent}>
                             <div className={styles.modalHeader}>
-                                <h2 className={styles.modalTitle}>Adjust Balance: {selectedResident?.firstName}</h2>
-                                <button onClick={() => setShowAdjustModal(false)} className={styles.closeBtn}><X size={20}/></button>
+                                <h2 className={styles.modalTitle}>{isEditing ? 'Edit Mobile Resident' : 'Add Mobile Resident'}</h2>
+                                <button onClick={() => setShowModal(false)} className={styles.closeBtn}><X size={20}/></button>
                             </div>
-                            {message && (
-                                <div style={{
-                                    padding: '10px',
-                                    margin: '10px 0',
-                                    borderRadius: '4px',
-                                    backgroundColor: message.includes('successfully') ? '#d4edda' : '#f8d7da',
-                                    color: message.includes('successfully') ? '#155724' : '#721c24',
-                                    border: `1px solid ${message.includes('successfully') ? '#c3e6cb' : '#f5c6cb'}`
-                                }}>
-                                    {message}
-                                </div>
-                            )}
-                            <form onSubmit={handleAdjustBalance} className={styles.form}>
+                            <form onSubmit={handleSubmit} className={styles.form}>
                                 <div className={styles.formGroup}>
-                                    <label>Adjustment Amount (Use negative for deduction)</label>
-                                    <input 
-                                        type="number" 
-                                        step="0.01" 
-                                        value={adjustmentAmount} 
-                                        onChange={(e) => setAdjustmentAmount(e.target.value)}
-                                        className={styles.input} 
-                                        required
-                                    />
+                                    <label>First Name</label>
+                                    <input name="firstName" value={formData.firstName} onChange={handleInputChange} className={`${styles.input} ${errors.firstName ? styles.inputError : ''}`} />
+                                    {errors.firstName && <span className={styles.error}>{errors.firstName}</span>}
                                 </div>
                                 <div className={styles.formGroup}>
-                                    <label>Reason for Adjustment</label>
-                                    <textarea 
-                                        value={adjustmentReason} 
-                                        onChange={(e) => setAdjustmentReason(e.target.value)}
-                                        className={styles.textarea}
-                                        placeholder="e.g., Manual correction for request error"
-                                        required
-                                    />
+                                    <label>Last Name</label>
+                                    <input name="lastName" value={formData.lastName} onChange={handleInputChange} className={`${styles.input} ${errors.lastName ? styles.inputError : ''}`} />
+                                    {errors.lastName && <span className={styles.error}>{errors.lastName}</span>}
                                 </div>
+                                <div className={styles.formGroup}>
+                                    <label>Email Address</label>
+                                    <input name="email" type="email" value={formData.email} onChange={handleInputChange} className={`${styles.input} ${errors.email ? styles.inputError : ''}`} />
+                                    {errors.email && <span className={styles.error}>{errors.email}</span>}
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>Phone Number</label>
+                                    <input name="phone" value={formData.phone} onChange={handleInputChange} className={styles.input} />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>Mobile User ID</label>
+                                    <input name="mobileUserId" value={formData.mobileUserId} onChange={handleInputChange} className={styles.input} placeholder="e.g. mobile-demo-001" />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>Status</label>
+                                    <select name="status" value={formData.status} onChange={handleInputChange} className={styles.selectInput} style={{width: '100%', border: '1px solid #d1d5db'}}>
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                    </select>
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>Source</label>
+                                    <select name="source" value={formData.source} onChange={handleInputChange} className={styles.selectInput} style={{width: '100%', border: '1px solid #d1d5db'}}>
+                                        <option value="Mobile Simulation">Mobile Simulation</option>
+                                        <option value="Mobile App">Mobile App</option>
+                                        <option value="Web">Web</option>
+                                        <option value="Imported">Imported</option>
+                                    </select>
+                                </div>
+                                <label style={{display: 'flex', alignItems: 'center', gap: '8px', color: '#374151', fontSize: '14px'}}>
+                                    <input type="checkbox" name="isTemporary" checked={formData.isTemporary} onChange={handleInputChange} />
+                                    Temporary account
+                                </label>
                                 <div className={styles.modalFooter}>
-                                    <button type="button" onClick={() => setShowAdjustModal(false)} className={styles.cancelBtn}>Cancel</button>
-                                    <button type="submit" className={styles.submitBtn}><Save size={16} style={{marginRight: '8px'}}/> Apply Adjustment</button>
+                                    <button type="button" onClick={() => setShowModal(false)} className={styles.cancelBtn}>Cancel</button>
+                                    <button type="submit" className={styles.submitBtn}><Save size={16} style={{marginRight:'6px'}}/> Save Resident</button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                )}
+
+                {deletingResident && (
+                    <div className={styles.modalOverlay}>
+                        <div className={styles.modalContent} style={{maxWidth: '400px'}}>
+                            <div className={styles.modalHeader}>
+                                <h2 className={styles.modalTitle}>Confirm Deletion</h2>
+                                <button onClick={() => setDeletingResident(null)} className={styles.closeBtn}><X size={20}/></button>
+                            </div>
+                            <p style={{color:'#666', marginBottom:'24px'}}>
+                                Delete {deletingResident.firstName} {deletingResident.lastName}? This also removes related payout transactions for this resident.
+                            </p>
+                            <div className={styles.modalFooter}>
+                                <button onClick={() => setDeletingResident(null)} className={styles.cancelBtn}>Cancel</button>
+                                <button onClick={confirmDelete} className={styles.deleteBtn}>Delete</button>
+                            </div>
                         </div>
                     </div>
                 )}

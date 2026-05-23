@@ -30,19 +30,6 @@
     display: flex;
     gap: 12px;
 }
-.exportBtn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    background: white;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #374151;
-    cursor: pointer;
-}
 .addBtn {
     display: flex;
     align-items: center;
@@ -153,17 +140,35 @@
 }
 .actionIcons {
     display: flex;
-    gap: 12px;
+    gap: 8px;
 }
 .iconBtn {
-    background: none;
-    border: none;
+    background: white;
+    border: 1px solid #d1d5db;
     cursor: pointer;
-    color: #6b7280;
-    padding: 4px;
+    color: #374151;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .iconBtn:hover {
-    color: #111827;
+    background: #f3f4f6;
+}
+.iconBtnDanger {
+    background: white;
+    border: 1px solid #fee2e2;
+    cursor: pointer;
+    color: #ef4444;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.iconBtnDanger:hover {
+    background: #fef2f2;
 }
 .statusActive {
     color: #059669; /* Green */

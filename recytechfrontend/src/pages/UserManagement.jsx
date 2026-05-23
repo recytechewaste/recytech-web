@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
-import Sidebar from './Sidebar';
+import Sidebar from '../components/Sidebar';
 import styles from '../styles/UserManagement.module.css';
-import { Download, Plus, Eye, Edit2, Trash2, X, Save, EyeOff, Copy, Check } from 'lucide-react';
+import { Plus, Eye, Edit2, Trash2, X, Save, EyeOff, Copy, Check } from 'lucide-react';
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
@@ -201,7 +201,6 @@ const UserManagement = () => {
                         <p>Manage and monitor registered system users</p>
                     </div>
                     <div className={styles.actionButtons}>
-                        <button className={styles.exportBtn}><Download size={16}/> Export Users</button>
                         <button className={styles.addBtn} onClick={openAddModal}><Plus size={16}/> Add User</button>
                     </div>
                 </div>
@@ -288,9 +287,8 @@ const UserManagement = () => {
                                         </td>
                                         <td className={styles.td}>
                                             <div className={styles.actionIcons}>
-                                                <button className={styles.iconBtn}><Eye size={16}/></button>
-                                                <button className={styles.iconBtn} onClick={() => openEditModal(user)}><Edit2 size={16}/></button>
-                                                <button className={styles.iconBtn} onClick={() => handleDelete(user._id)} style={{color: '#ef4444'}}><Trash2 size={16}/></button>
+                                                <button title="Edit user" className={styles.iconBtn} onClick={() => openEditModal(user)}><Edit2 size={16}/></button>
+                                                <button title="Delete user" className={styles.iconBtnDanger} onClick={() => handleDelete(user._id)}><Trash2 size={16}/></button>
                                             </div>
                                         </td>
                                     </tr>

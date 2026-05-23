@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
-import Sidebar from './Sidebar';
+import Sidebar from '../components/Sidebar';
 import styles from '../styles/Collectors.module.css';
 import { Plus, Search, Truck, Phone, Edit2, Trash2, X, Filter, Copy, Check, Eye, EyeOff } from 'lucide-react';
 
