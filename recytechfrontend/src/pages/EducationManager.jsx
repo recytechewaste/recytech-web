@@ -1,23 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import api from '../api/client';
 import Sidebar from '../components/Sidebar';
 import styles from '../styles/EducationManager.module.css';
 import { 
-    Plus, Search, Edit2, Trash2, X, Filter, 
-    ExternalLink, Save, Upload, AlertCircle, RefreshCw 
+    Plus, Search, Edit2, Trash2, 
+    ExternalLink, AlertCircle, RefreshCw 
 } from 'lucide-react';
+import { useEducation } from '../features/education/useEducation';
+import EducationFormModal from '../features/education/EducationFormModal';
 
 const CATEGORIES = ["Sustainability", "E-Waste Disposal", "Environmental Impact", "Regulations"];
 
 const EducationManager = () => {
-    const [materials, setMaterials] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [fetchError, setFetchError] = useState(null);
-    const [imagePreview, setImagePreview] = useState(null);
+    const { 
+        filteredMaterials, loading, fetchError, fetchMaterials,
+        searchTerm, setSearchTerm, categoryFilter, setCategoryFilter
+    } = useEducation();
+
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState('');
+    const [initialImage, setInitialImage] = useState(null);
     
     const [formData, setFormData] = useState({
         title: '',
@@ -28,45 +30,7 @@ const EducationManager = () => {
         status: 'Published'
     });
 
-    const fetchMaterials = async () => {
-        setLoading(true);
-        setFetchError(null);
-        try {
-            const res = await api.get('/education');
-            setMaterials(Array.isArray(res.data) ? res.data : []);
-        } catch (error) {
-            console.error("Error fetching materials", error);
-            setFetchError("Unable to connect to the server. Please ensure the backend is running.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        Promise.resolve().then(fetchMaterials);
-    }, []);
-
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => setImagePreview(reader.result);
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        if (!formData.title.trim()) return alert("Title is required");
-        
-        // Basic URL validation if provided
-        if (formData.contentURL && !formData.contentURL.startsWith('http')) {
-            return alert("Please enter a valid URL starting with http:// or https://");
-        }
-
-        const submissionData = { ...formData, thumbnail: imagePreview };
-
+    const handleSubmit = async (submissionData) => {
         try {
             if (editingId) {
                 await api.put(`/education/${editingId}`, submissionData);
@@ -87,10 +51,12 @@ const EducationManager = () => {
         }
     };
 
-    const filteredMaterials = materials.filter(m => 
-        m?.title?.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        (categoryFilter === '' || m?.category === categoryFilter)
-    );
+    const handleOpenAdd = () => {
+        setEditingId(null);
+        setInitialImage(null);
+        setFormData({ title: '', category: 'Sustainability', type: 'Article', description: '', contentURL: '', status: 'Published' });
+        setShowModal(true);
+    };
 
     return (
         <div className={styles.container}>
@@ -101,7 +67,7 @@ const EducationManager = () => {
                         <h1 className={styles.pageTitle}>Educational Content</h1>
                         <p className={styles.subTitle}>Curation of sustainability guides and e-waste awareness.</p>
                     </div>
-                    <button onClick={() => { setEditingId(null); setImagePreview(null); setFormData({ title: '', category: 'Sustainability', type: 'Article', description: '', contentURL: '', status: 'Published' }); setShowModal(true); }} className={styles.addBtn}>
+                    <button onClick={handleOpenAdd} className={styles.addBtn}>
                         <Plus size={18} /> Add Content
                     </button>
                 </div>
@@ -136,7 +102,7 @@ const EducationManager = () => {
                                     <div className={styles.cardHeader}>
                                         <span className={styles.categoryBadge}>{item.category}</span>
                                         <div className={styles.actions}>
-                                            <button onClick={() => { setFormData(item); setEditingId(item._id); setImagePreview(item.thumbnail); setShowModal(true); }} className={styles.iconBtn}><Edit2 size={16}/></button>
+                                            <button onClick={() => { setFormData(item); setEditingId(item._id); setInitialImage(item.thumbnail); setShowModal(true); }} className={styles.iconBtn}><Edit2 size={16}/></button>
                                             <button onClick={() => handleDelete(item._id)} className={styles.iconBtnDanger}><Trash2 size={16}/></button>
                                         </div>
                                     </div>
@@ -152,66 +118,14 @@ const EducationManager = () => {
                     </div>
                 )}
 
-                {showModal && (
-                    <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
-                        <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                            <div className={styles.modalHeader}>
-                                <h2>{editingId ? 'Edit Content' : 'New Educational Material'}</h2>
-                                <button onClick={() => setShowModal(false)} className={styles.closeBtn}><X size={20}/></button>
-                            </div>
-                            <form onSubmit={handleSubmit} className={styles.form}>
-                                <div className={styles.formGroup}>
-                                    <label>Title</label>
-                                    <input required value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className={styles.input} />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>Thumbnail</label>
-                                    <div className={styles.imageUploadArea}>
-                                        {imagePreview ? (
-                                            <div className={styles.previewContainer}>
-                                                <img src={imagePreview} className={styles.imagePreview} alt="Preview" />
-                                                <button type="button" onClick={() => setImagePreview(null)} className={styles.removeImgBtn}><X size={14} /></button>
-                                            </div>
-                                        ) : (
-                                            <label className={styles.uploadPlaceholder}>
-                                                <input type="file" accept="image/*" onChange={handleImageChange} hidden />
-                                                <Upload size={24} /> <span>Click to upload image</span>
-                                            </label>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className={styles.formRow}>
-                                    <div className={styles.formGroup}>
-                                        <label>Category</label>
-                                        <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className={styles.input}>
-                                            {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                                        </select>
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                        <label>Format</label>
-                                        <select value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value})} className={styles.input}>
-                                            <option value="Article">Article</option>
-                                            <option value="Video">Video</option>
-                                            <option value="PDF">PDF</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>Description</label>
-                                    <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className={styles.textarea} />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>External URL</label>
-                                    <input value={formData.contentURL} onChange={(e) => setFormData({...formData, contentURL: e.target.value})} className={styles.input} placeholder="https://..." />
-                                </div>
-                                <div className={styles.modalFooter}>
-                                    <button type="button" onClick={() => setShowModal(false)} className={styles.cancelBtn}>Cancel</button>
-                                    <button type="submit" className={styles.submitBtn}><Save size={16} /> Save Changes</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
+                <EducationFormModal 
+                    isOpen={showModal} 
+                    isEditing={!!editingId} 
+                    initialData={formData} 
+                    initialImage={initialImage}
+                    onClose={() => setShowModal(false)} 
+                    onSubmit={handleSubmit} 
+                />
             </div>
         </div>
     );

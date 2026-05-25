@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Recycle, Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Recycle, Loader2, ArrowLeft, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import api from '../api/client';
 import styles from '../styles/ForgotPassword.module.css'; // Reuse styles
 
@@ -11,6 +11,8 @@ const VerifyPin = () => {
     const [pin, setPin] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
@@ -105,23 +107,41 @@ const VerifyPin = () => {
                         <form onSubmit={handleResetPassword}>
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>New Password</label>
-                                <input
-                                    type="password"
-                                    placeholder="Enter new password"
-                                    className={styles.input}
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                />
+                                <div className={styles.passwordWrapper}>
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        placeholder="Enter new password"
+                                        className={styles.input}
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                    />
+                                    <button 
+                                        type="button" 
+                                        className={styles.eyeBtn}
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
                             </div>
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>Confirm New Password</label>
-                                <input
-                                    type="password"
-                                    placeholder="Confirm new password"
-                                    className={styles.input}
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                />
+                                <div className={styles.passwordWrapper}>
+                                    <input
+                                        type={showConfirm ? "text" : "password"}
+                                        placeholder="Confirm new password"
+                                        className={styles.input}
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                    />
+                                    <button 
+                                        type="button" 
+                                        className={styles.eyeBtn}
+                                        onClick={() => setShowConfirm(!showConfirm)}
+                                    >
+                                        {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
+                                </div>
                             </div>
 
                             <button

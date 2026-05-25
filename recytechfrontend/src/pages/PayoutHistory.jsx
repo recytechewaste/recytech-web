@@ -1,35 +1,10 @@
-import { useEffect, useState } from 'react';
-import api from '../api/client';
 import Sidebar from '../components/Sidebar';
 import styles from '../styles/UserManagement.module.css';
 import { RefreshCw, ArrowUpRight, ArrowDownLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { usePayoutHistory } from '../features/payouts/usePayoutHistory';
 
 const PayoutHistory = () => {
-    const [transactions, setTransactions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [pagination, setPagination] = useState({ page: 1, pages: 1 });
-
-    const fetchTransactions = async (page = 1) => {
-        setLoading(true);
-        try {
-            const res = await api.get(`/transactions?page=${page}&limit=10`);
-            setTransactions(res.data.transactions || res.data || []);
-            if (res.data.pagination) setPagination(res.data.pagination);
-        } catch (error) {
-            console.error("Error fetching transactions:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => { fetchTransactions(pagination.page); }, [pagination.page]);
-
-    const filteredTransactions = transactions.filter(t => 
-        t.resident?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t._id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const { loading, searchTerm, setSearchTerm, pagination, setPagination, filteredTransactions } = usePayoutHistory();
 
     return (
         <div className={styles.container}>

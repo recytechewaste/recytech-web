@@ -10,44 +10,10 @@ import RequestTable from '../features/requests/RequestTable';
 import SuccessModal from '../features/requests/SuccessModal';
 import ViewRequestModal from '../features/requests/ViewRequestModal';
 import styles from '../styles/RequestManagement.module.css';
-
-const calculateStats = (requests) => ({
-    total: requests.length,
-    pending: requests.filter((request) => request.status === 'Pending').length,
-    approved: requests.filter((request) => request.status === 'Approved').length,
-    completed: requests.filter((request) => request.status === 'Completed').length
-});
-
-const filterRequests = (requests, filters) => {
-    let result = [...requests];
-
-    if (filters.status) {
-        result = result.filter((request) => request.status === filters.status);
-    }
-
-    if (filters.wasteType) {
-        result = result.filter((request) => request.wasteType === filters.wasteType);
-    }
-
-    if (filters.assignment === 'assigned') {
-        result = result.filter((request) => Boolean(request.assignedCollector));
-    } else if (filters.assignment === 'unassigned') {
-        result = result.filter((request) => !request.assignedCollector);
-    } else if (filters.assignment === 'scheduled') {
-        result = result.filter((request) => Boolean(request.scheduledAt));
-    } else if (filters.assignment === 'unscheduled') {
-        result = result.filter((request) => !request.scheduledAt);
-    }
-
-    return result;
-};
+import { useRequests } from '../features/requests/useRequests';
 
 const RequestManagement = () => {
-    const [requests, setRequests] = useState([]);
-    const [filteredRequests, setFilteredRequests] = useState([]);
-    const [collectors, setCollectors] = useState([]);
-    const [wasteCategories, setWasteCategories] = useState([]);
-    const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, completed: 0 });
+    const { requests, filteredRequests, collectors, wasteCategories, stats, filters, setFilters, handleClearFilters, fetchData } = useRequests();
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [successTitle, setSuccessTitle] = useState('');
@@ -59,37 +25,6 @@ const RequestManagement = () => {
     const [scheduleConflict, setScheduleConflict] = useState('');
     const [showAssignmentModal, setShowAssignmentModal] = useState(false);
     const [rejectingRequestId, setRejectingRequestId] = useState(null);
-    const [filters, setFilters] = useState({
-        status: '',
-        wasteType: '',
-        assignment: ''
-    });
-
-    const fetchData = async () => {
-        try {
-            const [reqData, colData, rateData] = await Promise.all([
-                api.get('/requests'),
-                api.get('/collectors'),
-                api.get('/exchange-rates')
-            ]);
-
-            setRequests(reqData.data);
-            setFilteredRequests(reqData.data);
-            setCollectors(colData.data);
-            setWasteCategories((rateData.data.rates || []).map((rate) => rate.wasteType));
-            setStats(calculateStats(reqData.data));
-        } catch (error) {
-            console.error('Error', error);
-        }
-    };
-
-    useEffect(() => {
-        Promise.resolve().then(fetchData);
-    }, []);
-
-    useEffect(() => {
-        setFilteredRequests(filterRequests(requests, filters));
-    }, [filters, requests]);
 
     useEffect(() => {
         if (!selectedCollector || !selectedScheduleDate || !selectedScheduleTime || !selectedRequest) {
@@ -108,14 +43,6 @@ const RequestManagement = () => {
 
         setScheduleConflict(hasConflict ? 'Selected collector already has another request at the same scheduled date and time.' : '');
     }, [selectedCollector, selectedScheduleDate, selectedScheduleTime, requests, selectedRequest]);
-
-    const handleClearFilters = () => {
-        setFilters({
-            status: '',
-            wasteType: '',
-            assignment: ''
-        });
-    };
 
     const resetAssignmentForm = () => {
         setSelectedCollector('');

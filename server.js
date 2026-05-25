@@ -33,6 +33,9 @@ app.use('/api/transactions', require('./recytechbackend/routes/transactionRoutes
 app.use('/api/analytics', require('./recytechbackend/routes/analyticsRoutes'));
 app.use('/api/scheduling', require('./recytechbackend/routes/schedulingRoutes'));
 
+// Global Error Handler MUST be the last piece of middleware
+app.use(require('./recytechbackend/middleware/errorHandler').errorHandler);
+
 // Define Ports
 const PORT = process.env.PORT || 5000;
 

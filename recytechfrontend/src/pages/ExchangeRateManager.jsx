@@ -1,44 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import api from '../api/client';
 import Sidebar from '../components/Sidebar';
 import styles from '../styles/EducationManager.module.css'; // Reusing layout styles
-import { Plus, Edit2, X, Save, RefreshCw, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Edit2, RefreshCw, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { useExchangeRates } from '../features/exchange-rates/useExchangeRates';
+import ExchangeRateFormModal from '../features/exchange-rates/ExchangeRateFormModal';
 
 const ExchangeRateManager = () => {
-    const [rates, setRates] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { rates, loading, fetchRates } = useExchangeRates();
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({ wasteType: '', ratePerItem: 0, description: '', isActive: true });
 
-    const fetchRates = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get('/exchange-rates', { params: { includeInactive: true } });
-            setRates(res.data.rates || []);
-        } catch (error) { console.error(error); }
-        finally { setLoading(false); }
-    };
-
-    useEffect(() => { Promise.resolve().then(fetchRates); }, []);
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        // Frontend Validation
-        const rateValue = formData.ratePerItem ?? formData.ratePerKg ?? 0;
-        if (rateValue < 0) {
-            return alert("Exchange rate cannot be negative.");
-        }
-        if (!formData.wasteType.trim()) {
-            return alert("Waste type is required.");
-        }
-
+    const handleSubmit = async (submittedData) => {
         try {
             if (editingId) {
-                await api.put(`/exchange-rates/${editingId}`, formData);
+                await api.put(`/exchange-rates/${editingId}`, submittedData);
             } else {
-                await api.post('/exchange-rates', formData);
+                await api.post('/exchange-rates', submittedData);
             }
             setShowModal(false);
             fetchRates();
@@ -105,34 +84,13 @@ const ExchangeRateManager = () => {
                     </div>
                 )}
 
-                {showModal && (
-                    <div className={styles.modalOverlay}>
-                        <div className={styles.modalContent}>
-                            <div className={styles.modalHeader}>
-                                <h2>{editingId ? 'Edit Rate' : 'New Exchange Rate'}</h2>
-                                <button onClick={() => setShowModal(false)} className={styles.closeBtn}><X size={20}/></button>
-                            </div>
-                            <form onSubmit={handleSubmit} className={styles.form}>
-                                <div className={styles.formGroup}>
-                                    <label>Waste Type</label>
-                                    <input required value={formData.wasteType} onChange={(e) => setFormData({...formData, wasteType: e.target.value})} className={styles.input} placeholder="e.g. Plastics, Electronics" />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>Rate (PHP per item)</label>
-                                    <input type="number" step="0.01" min="0" required value={formData.ratePerItem ?? formData.ratePerKg ?? 0} onChange={(e) => setFormData({...formData, ratePerItem: parseFloat(e.target.value)})} className={styles.input} />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>Description</label>
-                                    <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className={styles.textarea} />
-                                </div>
-                                <div className={styles.modalFooter}>
-                                    <button type="button" onClick={() => setShowModal(false)} className={styles.cancelBtn}>Cancel</button>
-                                    <button type="submit" className={styles.submitBtn}><Save size={16} /> Save Rate</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
+                <ExchangeRateFormModal 
+                    isOpen={showModal} 
+                    isEditing={!!editingId} 
+                    initialData={formData} 
+                    onClose={() => setShowModal(false)} 
+                    onSubmit={handleSubmit} 
+                />
             </div>
         </div>
     );

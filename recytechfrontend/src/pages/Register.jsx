@@ -106,7 +106,8 @@ const Register = () => {
 
             <div className={styles.contentContainer}>
                 <div className={styles.card}>
-                    <h1 className={styles.header}>Register</h1>
+                    <h1 className={styles.header}>Create Account</h1>
+                    <p className={styles.subHeader}>Join RecyTech to manage your operations efficiently</p>
                     
                     <form onSubmit={handleRegister} className={styles.form}>
                         <div className={styles.gridRow}>
@@ -216,7 +217,6 @@ const Register = () => {
                             <button 
                                 type="submit" 
                                 className={styles.registerBtn} 
-                                style={{backgroundColor: '#2563EB'}}
                                 disabled={loading}
                             >
                                 {loading ? (
@@ -251,7 +251,7 @@ const Register = () => {
                             <button 
                                 className={styles.modalBtn} 
                                 onClick={() => navigate('/login')}
-                                style={{backgroundColor: '#2563EB'}}
+                                style={{background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}}
                             >
                                 Go to Login
                             </button>
@@ -269,7 +269,7 @@ const Register = () => {
                             <AlertCircle size={60} color="#ef4444" className={styles.modalIcon} />
                             <h2 className={styles.modalTitle}>Registration Failed</h2>
                             <p className={styles.modalText}>{errorMessage}</p>
-                            <button className={styles.modalBtn} onClick={() => setErrorMessage('')} style={{backgroundColor: '#111827'}}>
+                            <button className={styles.modalBtn} onClick={() => setErrorMessage('')} style={{background: 'linear-gradient(135deg, #0f766e 0%, #065f46 100%)'}}>
                                 Try Again
                             </button>
                         </div>

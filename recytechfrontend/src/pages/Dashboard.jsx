@@ -9,6 +9,9 @@ import SchedulingPanel from '../features/scheduling/SchedulingPanel';
 import styles from '../styles/Dashboard.module.css';
 
 const Dashboard = () => {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    const firstName = userInfo.firstName || 'User';
+
     const [stats, setStats] = useState({
         pending: 0,
         completed: 0,
@@ -59,7 +62,7 @@ const Dashboard = () => {
             <div className={styles.main}>
                 <div className={styles.dashboardHeader}>
                     <h1 className={styles.pageTitle}>System Dashboard</h1>
-                    <p className={styles.subTitle}>Welcome back, Super Admin. Here is your operational overview.</p>
+                    <p className={styles.subTitle}>Welcome back, {firstName}. Here is your operational overview.</p>
                 </div>
 
                 <EWasteMetrics stats={stats} monthlyData={monthlyData} />

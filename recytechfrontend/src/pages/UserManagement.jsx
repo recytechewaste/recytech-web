@@ -2,11 +2,19 @@ import { useEffect, useState } from 'react';
 import api from '../api/client';
 import Sidebar from '../components/Sidebar';
 import styles from '../styles/UserManagement.module.css';
-import { Plus, Eye, Edit2, Trash2, X, Save, EyeOff, Copy, Check } from 'lucide-react';
+import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { useUsers } from '../features/users/useUsers';
+import UserFormModal from '../features/users/UserFormModal';
 
 const UserManagement = () => {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { 
+        loading, 
+        filteredUsers, 
+        fetchUsers, 
+        searchTerm, setSearchTerm, 
+        roleFilter, setRoleFilter, 
+        statusFilter, setStatusFilter 
+    } = useUsers();
     
     // Modal State
     const [showModal, setShowModal] = useState(false);
@@ -21,105 +29,10 @@ const UserManagement = () => {
         role: 'Staff',
         status: 'Active'
     });
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [errors, setErrors] = useState({});
-    const [searchTerm, setSearchTerm] = useState('');
-    const [roleFilter, setRoleFilter] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
     const [deletingUserId, setDeletingUserId] = useState(null);
-    const [copied, setCopied] = useState(false);
-
-    const generateStrongPassword = () => {
-        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
-        let password = "";
-        // Ensure at least one of each required type is included
-        password += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[Math.floor(Math.random() * 26)];
-        password += "0123456789"[Math.floor(Math.random() * 10)];
-        password += "!@#$%^&*()_+"[Math.floor(Math.random() * 12)];
-        
-        for (let i = 0; i < 9; i++) {
-            password += charset[Math.floor(Math.random() * charset.length)];
-        }
-        // Shuffle the result
-        return password.split('').sort(() => 0.5 - Math.random()).join('');
-    };
-
-    const fetchUsers = async () => {
-        try {
-            const userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')) : null;
-            
-            if (!userInfo || !userInfo.token) {
-                // Handle unauthenticated state (e.g., redirect to login or show error)
-                return; 
-            }
-
-            // Fetching from your backend. Adjust endpoint if needed (e.g., /api/users)
-            // If you don't have a single /users endpoint yet, we can combine collectors + admins here
-            const response = await api.get('/users'); 
-            setUsers(response.data);
-            setLoading(false);
-        } catch (error) {
-            console.error("Error fetching users:", error);
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        Promise.resolve().then(fetchUsers);
-    }, []);
-
-    const validate = () => {
-        const newErrors = {};
-        if (!formData.firstName?.trim()) newErrors.firstName = 'First Name is required';
-        if (!formData.lastName?.trim()) newErrors.lastName = 'Last Name is required';
-        
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!formData.email.trim()) {
-            newErrors.email = 'Email is required';
-        } else if (!emailRegex.test(formData.email)) {
-            newErrors.email = 'Invalid email format';
-        }
-
-        if (!isEditing && !formData.password) {
-            newErrors.password = 'Password is required';
-        } else if (formData.password && formData.password.length < 8) {
-            newErrors.password = 'Password must be at least 8 characters';
-        }
-
-        if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = 'Passwords do not match';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleInputChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-        if (errors[e.target.name]) {
-            setErrors({ ...errors, [e.target.name]: '' });
-        }
-    };
-
-    const handleGeneratePassword = () => {
-        const newPass = generateStrongPassword();
-        setFormData({ ...formData, password: newPass, confirmPassword: newPass });
-        setErrors({ ...errors, password: '', confirmPassword: '' });
-    };
-
-    const copyToClipboard = () => {
-        if (!formData.password) return;
-        navigator.clipboard.writeText(formData.password);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
 
     const openAddModal = () => {
         setFormData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', role: 'Staff', status: 'Active' });
-        setErrors({});
-        setShowPassword(false);
-        setShowConfirmPassword(false);
         setIsEditing(false);
         setShowModal(true);
     };
@@ -129,28 +42,22 @@ const UserManagement = () => {
             firstName: user.firstName || '',
             lastName: user.lastName || '',
             email: user.email,
-            password: '', // Leave blank to keep current
+            password: '', 
             confirmPassword: '',
             role: user.role || 'Staff',
             status: user.status || 'Active'
         });
-        setErrors({});
-        setShowPassword(false);
-        setShowConfirmPassword(false);
         setCurrentUserId(user._id);
         setIsEditing(true);
         setShowModal(true);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!validate()) return;
-
+    const handleSubmit = async (submittedData) => {
         try {
             if (isEditing) {
-                await api.put(`/users/${currentUserId}`, formData);
+                await api.put(`/users/${currentUserId}`, submittedData);
             } else {
-                await api.post('/users', formData);
+                await api.post('/users', submittedData);
             }
             setShowModal(false);
             fetchUsers();
@@ -179,15 +86,6 @@ const UserManagement = () => {
         }
         setDeletingUserId(null);
     };
-
-    const filteredUsers = users.filter(user => {
-        const matchesSearch = user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                              user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                              user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesRole = roleFilter ? user.role === roleFilter : true;
-        const matchesStatus = statusFilter ? user.status === statusFilter : true;
-        return matchesSearch && matchesRole && matchesStatus;
-    });
 
     return (
         <div className={styles.container}>
@@ -298,120 +196,13 @@ const UserManagement = () => {
                     </table>
                 </div>
 
-                {/* ADD/EDIT MODAL */}
-                {showModal && (
-                    <div className={styles.modalOverlay}>
-                        <div className={styles.modalContent}>
-                            <div className={styles.modalHeader}>
-                                <h2 className={styles.modalTitle}>{isEditing ? 'Edit User' : 'Add New User'}</h2>
-                                <button onClick={() => setShowModal(false)} className={styles.closeBtn}><X size={20}/></button>
-                            </div>
-                            <form onSubmit={handleSubmit} className={styles.form}>
-                                <div className={styles.formGroup}>
-                                    <label>First Name</label>
-                                    <input 
-                                        name="firstName" 
-                                        value={formData.firstName} 
-                                        onChange={handleInputChange} 
-                                        className={`${styles.input} ${errors.firstName ? styles.inputError : ''}`} 
-                                    />
-                                    {errors.firstName && <span className={styles.error}>{errors.firstName}</span>}
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>Last Name</label>
-                                    <input 
-                                        name="lastName" 
-                                        value={formData.lastName} 
-                                        onChange={handleInputChange} 
-                                        className={`${styles.input} ${errors.lastName ? styles.inputError : ''}`} 
-                                    />
-                                    {errors.lastName && <span className={styles.error}>{errors.lastName}</span>}
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>Email Address</label>
-                                    <input 
-                                        name="email" 
-                                        type="email" 
-                                        value={formData.email} 
-                                        onChange={handleInputChange} 
-                                        className={`${styles.input} ${errors.email ? styles.inputError : ''}`} 
-                                    />
-                                    {errors.email && <span className={styles.error}>{errors.email}</span>}
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>Role</label>
-                                    <select name="role" value={formData.role} onChange={handleInputChange} className={styles.selectInput} style={{width: '100%', border: '1px solid #d1d5db'}}>
-                                        <option value="Staff">Staff</option>
-                                        <option value="Admin">Admin</option>
-                                        <option value="Super Admin">Super Admin</option>
-                                    </select>
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>Status</label>
-                                    <select name="status" value={formData.status} onChange={handleInputChange} className={styles.selectInput} style={{width: '100%', border: '1px solid #d1d5db'}}>
-                                        <option value="Active">Active</option>
-                                        <option value="Inactive">Inactive</option>
-                                    </select>
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <div className={styles.passwordHeader}>
-                                        <label>Password {isEditing && <span style={{fontSize:'10px', color:'#666'}}>(Leave blank to keep current)</span>}</label>
-                                        {!isEditing && (
-                                            <button 
-                                                type="button" 
-                                                className={styles.generateBtn} 
-                                                onClick={handleGeneratePassword}
-                                            >
-                                                Generate Strong Password
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className={styles.passwordWrapper}>
-                                        <input 
-                                            name="password" 
-                                            type={showPassword ? "text" : "password"} 
-                                            value={formData.password} 
-                                            onChange={handleInputChange} 
-                                            className={`${styles.input} ${errors.password ? styles.inputError : ''}`} 
-                                            style={{paddingRight: '35px'}}
-                                        />
-                                        {formData.password && !isEditing && (
-                                            <button type="button" className={styles.copyBtn} onClick={copyToClipboard} title="Copy to clipboard">
-                                                {copied ? <Check size={16} color="#059669" /> : <Copy size={16} />}
-                                            </button>
-                                        )}
-                                        <button type="button" className={styles.eyeBtn} onClick={() => setShowPassword(!showPassword)}>
-                                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                        </button>
-                                    </div>
-                                    {errors.password && <span className={styles.error}>{errors.password}</span>}
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>Confirm Password</label>
-                                    <div className={styles.passwordWrapper}>
-                                        <input 
-                                            name="confirmPassword" 
-                                            type={showConfirmPassword ? "text" : "password"} 
-                                            value={formData.confirmPassword} 
-                                            onChange={handleInputChange} 
-                                            className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ''}`} 
-                                            style={{paddingRight: '35px'}}
-                                        />
-                                        <button type="button" className={styles.eyeBtn} onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                        </button>
-                                    </div>
-                                    {errors.confirmPassword && <span className={styles.error}>{errors.confirmPassword}</span>}
-                                </div>
-                                
-                                <div className={styles.modalFooter}>
-                                    <button type="button" onClick={() => setShowModal(false)} className={styles.cancelBtn}>Cancel</button>
-                                    <button type="submit" className={styles.submitBtn}><Save size={16} style={{marginRight:'6px'}}/> Save User</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
+                <UserFormModal 
+                    isOpen={showModal} 
+                    isEditing={isEditing} 
+                    initialData={formData} 
+                    onClose={() => setShowModal(false)} 
+                    onSubmit={handleSubmit} 
+                />
 
                 {/* DELETE CONFIRMATION MODAL */}
                 {deletingUserId && (

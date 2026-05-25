@@ -1,7 +1,7 @@
 .container {
     display: flex;
     min-height: 100vh;
-    background-color: #f9fafb;
+    background-color: #ffffff;
     font-family: 'Inter', sans-serif;
 }
 
@@ -9,6 +9,7 @@
     flex: 1;
     padding: 32px;
     overflow-y: auto;
+    background-color: #fafafa;
 }
 
 .header {
@@ -20,8 +21,8 @@
 
 .titleGroup h1 {
     font-size: 24px;
-    font-weight: 600;
-    color: #111827;
+    font-weight: 700;
+    color: #0f766e;
     margin: 0 0 4px 0;
 }
 
@@ -29,6 +30,7 @@
     color: #6b7280;
     font-size: 14px;
     margin: 0;
+    font-weight: 500;
 }
 
 .addBtn {
@@ -36,30 +38,34 @@
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    background: #2563EB;
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    box-shadow: 0 2px 8px rgba(5,150,105,0.12);
 }
 
 .addBtn:hover {
-    background-color: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(5,150,105,0.18);
 }
 
 .filterBar {
-    background: white;
+    background: rgba(255,255,255,0.6);
     padding: 16px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border: 1px solid rgba(15,118,110,0.08);
+    border-radius: 12px;
     display: flex;
     justify-content: space-between;
     gap: 16px;
     margin-bottom: 24px;
     align-items: center;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 30px rgba(2,6,23,0.06);
 }
 
 .searchGroup {
@@ -77,11 +83,18 @@
 .searchInput {
     padding: 10px 12px;
     border: 1px solid #d1d5db;
-    border-radius: 6px;
+    border-radius: 8px;
     width: 300px;
     font-size: 14px;
     outline: none;
-    background-color: white;
+    background-color: rgba(255,255,255,0.8);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+
+.searchInput:focus {
+    border-color: #0f766e;
+    box-shadow: 0 6px 18px rgba(15,118,110,0.08);
+    transform: translateY(-1px);
 }
 
 .totalCount {
@@ -109,17 +122,18 @@
 }
 
 .contentCard {
-    background: white;
-    border: 1px solid #e5e7eb;
+    background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(250,250,250,0.6));
+    border: 1px solid rgba(15,118,110,0.06);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 8px 30px rgba(2,6,23,0.08);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    backdrop-filter: blur(6px);
 }
 
 .contentCard:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: translateY(-6px);
+    box-shadow: 0 18px 50px rgba(2,6,23,0.12);
 }
 
 .cardThumb {
@@ -141,11 +155,11 @@
 
 .categoryBadge {
     padding: 4px 10px;
-    background-color: #eff6ff;
-    color: #2563EB;
+    background-color: #ecfdf5;
+    color: #059669;
     border-radius: 9999px;
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .actions {
@@ -161,16 +175,16 @@
     display: flex;
     align-items: center;
     color: #6b7280;
-    transition: color 0.2s;
+    transition: color 0.18s, transform 0.12s;
 }
 
-.iconBtn:hover { color: #2563EB; }
-.iconBtnDanger:hover { color: #ef4444; }
+.iconBtn:hover { color: #0f766e; transform: translateY(-2px); }
+.iconBtnDanger:hover { color: #ef4444; transform: translateY(-2px); }
 
 .itemTitle {
     font-size: 18px;
-    font-weight: 600;
-    color: #111827;
+    font-weight: 700;
+    color: #0f766e;
     margin: 0 0 8px 0;
 }
 
@@ -229,11 +243,17 @@
 .retryBtn {
     margin-top: 16px;
     padding: 8px 20px;
-    background: #2563EB;
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.retryBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(5,150,105,0.12);
 }
 
 .modalOverlay {
@@ -248,14 +268,16 @@
 }
 
 .modalContent {
-    background: white;
+    background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(250,250,250,0.65));
     padding: 24px;
     border-radius: 12px;
     width: 100%;
     max-width: 600px;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 30px 60px rgba(2,6,23,0.12);
+    border: 1px solid rgba(15,118,110,0.08);
+    backdrop-filter: blur(8px);
 }
 
 .modalHeader {
@@ -267,7 +289,8 @@
 
 .modalHeader h2 {
     font-size: 20px;
-    font-weight: 600;
+    font-weight: 700;
+    color: #0f766e;
     margin: 0;
 }
 
@@ -309,6 +332,14 @@
     font-size: 14px;
     width: 100%;
     box-sizing: border-box;
+    transition: box-shadow 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+
+.input:focus, .textarea:focus {
+    border-color: #0f766e;
+    box-shadow: 0 8px 20px rgba(15,118,110,0.06);
+    outline: none;
+    transform: translateY(-1px);
 }
 
 .textarea {
@@ -389,11 +420,17 @@
     align-items: center;
     gap: 8px;
     padding: 10px 20px;
-    background: #2563EB;
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.submitBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(5,150,105,0.12);
 }

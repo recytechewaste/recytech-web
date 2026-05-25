@@ -3,40 +3,30 @@ const {
     getSchedulingRecommendations,
     confirmCollectorAssignments
 } = require('../services/schedulingService');
+const { asyncHandler } = require('../utils/asyncHandler');
 
-const getForecast = async (req, res) => {
-    try {
-        const days = parseInt(req.query.days, 10) || 7;
-        const forecast = await getCollectionForecast(days);
-        res.json(forecast);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+const getForecast = asyncHandler(async (req, res) => {
+    const days = parseInt(req.query.days, 10) || 7;
+    const forecast = await getCollectionForecast(days);
+    res.json(forecast);
+});
+
+const getRecommendations = asyncHandler(async (req, res) => {
+    const recommendations = await getSchedulingRecommendations();
+    res.json(recommendations);
+});
+
+const confirmAssignments = asyncHandler(async (req, res) => {
+    const { assignments } = req.body;
+
+    if (!Array.isArray(assignments) || assignments.length === 0) {
+        res.status(400);
+        throw new Error('No assignments provided.');
     }
-};
 
-const getRecommendations = async (req, res) => {
-    try {
-        const recommendations = await getSchedulingRecommendations();
-        res.json(recommendations);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-const confirmAssignments = async (req, res) => {
-    try {
-        const { assignments } = req.body;
-
-        if (!Array.isArray(assignments) || assignments.length === 0) {
-            return res.status(400).json({ message: 'No assignments provided.' });
-        }
-
-        const confirmationResult = await confirmCollectorAssignments(assignments);
-        return res.json(confirmationResult);
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
-    }
-};
+    const confirmationResult = await confirmCollectorAssignments(assignments);
+    res.json(confirmationResult);
+});
 
 module.exports = {
     getForecast,

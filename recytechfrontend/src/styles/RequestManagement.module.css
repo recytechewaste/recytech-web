@@ -2,13 +2,14 @@
     display: flex;
     min-height: 100vh;
     font-family: 'Inter', sans-serif;
-    background-color: #f9fafb;
+    background-color: #ffffff;
 }
 
 .main {
     flex: 1;
     padding: 32px;
     overflow-y: auto;
+    background-color: #fafafa;
 }
 
 /* HEADER WITH HELP BTN */
@@ -21,8 +22,8 @@
 
 .pageTitle {
     font-size: 24px;
-    font-weight: 600;
-    color: #111827;
+    font-weight: 700;
+    color: #0f766e;
     margin: 0 0 8px 0;
 }
 
@@ -30,19 +31,23 @@
     color: #6b7280;
     font-size: 14px;
     margin: 0;
+    font-weight: 500;
 }
 
 /* FILTERS */
 .filterBar {
-    background: white;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     padding: 18px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
     margin-bottom: 24px;
     display: grid;
     grid-template-columns: repeat(3, minmax(170px, 1fr)) auto;
     gap: 14px;
     align-items: end;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
 }
 
 .filterGroup {
@@ -54,19 +59,29 @@
 
 .label {
     font-size: 12px;
-    font-weight: 600;
-    color: #374151;
+    font-weight: 700;
+    color: #0f766e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .select, .input {
-    padding: 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
+    padding: 10px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
     font-size: 14px;
     width: 100%;
     background-color: white;
     color: #374151;
     box-sizing: border-box;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.select:focus, .input:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 /* --- NEW: METRICS GRID --- */
@@ -78,34 +93,46 @@
 }
 
 .metricCard {
-    background: white;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     padding: 24px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.metricCard:hover {
+    transform: translateY(-4px);
+    border-color: #10b981;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 .metricLabel {
-    font-size: 13px;
+    font-size: 12px;
     color: #6b7280;
     display: block;
     margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .metricValue {
     font-size: 32px;
-    font-weight: 600;
-    color: #111827;
+    font-weight: 700;
+    color: #0f766e;
     margin: 0;
 }
 
 /* TABLE CARD */
 .card {
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .table {
@@ -115,13 +142,14 @@
 }
 
 .th {
-    background: #f9fafb;
+    background: rgba(16, 185, 129, 0.1);
     padding: 16px 24px;
     font-size: 12px;
-    font-weight: 600;
-    color: #6b7280;
+    font-weight: 700;
+    color: #0f766e;
     text-transform: uppercase;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 2px solid rgba(16, 185, 129, 0.3);
+    letter-spacing: 0.5px;
 }
 
 .tr {
@@ -180,14 +208,16 @@
 }
 
 .actionApprove {
-    background: #ecfdf5;
-    border-color: #bbf7d0;
-    color: #047857;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
+    border-color: #10b981;
+    color: #065f46;
+    font-weight: 600;
 }
 
 .actionApprove:hover {
-    background: #d1fae5;
-    border-color: #86efac;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.3));
+    border-color: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
 }
 
 .actionReject {
@@ -214,24 +244,40 @@
 }
 
 .approveBtn {
-    padding: 6px 12px;
-    background: #059669;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     margin-right: 8px;
     font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.approveBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .rejectBtn {
-    padding: 6px 12px;
-    background: #ef4444;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
     border: none;
     color: white;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
     font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.rejectBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 /* MODAL STYLES (Unchanged from your working version, just ensuring they exist) */
@@ -239,21 +285,34 @@
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
     display: flex; justify-content: center; align-items: center; z-index: 50;
+    backdrop-filter: blur(4px);
 }
 .modalContent {
-    background: white; padding: 24px; border-radius: 12px; 
-    width: 900px; max-width: 95vw;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    background: white;
+    padding: 32px;
+    border-radius: 16px; 
+    width: 95%;
+    max-width: 850px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    position: relative;
+    animation: modalFadeIn 0.3s ease-out;
 }
-.modalHeader { display: flex; justify-content: space-between; margin-bottom: 20px; }
-.modalTitle { font-size: 18px; font-weight: 600; margin: 0; }
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.modalHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #f3f4f6; }
+.modalTitle { font-size: 20px; font-weight: 700; margin: 0; color: #0f766e; }
 .closeBtn { border: none; background: none; font-size: 20px; cursor: pointer; }
-.evidenceImage { width: 100%; height: 200px; object-fit: cover; border-radius: 6px; margin-bottom: 16px; background: #eee; }
-.detailRow { margin-bottom: 12px; font-size: 14px; }
+.evidenceImage { width: 100%; height: 220px; object-fit: cover; border-radius: 12px; margin-bottom: 16px; background: #f3f4f6; border: 1px solid #e5e7eb; }
+.detailRow { margin-bottom: 16px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
+.detailRow strong { color: #0f766e; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
 
 .modalBody {
     display: flex;
-    gap: 24px;
+    gap: 32px;
 }
 .detailsSection { flex: 1; }
 .mapSection {
@@ -262,6 +321,16 @@
     border-radius: 8px;
     overflow: hidden;
     min-height: 300px;
+    border: 1px solid #e5e7eb;
+}
+
+@media (max-width: 768px) {
+    .modalBody {
+        flex-direction: column;
+    }
+    .modalContent {
+        padding: 20px;
+    }
 }
 
 .successModal {
@@ -284,7 +353,7 @@
     gap: 8px;
 }
 
-.iconBtn {
+ .iconBtn {
     background: white; border: 1px solid #d1d5db; padding: 6px;
     border-radius: 4px; cursor: pointer; color: #374151;
     display: flex; align-items: center; justify-content: center;
@@ -329,16 +398,22 @@
 .clearBtn {
     padding: 10px 16px;
     background-color: white;
-    color: #374151;
-    border: 1px solid #d1d5db;
+    color: #0f766e;
+    border: 1px solid #10b981;
     border-radius: 6px;
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
     height: 40px;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
 }
+
 .clearBtn:hover {
-    background-color: #f9fafb;
+    background-color: rgba(16, 185, 129, 0.1);
+    border-color: #059669;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
 }
 
 @media (max-width: 1200px) {

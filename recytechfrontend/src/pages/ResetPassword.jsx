@@ -88,7 +88,7 @@ const ResetPassword = () => {
                     <form onSubmit={handleResetPassword}>
                         <div className={styles.inputGroup}>
                             <label className={styles.label}>New Password</label>
-                            <div style={{ position: 'relative' }}>
+                            <div className={styles.passwordWrapper}>
                                 <input 
                                     type={showPassword ? "text" : "password"} 
                                     placeholder="Enter new password" 
@@ -98,17 +98,8 @@ const ResetPassword = () => {
                                 />
                                 <button 
                                     type="button"
+                                    className={styles.eyeBtn}
                                     onClick={() => setShowPassword(!showPassword)}
-                                    style={{
-                                        position: 'absolute',
-                                        right: '12px',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        color: '#6b7280'
-                                    }}
                                 >
                                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
@@ -117,7 +108,7 @@ const ResetPassword = () => {
 
                         <div className={styles.inputGroup}>
                             <label className={styles.label}>Confirm Password</label>
-                            <div style={{ position: 'relative' }}>
+                            <div className={styles.passwordWrapper}>
                                 <input 
                                     type={showConfirm ? "text" : "password"} 
                                     placeholder="Confirm new password" 
@@ -127,17 +118,8 @@ const ResetPassword = () => {
                                 />
                                 <button 
                                     type="button"
+                                    className={styles.eyeBtn}
                                     onClick={() => setShowConfirm(!showConfirm)}
-                                    style={{
-                                        position: 'absolute',
-                                        right: '12px',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        color: '#6b7280'
-                                    }}
                                 >
                                     {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
