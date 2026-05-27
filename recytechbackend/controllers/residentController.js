@@ -129,7 +129,6 @@ const updateResident = asyncHandler(async (req, res) => {
     if (req.body.mobileUserId !== undefined) resident.mobileUserId = req.body.mobileUserId;
     if (req.body.isTemporary !== undefined) resident.isTemporary = req.body.isTemporary;
     if (req.body.source) resident.source = req.body.source;
-    if (req.body.walletBalance !== undefined) resident.walletBalance = req.body.walletBalance;
 
     const updatedResident = await resident.save();
     res.json(updatedResident);

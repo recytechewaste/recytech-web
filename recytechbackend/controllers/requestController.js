@@ -59,7 +59,7 @@ const findOrCreateTemporaryResident = async ({ residentName, residentEmail, phon
 
 const getRequests = asyncHandler(async (req, res) => {
     const requests = await Request.find()
-        .populate('resident', 'email firstName lastName phone walletBalance totalEarned requestCount isTemporary source')
+        .populate('resident', 'email firstName lastName phone totalEarned requestCount isTemporary source')
         .populate('assignedCollector', 'firstName lastName phone vehicleType vehiclePlate')
         .sort({ createdAt: -1 });
     res.json(requests);
@@ -228,7 +228,7 @@ const deleteRequest = asyncHandler(async (req, res) => {
 
 const getRequestPayout = asyncHandler(async (req, res) => {
     const request = await Request.findById(req.params.id)
-        .populate('resident', 'email firstName lastName phone walletBalance totalEarned requestCount isTemporary source')
+        .populate('resident', 'email firstName lastName phone totalEarned requestCount isTemporary source')
         .populate('assignedCollector', 'firstName lastName');
     
     if (!request) {

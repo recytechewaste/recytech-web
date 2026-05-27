@@ -7,7 +7,7 @@ import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Collectors from './pages/Collectors';
 import Reports from './pages/Reports';
-import Settings from './pages/Settings';
+
 import UserManagement from './pages/UserManagement'; 
 import RequestManagement from './pages/RequestManagement'; 
 import RequestsSummary from './pages/RequestsSummary';
@@ -101,15 +101,7 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        <Route 
-          path="/settings" 
-          element={
-            <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
-              <Settings />
-            </ProtectedRoute>
-          } 
-        />
-
+        
         {/* Super Admin Only */}
         <Route 
           path="/users" 

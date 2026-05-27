@@ -38,12 +38,6 @@ const residentSchema = mongoose.Schema({
         trim: true,
         description: "Future link to the mobile app account/user ID"
     },
-    walletBalance: {
-        type: Number,
-        default: 0,
-        min: 0,
-        description: "Current available balance in PHP"
-    },
     totalEarned: {
         type: Number,
         default: 0,

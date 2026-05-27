@@ -27,7 +27,7 @@ const getTransactions = asyncHandler(async (req, res) => {
     }
 
     const transactions = await Transaction.find(query)
-        .populate('resident', 'email firstName lastName walletBalance')
+        .populate('resident', 'email firstName lastName totalEarned')
         .populate('requestId', 'wasteType quantity status')
         .skip(skip)
         .limit(limit)
@@ -115,7 +115,7 @@ const getTransactionByRequest = asyncHandler(async (req, res) => {
 
     // Find related transaction
     const transaction = await Transaction.findOne({ requestId: req.params.requestId })
-        .populate('resident', 'email firstName lastName walletBalance');
+        .populate('resident', 'email firstName lastName totalEarned');
 
     if (!transaction) {
         return res.status(404).json({ 

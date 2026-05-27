@@ -64,7 +64,7 @@ const Sidebar = ({ activePage }) => {
         { name: 'Payout History', icon: <History size={20} />, path: '/transactions', roles: ['Admin', 'Super Admin'] },
         { name: 'Educational Content', icon: <BookOpen size={20} />, path: '/education', roles: ['Staff', 'Admin', 'Super Admin'] },
         { name: 'Reports and Analytics', icon: <BarChart3 size={20} />, path: '/reports', roles: ['Admin', 'Super Admin'] },
-        //{ name: 'Settings', icon: <Settings size={20} />, path: '/settings', roles: ['Admin', 'Super Admin'] },
+       
     ];
 
     // Filter menu items based on user role

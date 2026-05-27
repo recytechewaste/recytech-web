@@ -1,12 +1,12 @@
-# RecyTech Simple System Architecture
+# RecyTech System Architecture
 
-## Overview
+## 1. High-Level Architecture Overview
 
-RecyTech is a web-based recycling management system with a React frontend, an Express.js REST API, and MongoDB for persistence. The system supports role-based access for Staff, Admin, Super Admin, and Collector users.
+RecyTech follows a modern **three-tier architecture** using the React ecosystem on the frontend and a Node.js/Express REST API on the backend, with MongoDB serving as the persistent data store. It includes a robust Role-Based Access Control (RBAC) system for Super Admins, Admins, Staff.
 
 ```mermaid
 flowchart LR
-    User[Web User / Staff / Admin / Super Admin] --> Frontend[React Frontend<br/>Vite + React Router]
+    User[Staff / Admin / Super Admin] --> Frontend[React Frontend<br/>Vite + React Router]
     Frontend --> ApiClient[Axios API Client<br/>JWT Bearer Token]
     ApiClient --> Backend[Express.js API Server]
 
@@ -47,14 +47,13 @@ Main API groups:
 - `/api/auth` - login, registration, forgot password, PIN verification, password reset
 - `/api/users` - Super Admin user management
 - `/api/requests` - recycling pickup/request management
-- `/api/residents` - resident profile and wallet management
+- `/api/residents` - resident profile and earnings management
 - `/api/collectors` - collector management
 - `/api/transactions` - payout and transaction history
 - `/api/exchange-rates` - waste-type payout rates
 - `/api/education` - educational content management
 - `/api/analytics` - dashboard reports, trends, summaries, predictive analytics
 - `/api/scheduling` - forecasting, recommendations, assignment confirmation
-- `/api/recycling-centers` - recycling center records
 
 ### 3. Authentication and Authorization
 
@@ -80,8 +79,8 @@ The backend uses Mongoose models to read and write MongoDB data.
 
 Core collections:
 
-- `User` - staff/admin/super admin/collector login accounts
-- `Resident` - recycling residents, wallet balance, earnings, request count
+- `User` - staff/admin/super admin login accounts
+- `Resident` - recycling residents, lifetime earnings, request count
 - `Collector` - collector profile, linked user account, vehicle information
 - `Request` - recycling request details, status, assigned collector, payout data
 - `Transaction` - resident payments, refunds, adjustments
@@ -121,7 +120,7 @@ flowchart TD
     G --> H[Request completed]
     H --> I[Calculate payout from exchange rate]
     I --> J[Create transaction]
-    J --> K[Update resident wallet and earnings]
+    J --> K[Update resident total earnings]
 ```
 
 ## Deployment Shape

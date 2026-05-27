@@ -269,7 +269,6 @@ const getResidentSummary = async () => {
                 totalResidents: { $sum: 1 },
                 activeResidents: { $sum: { $cond: [{ $eq: ['$status', 'Active'] }, 1, 0] } },
                 temporaryResidents: { $sum: { $cond: ['$isTemporary', 1, 0] } },
-                totalWalletBalance: { $sum: '$walletBalance' },
                 totalEarned: { $sum: '$totalEarned' }
             }
         }
@@ -281,7 +280,6 @@ const getResidentSummary = async () => {
         totalResidents: stats.totalResidents || 0,
         activeResidents: stats.activeResidents || 0,
         temporaryResidents: stats.temporaryResidents || 0,
-        totalWalletBalance: roundCurrency(stats.totalWalletBalance || 0),
         totalEarned: roundCurrency(stats.totalEarned || 0)
     };
 };

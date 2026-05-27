@@ -12,7 +12,7 @@ const ResidentTable = ({ residents, loading, onEdit, onDelete }) => {
                         <th className={styles.th}>Email</th>
                         <th className={styles.th}>Contact Number</th>
                         <th className={styles.th}>Status</th>
-                        <th className={styles.th}>Wallet Balance</th>
+                        <th className={styles.th}>Total Earned</th>
                         <th className={styles.th}>Requests</th>
                         <th className={styles.th}>Actions</th>
                     </tr>
@@ -44,7 +44,7 @@ const ResidentTable = ({ residents, loading, onEdit, onDelete }) => {
                                         {resident.status || 'Active'}
                                     </span>
                                 </td>
-                                <td className={styles.td} style={{color: '#059669', fontWeight: 700}}>PHP {resident.walletBalance?.toFixed(2)}</td>
+                                <td className={styles.td} style={{color: '#059669', fontWeight: 700}}>PHP {resident.totalEarned?.toFixed(2) || '0.00'}</td>
                                 <td className={styles.td}>{resident.requestCount || 0}</td>
                                 <td className={styles.td}>
                                     <div className={styles.actionIcons}>

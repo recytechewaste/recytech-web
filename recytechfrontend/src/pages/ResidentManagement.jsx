@@ -82,7 +82,7 @@ const ResidentManagement = () => {
                 <div className={styles.header}>
                     <div className={styles.titleGroup}>
                         <h1>Mobile User Management</h1>
-                        <p>Manage mobile users, wallet balances, and recycling activity.</p>
+                        <p>Manage mobile users, total earnings, and recycling activity.</p>
                     </div>
                     <div className={styles.actionButtons}>
                         <button className={styles.addBtn} onClick={openAddModal}><Plus size={16}/> Add Resident</button>
