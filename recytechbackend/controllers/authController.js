@@ -10,7 +10,7 @@ const generateToken = (res, id) => {
     res.cookie('jwt', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV !== 'development', // Uses HTTPS in production
-        sameSite: 'strict', // Prevents CSRF attacks
+        sameSite: process.env.NODE_ENV !== 'development' ? 'none' : 'strict', // Allows cross-site cookies in production
         maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days in milliseconds
     });
 };
@@ -68,6 +68,8 @@ const registerUser = asyncHandler(async (req, res) => {
 const logoutUser = asyncHandler(async (req, res) => {
     res.cookie('jwt', '', {
         httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development',
+        sameSite: process.env.NODE_ENV !== 'development' ? 'none' : 'strict',
         expires: new Date(0)
     });
     res.status(200).json({ message: 'Logged out successfully' });
