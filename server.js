@@ -13,7 +13,11 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: 'http://localhost:5173', // Change to your frontend dev URL
+    origin: [
+        'http://localhost:5173', 
+        'https://recytech-web.vercel.app',
+        process.env.FRONTEND_URL
+    ],
     credentials: true // Required for HTTP-only cookies to be sent
 })); 
 app.use(express.json({ limit: '10mb' })); 
