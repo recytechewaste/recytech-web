@@ -1,13 +1,58 @@
+import { useRef, useState } from 'react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import Sidebar from '../components/Sidebar';
 import styles from '../styles/Reports.module.css';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Download, Calendar, Filter } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { Download, Calendar, Filter, Loader2 } from 'lucide-react';
 import { useReports } from '../features/reports/useReports';
+
+const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#14B8A6'];
+const RADIAN = Math.PI / 180;
+
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+        <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight="600">
+            {percent > 0.05 ? `${(percent * 100).toFixed(0)}%` : ''}
+        </text>
+    );
+};
 
 const Reports = () => {
     const { filteredData, chartData, pieData, wasteTypes, filters, setFilters, stats, handleClearFilters } = useReports();
+    const reportRef = useRef(null);
+    const [isExporting, setIsExporting] = useState(false);
 
-    const COLORS = ['#111827', '#374151', '#6B7280', '#9CA3AF', '#D1D5DB'];
+    const handleExportPDF = async () => {
+        if (!reportRef.current) return;
+        
+        setIsExporting(true);
+        try {
+            // Capture the exact React elements as a high-quality canvas
+            const canvas = await html2canvas(reportRef.current, {
+                scale: 2, // 2x scale for crisp text resolution
+                backgroundColor: '#f3f4f6', // Matches your dashboard background
+                useCORS: true // Allows Recharts to render properly
+            });
+            
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4'); // Portrait, millimeters, A4 page size
+            
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`RecyTech_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     return (
         <div className={styles.container}>
@@ -20,13 +65,16 @@ const Reports = () => {
                         <h1 className={styles.pageTitle}>Reports & Analytics</h1>
                         <p className={styles.subTitle}>Performance metrics and collection history.</p>
                     </div>
-                    <button onClick={() => window.print()} className={styles.exportBtn} style={{backgroundColor: '#2563EB', color: 'white', border: 'none'}}>
-                        <Download size={16} /> Export Report
+                    <button onClick={handleExportPDF} disabled={isExporting} className={styles.exportBtn} style={{backgroundColor: '#2563EB', color: 'white', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', opacity: isExporting ? 0.7 : 1, cursor: isExporting ? 'wait' : 'pointer'}}>
+                        {isExporting ? <Loader2 size={16} /> : <Download size={16} />} 
+                        {isExporting ? 'Generating PDF...' : 'Export Report'}
                     </button>
                 </div>
 
-                {/* FILTERS */}
-                <div className={styles.filterBar}>
+                {/* PDF EXPORT CONTENT WRAPPER */}
+                <div ref={reportRef} style={{ padding: '10px 0', backgroundColor: '#f3f4f6' }}>
+                    {/* FILTERS */}
+                    <div className={styles.filterBar}>
                     <div className={styles.filterGroup}>
                         <Calendar size={16} className={styles.icon} />
                         <select className={styles.select} value={filters.dateRange} onChange={(e) => setFilters({ ...filters, dateRange: e.target.value })}>
@@ -93,7 +141,8 @@ const Reports = () => {
                                     <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
                                     <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
                                     <Tooltip cursor={{fill: '#f3f4f6'}} />
-                                    <Bar dataKey="collections" fill="#111827" radius={[4, 4, 0, 0]} barSize={40} />
+                                    <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '12px' }} />
+                                    <Bar dataKey="collections" name="Total Collections" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={40} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>
@@ -110,17 +159,20 @@ const Reports = () => {
                                     <Pie
                                         data={pieData}
                                         cx="50%"
-                                        cy="50%"
+                                    cy="45%"
                                         innerRadius={60}
-                                        outerRadius={80}
+                                    outerRadius={90}
                                         paddingAngle={5}
                                         dataKey="value"
+                                    labelLine={false}
+                                    label={renderCustomizedLabel}
                                     >
                                         {pieData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
                                     <Tooltip />
+                                <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '12px' }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -158,6 +210,7 @@ const Reports = () => {
                             ))}
                         </tbody>
                     </table>
+                </div>
                 </div>
             </div>
         </div>
