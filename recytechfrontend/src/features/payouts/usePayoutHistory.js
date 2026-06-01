@@ -1,18 +1,22 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/client';
+import { usePagination } from '../../hooks/usePagination';
 
 export const usePayoutHistory = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [pagination, setPagination] = useState({ page: 1, pages: 1 });
+    
+    const { page, limit, pages, total, goToPage, updatePaginationInfo, hasNextPage, hasPrevPage } = usePagination(1, 10);
 
-    const fetchTransactions = async (page = 1) => {
+    const fetchTransactions = async (currentPage) => {
         setLoading(true);
         try {
-            const res = await api.get(`/transactions?page=${page}&limit=10`);
+            const res = await api.get(`/transactions?page=${currentPage}&limit=${limit}`);
             setTransactions(res.data.transactions || res.data || []);
-            if (res.data.pagination) setPagination(res.data.pagination);
+            
+            // Update the hook's internal tracking with the API response
+            updatePaginationInfo(res.data.pagination);
         } catch (error) {
             console.error("Error fetching transactions:", error);
         } finally {
@@ -20,7 +24,7 @@ export const usePayoutHistory = () => {
         }
     };
 
-    useEffect(() => { fetchTransactions(pagination.page); }, [pagination.page]);
+    useEffect(() => { fetchTransactions(page); }, [page, limit]);
 
     const filteredTransactions = transactions.filter(t => 
         t.resident?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -28,5 +32,12 @@ export const usePayoutHistory = () => {
         t.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    return { loading, searchTerm, setSearchTerm, pagination, setPagination, filteredTransactions };
+    return { 
+        loading, 
+        searchTerm, setSearchTerm, 
+        filteredTransactions,
+        // Pagination exports
+        page, limit, pages, total, 
+        goToPage, hasNextPage, hasPrevPage 
+    };
 };

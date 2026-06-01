@@ -61,4 +61,9 @@ const requestSchema = mongoose.Schema({
     timestamps: true
 });
 
+// Performance: Add indexes for frequently queried fields in Analytics & Dashboards
+requestSchema.index({ status: 1 });
+requestSchema.index({ createdAt: -1 });
+requestSchema.index({ wasteType: 1 });
+
 module.exports = mongoose.model('Request', requestSchema);

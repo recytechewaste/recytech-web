@@ -21,9 +21,11 @@ const createCenter = asyncHandler(async (req, res) => {
 });
 
 const updateCenter = asyncHandler(async (req, res) => {
+    const { name, location, address, items, status } = req.body;
+
     const updatedCenter = await RecyclingCenter.findByIdAndUpdate(
         req.params.id,
-        req.body,
+        { name, location, address, items, status },
         { new: true }
     );
     

@@ -1,6 +1,8 @@
 const Resident = require('../models/Resident');
 const Transaction = require('../models/Transaction');
+const bcrypt = require('bcryptjs');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { sendWelcomeEmail } = require('../services/emailService');
 
 const getResidents = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
@@ -25,51 +27,50 @@ const getResidents = asyncHandler(async (req, res) => {
     });
 });
 
-const createTempResident = asyncHandler(async (req, res) => {
-    const { firstName, lastName, email, phone, mobileUserId, status, source, isTemporary } = req.body || {};
+const createResident = asyncHandler(async (req, res) => {
+    const { firstName, lastName, email, password, phone, mobileUserId, status, source, isTemporary } = req.body || {};
 
-    if (!firstName || !lastName) {
+    if (!firstName || !lastName || !email || !password) {
         res.status(400);
-        throw new Error('firstName and lastName are required');
+        throw new Error('Please provide all required fields: First Name, Last Name, Email, and Password.');
     }
 
-    const generatedEmail = email
-        ? email.trim().toLowerCase()
-        : `temp-${String(phone || `${firstName}-${lastName}-${Date.now()}`)
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-|-$/g, '')}@recytech.local`;
+    const generatedEmail = email.trim().toLowerCase();
 
-    let resident = await Resident.findOne({ email: generatedEmail });
-    let resultStatus = 'existing';
+    const existingResident = await Resident.findOne({ email: generatedEmail });
 
-    if (!resident) {
-        resident = await Resident.create({
-            email: generatedEmail,
-            firstName,
-            lastName,
-            phone,
-            mobileUserId,
-            status: status || 'Active',
-            source: source || 'Mobile Simulation',
-            isTemporary: isTemporary !== undefined ? isTemporary : true
-        });
-        resultStatus = 'created';
-    } else {
-        resident.firstName = firstName;
-        resident.lastName = lastName;
-        if (phone !== undefined) resident.phone = phone;
-        if (mobileUserId !== undefined) resident.mobileUserId = mobileUserId;
-        if (status !== undefined) resident.status = status;
-        resident.source = source || resident.source || 'Mobile Simulation';
-        resident.isTemporary = isTemporary !== undefined ? isTemporary : true;
-        await resident.save();
-        resultStatus = 'updated';
+    if (existingResident) {
+        res.status(409);
+        throw new Error('A resident with this email already exists.');
     }
 
-    res.status(resultStatus === 'created' ? 201 : 200).json({
-        message: `Temporary resident ${resultStatus}`,
-        resident
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const resident = await Resident.create({
+        email: generatedEmail,
+        firstName,
+        lastName,
+        password: hashedPassword,
+        phone: phone || '',
+        mobileUserId,
+        status: status || 'Active',
+        source: source || 'Web',
+        isTemporary: isTemporary !== undefined ? isTemporary : false
+    });
+    
+    const residentResponse = resident.toObject();
+    delete residentResponse.password; // Ensure password is removed from API response
+
+    try {
+        await sendWelcomeEmail(generatedEmail, firstName, 'Mobile User');
+    } catch (err) {
+        console.error('Failed to send welcome email to resident:', err);
+    }
+
+    res.status(201).json({
+        message: 'Resident created successfully',
+        resident: residentResponse
     });
 });
 
@@ -100,32 +101,11 @@ const updateResident = asyncHandler(async (req, res) => {
         throw new Error('Resident not found');
     }
 
-    // Allow updates to these fields only
-    if (req.body.email !== undefined) {
-        const email = req.body.email.trim().toLowerCase();
-
-        if (!email) {
-            res.status(400);
-            throw new Error('Email is required');
-        }
-
-        const existingResident = await Resident.findOne({
-            email,
-            _id: { $ne: req.params.id }
-        });
-
-        if (existingResident) {
-            res.status(409);
-            throw new Error('Resident email already exists');
-        }
-
-        resident.email = email;
-    }
 
     if (req.body.status) resident.status = req.body.status;
-    if (req.body.firstName) resident.firstName = req.body.firstName;
-    if (req.body.lastName) resident.lastName = req.body.lastName;
-    if (req.body.phone) resident.phone = req.body.phone;
+    if (req.body.firstName !== undefined) resident.firstName = req.body.firstName;
+    if (req.body.lastName !== undefined) resident.lastName = req.body.lastName;
+    if (req.body.phone !== undefined) resident.phone = req.body.phone;
     if (req.body.mobileUserId !== undefined) resident.mobileUserId = req.body.mobileUserId;
     if (req.body.isTemporary !== undefined) resident.isTemporary = req.body.isTemporary;
     if (req.body.source) resident.source = req.body.source;
@@ -160,12 +140,13 @@ const deleteResident = asyncHandler(async (req, res) => {
 
 const searchResidents = asyncHandler(async (req, res) => {
     const searchQuery = req.params.query;
+    const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     const residents = await Resident.find({
         $or: [
-            { email: { $regex: searchQuery, $options: 'i' } },
-            { firstName: { $regex: searchQuery, $options: 'i' } },
-            { lastName: { $regex: searchQuery, $options: 'i' } }
+            { email: { $regex: escapedQuery, $options: 'i' } },
+            { firstName: { $regex: escapedQuery, $options: 'i' } },
+            { lastName: { $regex: escapedQuery, $options: 'i' } }
         ]
     }).limit(20);
 
@@ -174,7 +155,7 @@ const searchResidents = asyncHandler(async (req, res) => {
 
 module.exports = {
     getResidents,
-    createTempResident,
+    createResident,
     getResidentById,
     updateResident,
     deleteResident,

@@ -5,7 +5,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
 
     // 1. Check if user is logged in
-    if (!userInfo || !userInfo.token) {
+    if (!userInfo || !userInfo._id) {
         return <Navigate to="/login" replace />;
     }
 

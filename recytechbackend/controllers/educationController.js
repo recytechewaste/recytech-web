@@ -6,12 +6,28 @@ const getMaterials = asyncHandler(async (req, res) => {
     res.json(materials);
 });
 
+const validateImageUri = (imageStr) => {
+    if (!imageStr) return true;
+    const isValidUrl = /^https?:\/\//.test(imageStr);
+    const isValidBase64Image = /^data:image\/(jpeg|png|jpg|gif|webp);base64,/.test(imageStr);
+    return isValidUrl || isValidBase64Image;
+};
+
 const createMaterial = asyncHandler(async (req, res) => {
-    const material = await Education.create(req.body);
+    const { title, category, type, description, contentURL, thumbnail, status } = req.body;
+    if (!validateImageUri(thumbnail)) {
+        res.status(400);
+        throw new Error('Invalid thumbnail format. Must be a valid URL or base64 image data URI.');
+    }
+    const material = await Education.create({ title, category, type, description, contentURL, thumbnail, status });
     res.status(201).json(material);
 });
 
 const updateMaterial = asyncHandler(async (req, res) => {
+    if (req.body.thumbnail && !validateImageUri(req.body.thumbnail)) {
+        res.status(400);
+        throw new Error('Invalid thumbnail format. Must be a valid URL or base64 image data URI.');
+    }
     const material = await Education.findById(req.params.id);
 
     if (material) {

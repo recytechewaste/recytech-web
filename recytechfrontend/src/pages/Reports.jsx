@@ -88,7 +88,7 @@ const Reports = () => {
                             <h3>Weekly Collection Trends</h3>
                         </div>
                         <div style={{ height: '300px', width: '100%' }}>
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="99%" height="100%">
                                 <BarChart data={chartData}>
                                     <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
                                     <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
@@ -105,7 +105,7 @@ const Reports = () => {
                             <h3>Waste Type Distribution</h3>
                         </div>
                         <div style={{ height: '300px', width: '100%' }}>
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="99%" height="100%">
                                 <PieChart>
                                     <Pie
                                         data={pieData}

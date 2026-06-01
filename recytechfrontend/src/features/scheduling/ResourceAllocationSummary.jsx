@@ -1,8 +1,34 @@
+import { useState } from 'react';
+import { Info } from 'lucide-react';
 import styles from '../../styles/Dashboard.module.css';
 
-const ResourceAllocationSummary = ({ summary }) => (
+const ResourceAllocationSummary = ({ summary }) => {
+    const [showTooltip, setShowTooltip] = useState(false);
+    
+    const tooltipStyle = {
+        position: 'absolute', top: '100%', right: 0, marginTop: '8px',
+        backgroundColor: '#1F2937', color: '#F9FAFB', padding: '12px',
+        borderRadius: '8px', fontSize: '12px', width: '240px', zIndex: 50,
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', pointerEvents: 'none',
+        lineHeight: '1.5', textAlign: 'left', fontWeight: 'normal', textTransform: 'none'
+    };
+
+    return (
     <div className={styles.chartCard}>
-        <h3 className={styles.cardTitle}>Resource Allocation Summary</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <h3 className={styles.cardTitle} style={{ margin: 0 }}>Resource Allocation Summary</h3>
+            <div 
+                style={{ position: 'relative', cursor: 'help', color: '#9CA3AF', display: 'flex' }}
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+                onClick={() => setShowTooltip(!showTooltip)}
+            >
+                <Info size={18} />
+                {showTooltip && (
+                    <div style={tooltipStyle}>Overview comparing your total pending request load against the total carrying capacity of your active collectors.</div>
+                )}
+            </div>
+        </div>
         <span className={styles.chartSub}>Collector capacity and pending operational load</span>
         <table className={styles.activityTable}>
             <tbody>
@@ -33,6 +59,7 @@ const ResourceAllocationSummary = ({ summary }) => (
             </tbody>
         </table>
     </div>
-);
+    );
+};
 
 export default ResourceAllocationSummary;

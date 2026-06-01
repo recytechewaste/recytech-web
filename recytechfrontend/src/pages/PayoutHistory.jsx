@@ -2,9 +2,14 @@ import Sidebar from '../components/Sidebar';
 import styles from '../styles/UserManagement.module.css';
 import { RefreshCw, ArrowUpRight, ArrowDownLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePayoutHistory } from '../features/payouts/usePayoutHistory';
+import Skeleton from '../components/Skeleton';
 
 const PayoutHistory = () => {
     const { loading, searchTerm, setSearchTerm, pagination, setPagination, filteredTransactions } = usePayoutHistory();
+
+    // Safe fallbacks to prevent crashes if the API request fails
+    const safeTransactions = filteredTransactions || [];
+    const safePagination = pagination || { page: 1, pages: 1 };
 
     return (
         <div className={styles.container}>
@@ -27,7 +32,7 @@ const PayoutHistory = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <span className={styles.totalUsers}>Total: {filteredTransactions.length} records</span>
+                    <span className={styles.totalUsers}>Total: {safeTransactions.length} records</span>
                 </div>
 
                 <div className={styles.card}>
@@ -44,11 +49,30 @@ const PayoutHistory = () => {
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="6" style={{textAlign:'center', padding:'40px'}}><RefreshCw className={styles.spinner} /> Loading history...</td></tr>
-                            ) : filteredTransactions.length === 0 ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <tr key={`skeleton-${i}`}>
+                                        <td className={styles.td}>
+                                            <div style={{display:'flex', flexDirection:'column', gap: '4px'}}>
+                                                <Skeleton width="80px" height="16px" />
+                                                <Skeleton width="60px" height="12px" />
+                                            </div>
+                                        </td>
+                                        <td className={styles.td}>
+                                            <div style={{display:'flex', flexDirection:'column', gap: '4px'}}>
+                                                <Skeleton width="120px" height="16px" />
+                                                <Skeleton width="160px" height="12px" />
+                                            </div>
+                                        </td>
+                                        <td className={styles.td}><Skeleton width="80px" height="16px" /></td>
+                                        <td className={styles.td}><Skeleton width="100px" height="16px" /></td>
+                                        <td className={styles.td}><Skeleton width="200px" height="16px" /></td>
+                                        <td className={styles.td}><Skeleton width="120px" height="20px" borderRadius="4px" /></td>
+                                    </tr>
+                                ))
+                            ) : safeTransactions.length === 0 ? (
                                 <tr><td colSpan="6" style={{textAlign:'center', padding:'40px'}}>No transaction history found.</td></tr>
                             ) : (
-                                filteredTransactions.map((tx) => (
+                                safeTransactions.map((tx) => (
                                     <tr key={tx._id}>
                                         <td className={styles.td}>
                                             <div style={{display:'flex', flexDirection:'column'}}>
@@ -78,15 +102,15 @@ const PayoutHistory = () => {
                 {/* Pagination Controls */}
                 <div className={styles.filterBar} style={{ marginTop: '20px', justifyContent: 'center' }}>
                     <button 
-                        disabled={pagination.page <= 1} 
+                        disabled={safePagination.page <= 1} 
                         onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
                         className={styles.iconBtn}
                     >
                         <ChevronLeft size={20} />
                     </button>
-                    <span style={{ padding: '0 20px' }}>Page {pagination.page} of {pagination.pages}</span>
+                    <span style={{ padding: '0 20px' }}>Page {safePagination.page} of {safePagination.pages}</span>
                     <button 
-                        disabled={pagination.page >= pagination.pages} 
+                        disabled={safePagination.page >= safePagination.pages} 
                         onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                         className={styles.iconBtn}
                     >

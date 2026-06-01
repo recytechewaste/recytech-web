@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Recycle, Loader2, ArrowLeft, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { Loader2, ArrowLeft, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import api from '../api/client';
 import styles from '../styles/ForgotPassword.module.css'; // Reuse styles
+import logo from '../assets/recytech_logo.png';
+import { useToast } from '../context/ToastContext';
 
 const VerifyPin = () => {
     const navigate = useNavigate();
@@ -14,24 +16,21 @@ const VerifyPin = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
     const [resetToken, setResetToken] = useState('');
+    const { showToast } = useToast();
 
     const handleVerifyPin = async (e) => {
         e.preventDefault();
-        if (!pin) return setError('Please enter the PIN');
+        if (!pin) return showToast('Please enter the PIN', 'error');
 
         setLoading(true);
-        setError('');
-        setMessage('');
 
         try {
             const { data } = await api.post('/auth/verify-pin', { email, pin });
             setResetToken(data.resetToken);
-            setMessage('PIN verified! Now set your new password.');
+            showToast('PIN verified! Now set your new password.', 'success');
         } catch (err) {
-            setError(err.response?.data?.message || 'Invalid PIN');
+            showToast(err.response?.data?.message || 'Invalid PIN', 'error');
         } finally {
             setLoading(false);
         }
@@ -39,20 +38,22 @@ const VerifyPin = () => {
 
     const handleResetPassword = async (e) => {
         e.preventDefault();
-        if (!newPassword || !confirmPassword) return setError('Please fill all fields');
-        if (newPassword !== confirmPassword) return setError('Passwords do not match');
-        if (newPassword.length < 6) return setError('Password must be at least 6 characters');
+        if (!newPassword || !confirmPassword) return showToast('Please fill all fields', 'error');
+        if (newPassword !== confirmPassword) return showToast('Passwords do not match', 'error');
+        
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            return showToast('Password must be at least 8 chars, including upper, lower, number, and special char.', 'error');
+        }
 
         setLoading(true);
-        setError('');
-        setMessage('');
 
         try {
             await api.post('/auth/reset-password', { email, newPassword, confirmPassword, resetToken });
-            setMessage('Password reset successful! Redirecting to login...');
+            showToast('Password reset successful! Redirecting to login...', 'success');
             setTimeout(() => navigate('/login'), 2000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to reset password');
+            showToast(err.response?.data?.message || 'Failed to reset password', 'error');
         } finally {
             setLoading(false);
         }
@@ -62,7 +63,9 @@ const VerifyPin = () => {
         <div className={styles.pageContainer}>
             <div className={styles.topBar}>
                 <div className={styles.logoContainer}>
-                    <div className={styles.logoIcon}><Recycle size={20} color="white" /></div>
+                    <div className={styles.logoIcon} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+                        <img src={logo} alt="RecyTech Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+                    </div>
                     <span className={styles.logoText}>
                         RecyTech <span style={{ fontWeight: '400', opacity: '0.9' }}>Admin Portal</span>
                     </span>
@@ -73,9 +76,6 @@ const VerifyPin = () => {
                 <div className={styles.card}>
                     <h1 className={styles.header}>Verify PIN & Reset Password</h1>
                     <p className={styles.subtext}>Enter the PIN sent to your email and set a new password.</p>
-
-                    {message && <p className={styles.successMessage}>{message}</p>}
-                    {error && <p className={styles.errorMessage}>{error}</p>}
 
                     {!resetToken ? (
                         <form onSubmit={handleVerifyPin}>

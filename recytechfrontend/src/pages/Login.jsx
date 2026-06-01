@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useNavigate } from 'react-router-dom';
-import { Recycle, Eye, EyeOff, Loader2, CheckCircle, AlertCircle, X } from 'lucide-react'; 
+import { Eye, EyeOff, Loader2 } from 'lucide-react'; 
 import styles from '../styles/Login.module.css';
+import logo from '../assets/recytech_logo.png';
+import { useToast } from '../context/ToastContext';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [error, setError] = useState('');
-    const [role, setRole] = useState('Staff');
     const [loading, setLoading] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     useEffect(() => {
         const savedEmail = localStorage.getItem('rememberedEmail');
@@ -26,18 +26,17 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setError('');
         try {
             if (rememberMe) {
                 localStorage.setItem('rememberedEmail', email);
             } else {
                 localStorage.removeItem('rememberedEmail');
             }
-            const { data } = await api.post('/auth/login', { email, password, role });
+        const { data } = await api.post('/auth/login', { email, password });
             localStorage.setItem('userInfo', JSON.stringify(data));
-            setShowSuccessModal(true);
+        navigate('/dashboard'); // QoL: Immediate auto-redirect
         } catch (err) {
-            setError(err.response?.data?.message || 'Invalid email or password');
+            showToast(err.response?.data?.message || 'Invalid email or password', 'error');
         } finally {
             setLoading(false);
         }
@@ -48,9 +47,11 @@ const Login = () => {
             {/* TOP HEADER BAR */}
             <div className={styles.topBar}>
                 <div className={styles.logoContainer}>
-                    <div className={styles.logoIcon}><Recycle size={20} color="white" /></div>
+                    <div className={styles.logoIcon} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+                        <img src={logo} alt="RecyTech Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+                    </div>
                     <span className={styles.logoText}>
-                        RecyTech <span style={{ fontWeight: '400', opacity: '0.9' }}>Admin Portal</span>
+                        RecyTech<span style={{ fontWeight: '400', opacity: '0.9' }}>: E-waste Management System</span>
                     </span>
                 </div>
             </div>
@@ -73,19 +74,7 @@ const Login = () => {
                                     onChange={(e) => setEmail(e.target.value)}
                                 />
                             </div>
-                            <div className={styles.inputGroup}>
-                                <label className={styles.label}>Account Role</label>
-                                <select 
-                                    className={styles.input} 
-                                    value={role} 
-                                    onChange={(e) => setRole(e.target.value)}
-                                >
-                                    <option value="Staff">Staff</option>
-                                    <option value="Admin">Admin</option>
-                                    <option value="Super Admin">Super Admin</option>
-                                </select>
-                            </div>
-                            <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+                        <div className={styles.inputGroup}>
                                 <label className={styles.label}>Password</label>
                                 <div className={styles.passwordWrapper}>
                                     <input 
@@ -147,43 +136,6 @@ const Login = () => {
                     </div>
                 </div>
             </div>
-
-            {/* SUCCESS MODAL */}
-            {showSuccessModal && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modalContent}>
-                        <div className={styles.modalBody}>
-                            <CheckCircle size={60} color="#059669" className={styles.modalIcon} />
-                            <h2 className={styles.modalTitle}>Login Successful!</h2>
-                            <p className={styles.modalText}>Welcome back to the RecyTech Admin Portal.</p>
-                            <button 
-                                className={styles.modalBtn} 
-                                onClick={() => navigate('/dashboard')}
-                                style={{background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}}
-                            >
-                                Proceed to Dashboard
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ERROR MODAL */}
-            {error && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modalContent}>
-                        <button className={styles.closeModalBtn} onClick={() => setError('')}><X size={20}/></button>
-                        <div className={styles.modalBody}>
-                            <AlertCircle size={60} color="#ef4444" className={styles.modalIcon} />
-                            <h2 className={styles.modalTitle}>Login Failed</h2>
-                            <p className={styles.modalText}>{error}</p>
-                            <button className={styles.modalBtn} onClick={() => setError('')} style={{background: 'linear-gradient(135deg, #0f766e 0%, #065f46 100%)'}}>
-                                Try Again
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

@@ -1,5 +1,6 @@
 import { Edit2, RefreshCw, Trash2 } from 'lucide-react';
 import styles from '../../styles/UserManagement.module.css';
+import Skeleton from '../../components/Skeleton';
 
 const ResidentTable = ({ residents, loading, onEdit, onDelete }) => {
     return (
@@ -19,7 +20,31 @@ const ResidentTable = ({ residents, loading, onEdit, onDelete }) => {
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="8" className={styles.td} style={{textAlign:'center', padding:'40px'}}><RefreshCw className={styles.spinner} /> Loading residents...</td></tr>
+                        Array.from({ length: 5 }).map((_, i) => (
+                            <tr key={`skeleton-${i}`}>
+                                <td className={styles.td}><Skeleton width="20px" /></td>
+                                <td className={styles.td}>
+                                    <div className={styles.userCell}>
+                                        <Skeleton width="32px" height="32px" borderRadius="50%" />
+                                        <div className={styles.userInfo}>
+                                            <Skeleton width="120px" height="16px" style={{marginBottom: '4px'}} />
+                                            <Skeleton width="60px" height="12px" />
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className={styles.td}><Skeleton width="160px" height="16px" /></td>
+                                <td className={styles.td}><Skeleton width="100px" height="16px" /></td>
+                                <td className={styles.td}><Skeleton width="60px" height="24px" borderRadius="12px" /></td>
+                                <td className={styles.td}><Skeleton width="80px" height="16px" /></td>
+                                <td className={styles.td}><Skeleton width="30px" height="16px" /></td>
+                                <td className={styles.td}>
+                                    <div className={styles.actionIcons}>
+                                        <Skeleton width="28px" height="28px" borderRadius="4px" />
+                                        <Skeleton width="28px" height="28px" borderRadius="4px" />
+                                    </div>
+                                </td>
+                            </tr>
+                        ))
                     ) : residents.length === 0 ? (
                         <tr><td colSpan="8" className={styles.td} style={{textAlign:'center', padding:'40px'}}>No mobile residents found.</td></tr>
                     ) : (

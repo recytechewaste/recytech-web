@@ -1,33 +1,32 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Recycle, Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import api from '../api/client';
 import styles from '../styles/ForgotPassword.module.css';
+import logo from '../assets/recytech_logo.png';
+import { useToast } from '../context/ToastContext';
 
 const ForgotPassword = () => {
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
+    const { showToast } = useToast();
 
     const handleResetRequest = async (e) => {
         e.preventDefault();
-        if (!email) return setError('Please enter your email address');
+        if (!email) return showToast('Please enter your email address', 'error');
         
         setLoading(true);
-        setError('');
-        setMessage('');
 
         try {
             await api.post('/auth/forgot-password', { email });
-            setMessage('PIN has been sent to your email! Redirecting...');
+            showToast('PIN has been sent to your email! Redirecting...', 'success');
             
             setTimeout(() => {
                 navigate('/verify-pin', { state: { email } });
             }, 1500);
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to send reset instructions.');
+            showToast(err.response?.data?.message || 'Failed to send reset instructions.', 'error');
         } finally {
             setLoading(false);
         }
@@ -37,9 +36,11 @@ const ForgotPassword = () => {
         <div className={styles.pageContainer}>
             <div className={styles.topBar}>
                 <div className={styles.logoContainer}>
-                    <div className={styles.logoIcon}><Recycle size={20} color="white" /></div>
+                    <div className={styles.logoIcon} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+                        <img src={logo} alt="RecyTech Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+                    </div>
                     <span className={styles.logoText}>
-                        RecyTech <span style={{ fontWeight: '400', opacity: '0.9' }}>Admin Portal</span>
+                        RecyTech<span style={{ fontWeight: '400', opacity: '0.9' }}>: E-waste Management System</span>
                     </span>
                 </div>
             </div>
@@ -49,9 +50,6 @@ const ForgotPassword = () => {
                     <h1 className={styles.header}>Reset Password</h1>
                     <p className={styles.subtext}>Enter your registered email address to receive password reset instructions.</p>
                     
-                    {message && <p className={styles.successMessage}>{message}</p>}
-                    {error && <p className={styles.errorMessage}>{error}</p>}
-
                     <form onSubmit={handleResetRequest}>
                         <div className={styles.inputGroup}>
                             <label className={styles.label}>Email Address</label>

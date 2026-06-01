@@ -14,7 +14,10 @@ const getDefaultScheduleTime = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(9, 0, 0, 0);
-    return tomorrow.toISOString().slice(0, 16);
+    
+    // Adjust for local timezone offset so datetime-local input shows 9:00 AM correctly
+    const tzOffset = tomorrow.getTimezoneOffset() * 60000;
+    return new Date(tomorrow.getTime() - tzOffset).toISOString().slice(0, 16);
 };
 
 const buildInitialScheduledTimes = (recommendations = []) => {

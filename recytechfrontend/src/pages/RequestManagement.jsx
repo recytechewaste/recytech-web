@@ -11,9 +11,11 @@ import SuccessModal from '../features/requests/SuccessModal';
 import ViewRequestModal from '../features/requests/ViewRequestModal';
 import styles from '../styles/RequestManagement.module.css';
 import { useRequests } from '../features/requests/useRequests';
+import { useToast } from '../context/ToastContext';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const RequestManagement = () => {
-    const { requests, filteredRequests, collectors, wasteCategories, stats, filters, setFilters, handleClearFilters, fetchData } = useRequests();
+    const { requests, filteredRequests, paginatedRequests, collectors, wasteCategories, stats, filters, setFilters, handleClearFilters, fetchData, loading, page, limit, pages, goToPage, hasNextPage, hasPrevPage } = useRequests();
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [successTitle, setSuccessTitle] = useState('');
@@ -25,6 +27,7 @@ const RequestManagement = () => {
     const [scheduleConflict, setScheduleConflict] = useState('');
     const [showAssignmentModal, setShowAssignmentModal] = useState(false);
     const [rejectingRequestId, setRejectingRequestId] = useState(null);
+    const { showToast } = useToast();
 
     useEffect(() => {
         if (!selectedCollector || !selectedScheduleDate || !selectedScheduleTime || !selectedRequest) {
@@ -74,23 +77,28 @@ const RequestManagement = () => {
     };
 
     const confirmAssignment = () => {
-        if (!selectedCollector) return alert('Please select a collector');
-        if (!selectedScheduleDate || !selectedScheduleTime) return alert('Please select a scheduled date and time.');
-        if (scheduleConflict) return alert(scheduleConflict);
+        if (scheduleConflict) return showToast(scheduleConflict, 'error');
         setShowAssignmentModal(true);
     };
 
     const executeAssignment = async () => {
         try {
-            const scheduledAt = `${selectedScheduleDate}T${selectedScheduleTime}`;
-            await api.put(`/requests/${selectedRequest._id}`, {
-                status: 'Approved',
-                assignedCollector: selectedCollector,
-                scheduledAt
-            });
+            const payload = { status: 'Approved' };
+            
+            if (selectedCollector) {
+                payload.assignedCollector = selectedCollector;
+            }
+            
+            if (selectedScheduleDate && selectedScheduleTime) {
+                payload.scheduledAt = `${selectedScheduleDate}T${selectedScheduleTime}`;
+            }
+
+            await api.put(`/requests/${selectedRequest._id}`, payload);
 
             setSuccessTitle('Request Approved');
-            setSuccessMessage('The pickup request has been successfully approved, assigned, and scheduled.');
+            setSuccessMessage(selectedCollector 
+                ? 'The pickup request has been successfully approved, assigned, and scheduled.' 
+                : 'The pickup request has been approved and sent to the Dashboard for smart scheduling.');
             setShowSuccessModal(true);
             setShowAssignmentModal(false);
             setSelectedRequest(null);
@@ -98,7 +106,7 @@ const RequestManagement = () => {
             fetchData();
         } catch (error) {
             console.error(error);
-            alert(error.response?.data?.message || 'Unable to approve the request.');
+            showToast(error.response?.data?.message || 'Unable to approve the request.', 'error');
         }
     };
 
@@ -132,13 +140,33 @@ const RequestManagement = () => {
                     onFilterChange={setFilters}
                     onClearFilters={handleClearFilters}
                 />
-                <RequestStats stats={stats} />
+                <RequestStats stats={stats} loading={loading} />
                 <RequestTable
-                    requests={filteredRequests}
+                    requests={paginatedRequests}
+                    loading={loading}
                     onView={setViewRequest}
                     onApprove={handleApproveClick}
                     onReject={setRejectingRequestId}
                 />
+
+                {/* Pagination Controls */}
+                <div className={styles.filterBar} style={{ display: 'flex', alignItems: 'center', marginTop: '20px', justifyContent: 'center' }}>
+                    <button 
+                        disabled={!hasPrevPage} 
+                        onClick={() => goToPage(page - 1)}
+                        className={styles.iconBtn}
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
+                    <span style={{ padding: '0 20px' }}>Page {page} of {pages}</span>
+                    <button 
+                        disabled={!hasNextPage} 
+                        onClick={() => goToPage(page + 1)}
+                        className={styles.iconBtn}
+                    >
+                        <ChevronRight size={20} />
+                    </button>
+                </div>
 
                 <ViewRequestModal
                     request={viewRequest}

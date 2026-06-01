@@ -32,7 +32,7 @@ const AssignCollectorModal = ({
                     <option value="">-- Select Driver --</option>
                     {collectors.filter((collector) => collector.status === 'Active').map((collector) => (
                         <option key={collector._id} value={collector._id}>
-                            {`${collector.firstName} ${collector.lastName}`} ({collector.vehiclePlate})
+                            {`${collector.firstName} ${collector.lastName}`} ({collector.vehicleType} - {collector.vehiclePlate})
                         </option>
                     ))}
                 </select>

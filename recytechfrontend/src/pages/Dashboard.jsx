@@ -7,6 +7,8 @@ import PredictiveInsights from '../features/dashboard/PredictiveInsights';
 import RecentRequestsTable from '../features/dashboard/RecentRequestsTable';
 import SchedulingPanel from '../features/scheduling/SchedulingPanel';
 import styles from '../styles/Dashboard.module.css';
+import { MetricSkeleton } from '../components/Skeleton';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 const Dashboard = () => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
@@ -25,11 +27,13 @@ const Dashboard = () => {
     const [monthlyData, setMonthlyData] = useState([]);
     const [recentActivity, setRecentActivity] = useState([]);
     const [predictiveInsights, setPredictiveInsights] = useState({});
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchStats = async () => {
+            setLoading(true);
             try {
-                const { data } = await api.get('/analytics/dashboard');
+                const { data } = await api.get(`/analytics/dashboard?role=${userInfo.role}`);
                 const requestStats = data.summary?.requests || {};
                 const payoutStats = data.summary?.payouts || {};
                 const residentStats = data.summary?.residents || {};
@@ -49,6 +53,8 @@ const Dashboard = () => {
                 setPredictiveInsights(data.predictiveAnalytics || {});
             } catch (error) {
                 console.error('Error fetching stats', error);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -65,11 +71,30 @@ const Dashboard = () => {
                     <p className={styles.subTitle}>Welcome back, {firstName}. Here is your operational overview.</p>
                 </div>
 
-                <EWasteMetrics stats={stats} monthlyData={monthlyData} />
-                <PredictiveInsights predictiveInsights={predictiveInsights} />
-                <SchedulingPanel />
-                <DistributionCharts categoryData={categoryData} roleData={roleData} />
-                <RecentRequestsTable requests={recentActivity} />
+                {loading ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+                        <MetricSkeleton />
+                        <MetricSkeleton />
+                        <MetricSkeleton />
+                        <MetricSkeleton />
+                    </div>
+                ) : (
+                    <ErrorBoundary>
+                        <EWasteMetrics stats={stats} monthlyData={monthlyData} />
+                    </ErrorBoundary>
+                )}
+                <ErrorBoundary>
+                    <PredictiveInsights predictiveInsights={predictiveInsights} />
+                </ErrorBoundary>
+                <ErrorBoundary>
+                    <SchedulingPanel />
+                </ErrorBoundary>
+                <ErrorBoundary>
+                    <DistributionCharts categoryData={categoryData} roleData={roleData} />
+                </ErrorBoundary>
+                <ErrorBoundary>
+                    <RecentRequestsTable requests={recentActivity} />
+                </ErrorBoundary>
             </div>
         </div>
     );

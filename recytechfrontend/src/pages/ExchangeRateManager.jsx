@@ -5,23 +5,28 @@ import styles from '../styles/EducationManager.module.css'; // Reusing layout st
 import { Plus, Edit2, RefreshCw, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useExchangeRates } from '../features/exchange-rates/useExchangeRates';
 import ExchangeRateFormModal from '../features/exchange-rates/ExchangeRateFormModal';
+import { useToast } from '../context/ToastContext';
+import Skeleton from '../components/Skeleton';
 
 const ExchangeRateManager = () => {
     const { rates, loading, fetchRates } = useExchangeRates();
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({ wasteType: '', ratePerItem: 0, description: '', isActive: true });
+    const { showToast } = useToast();
 
     const handleSubmit = async (submittedData) => {
         try {
             if (editingId) {
                 await api.put(`/exchange-rates/${editingId}`, submittedData);
+                showToast('Exchange rate updated successfully.', 'success');
             } else {
                 await api.post('/exchange-rates', submittedData);
+                showToast('Exchange rate added successfully.', 'success');
             }
             setShowModal(false);
             fetchRates();
-        } catch (error) { alert(error.response?.data?.message || 'Error saving rate'); }
+        } catch (error) { showToast(error.response?.data?.message || 'Error saving rate', 'error'); }
     };
 
     const handleDelete = async (rate) => {
@@ -29,17 +34,19 @@ const ExchangeRateManager = () => {
 
         try {
             await api.delete(`/exchange-rates/${rate._id}`);
+            showToast('Exchange rate deleted successfully.', 'success');
             fetchRates();
         } catch (error) {
-            alert(error.response?.data?.message || 'Error deleting rate');
+            showToast(error.response?.data?.message || 'Error deleting rate', 'error');
         }
     };
 
     const toggleStatus = async (rate) => {
         try {
             await api.put(`/exchange-rates/${rate._id}`, { isActive: !rate.isActive });
+            showToast(`Exchange rate ${rate.isActive ? 'deactivated' : 'activated'} successfully.`, 'success');
             fetchRates();
-        } catch (error) { console.error(error); }
+        } catch (error) { showToast(error.response?.data?.message || 'Error toggling rate status', 'error'); }
     };
 
     return (
@@ -57,7 +64,25 @@ const ExchangeRateManager = () => {
                 </div>
 
                 {loading ? (
-                    <div className={styles.loadingState}><RefreshCw className={styles.spinner} /> Loading rates...</div>
+                    <div className={styles.grid}>
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div key={`skeleton-${i}`} className={styles.contentCard} style={{ borderLeft: '4px solid #e5e7eb' }}>
+                                <div className={styles.cardBody}>
+                                    <div className={styles.cardHeader}>
+                                        <Skeleton width="60px" height="24px" borderRadius="12px" />
+                                        <div className={styles.actions}>
+                                            <Skeleton width="28px" height="28px" borderRadius="4px" />
+                                            <Skeleton width="28px" height="28px" borderRadius="4px" />
+                                            <Skeleton width="28px" height="28px" borderRadius="4px" />
+                                        </div>
+                                    </div>
+                                    <Skeleton width="150px" height="24px" style={{ marginTop: '12px', marginBottom: '8px' }} />
+                                    <Skeleton width="180px" height="32px" style={{ marginBottom: '16px' }} />
+                                    <Skeleton width="80%" height="16px" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 ) : (
                     <div className={styles.grid}>
                         {rates.map((rate) => (

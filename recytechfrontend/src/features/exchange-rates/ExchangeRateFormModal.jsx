@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Save, X } from 'lucide-react';
+import { Save } from 'lucide-react';
 import styles from '../../styles/EducationManager.module.css'; // Reusing layout styles
+import Modal from '../../components/Modal';
 
 const ExchangeRateFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit }) => {
     const [formData, setFormData] = useState(initialData);
@@ -27,12 +28,7 @@ const ExchangeRateFormModal = ({ isOpen, isEditing, initialData, onClose, onSubm
     };
 
     return (
-        <div className={styles.modalOverlay}>
-            <div className={styles.modalContent}>
-                <div className={styles.modalHeader}>
-                    <h2>{isEditing ? 'Edit Rate' : 'New Exchange Rate'}</h2>
-                    <button onClick={onClose} className={styles.closeBtn}><X size={20}/></button>
-                </div>
+        <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Rate' : 'New Exchange Rate'} maxWidth="450px">
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.formGroup}>
                         <label>Waste Type</label>
@@ -51,8 +47,7 @@ const ExchangeRateFormModal = ({ isOpen, isEditing, initialData, onClose, onSubm
                         <button type="submit" className={styles.submitBtn}><Save size={16} /> Save Rate</button>
                     </div>
                 </form>
-            </div>
-        </div>
+        </Modal>
     );
 };
 

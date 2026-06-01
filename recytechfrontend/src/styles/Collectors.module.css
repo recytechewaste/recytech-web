@@ -233,40 +233,6 @@
 }
 .iconBtnDanger:hover { background: #fef2f2; }
 
-/* MODAL */
-.modalOverlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex; justify-content: center; align-items: center;
-    z-index: 50;
-    backdrop-filter: blur(2px);
-}
-
-.modalContent {
-    background: white;
-    padding: 24px;
-    border-radius: 12px;
-    width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-}
-
-.modalHeader {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 24px; border-bottom: 1px solid #e5e7eb; padding-bottom: 16px;
-}
-.modalHeader h2 { 
-    margin: 0; 
-    font-size: 18px; 
-    color: #0f766e;
-    font-weight: 700;
-}
-
-.closeBtn { border: none; background: none; cursor: pointer; color: #6b7280; }
-
 .formGroup { margin-bottom: 16px; }
 .formGroup label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; color: #374151; }
 

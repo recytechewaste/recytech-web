@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, X, Upload } from 'lucide-react';
 import styles from '../../styles/EducationManager.module.css';
+import Modal from '../../components/Modal';
 
 const CATEGORIES = ["Sustainability", "E-Waste Disposal", "Environmental Impact", "Regulations"];
 
@@ -37,12 +38,7 @@ const EducationFormModal = ({ isOpen, isEditing, initialData, initialImage, onCl
     };
 
     return (
-        <div className={styles.modalOverlay} onClick={onClose}>
-            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-                <div className={styles.modalHeader}>
-                    <h2>{isEditing ? 'Edit Content' : 'New Educational Material'}</h2>
-                    <button onClick={onClose} className={styles.closeBtn}><X size={20}/></button>
-                </div>
+        <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Content' : 'New Educational Material'} maxWidth="600px">
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.formGroup}>
                         <label>Title</label>
@@ -93,8 +89,7 @@ const EducationFormModal = ({ isOpen, isEditing, initialData, initialImage, onCl
                         <button type="submit" className={styles.submitBtn}><Save size={16} /> Save Changes</button>
                     </div>
                 </form>
-            </div>
-        </div>
+        </Modal>
     );
 };
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/client';
+import { usePagination } from '../../hooks/usePagination';
 
 const calculateStats = (requests) => ({
     total: requests.length,
@@ -37,6 +38,7 @@ export const useRequests = () => {
     const [filteredRequests, setFilteredRequests] = useState([]);
     const [collectors, setCollectors] = useState([]);
     const [wasteCategories, setWasteCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, completed: 0 });
     const [filters, setFilters] = useState({
         status: '',
@@ -44,7 +46,10 @@ export const useRequests = () => {
         assignment: ''
     });
 
+    const { page, limit, pages, total, goToPage, updatePaginationInfo, hasNextPage, hasPrevPage } = usePagination(1, 10);
+
     const fetchData = async () => {
+        setLoading(true);
         try {
             const [reqData, colData, rateData] = await Promise.all([
                 api.get('/requests'),
@@ -59,6 +64,8 @@ export const useRequests = () => {
             setStats(calculateStats(reqData.data));
         } catch (error) {
             console.error('Error fetching requests data', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -70,14 +77,24 @@ export const useRequests = () => {
         setFilteredRequests(filterRequests(requests, filters));
     }, [filters, requests]);
 
+    useEffect(() => {
+        updatePaginationInfo({
+            total: filteredRequests.length,
+            pages: Math.ceil(filteredRequests.length / limit) || 1
+        });
+    }, [filteredRequests.length, limit, updatePaginationInfo]);
+
+    const paginatedRequests = filteredRequests.slice((page - 1) * limit, page * limit);
+
     const handleClearFilters = () => {
         setFilters({ status: '', wasteType: '', assignment: '' });
     };
 
     return {
-        requests, filteredRequests,
+        requests, filteredRequests, paginatedRequests, loading,
         collectors, wasteCategories,
         stats, filters, setFilters,
-        handleClearFilters, fetchData
+        handleClearFilters, fetchData,
+        page, limit, pages, total, goToPage, hasNextPage, hasPrevPage
     };
 };

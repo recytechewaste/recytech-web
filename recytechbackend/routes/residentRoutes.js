@@ -3,7 +3,7 @@ const router = express.Router();
 const { protect, admin } = require('../middleware/authMiddleware');
 const {
     getResidents,
-    createTempResident,
+    createResident,
     getResidentById,
     updateResident,
     deleteResident,
@@ -15,10 +15,10 @@ const {
 // @access  Admin only
 router.get('/', protect, admin, getResidents);
 
-// @desc    Create or reuse a temporary resident profile for mobile simulation
-// @route   POST /api/residents/temp
+// @desc    Create a new resident
+// @route   POST /api/residents
 // @access  Admin only
-router.post('/temp', protect, admin, createTempResident);
+router.post('/', protect, admin, createResident);
 
 // @desc    Search residents by email or name
 // @route   GET /api/residents/search

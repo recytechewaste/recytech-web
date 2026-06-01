@@ -16,7 +16,6 @@ const {
 router.post('/login', [
     body('email').isEmail().withMessage('Please provide a valid email'),
     body('password').notEmpty().withMessage('Password is required'),
-    body('role').notEmpty().withMessage('Role is required'),
     validateRequest
 ], loginUser);
 
@@ -26,7 +25,9 @@ router.post('/register', [
     body('firstName').notEmpty().withMessage('First name is required'),
     body('lastName').notEmpty().withMessage('Last name is required'),
     body('email').isEmail().withMessage('Please provide a valid email'),
-    body('password').isLength({ min: AUTH_CONSTANTS.MIN_PASSWORD_LENGTH }).withMessage(`Password must be at least ${AUTH_CONSTANTS.MIN_PASSWORD_LENGTH} characters`),
+    body('password')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/)
+        .withMessage('Password must be at least 8 characters, including upper, lower, number, and special character'),
     validateRequest
 ], registerUser);
 
@@ -49,7 +50,9 @@ router.post('/verify-pin', [
 // @route   POST /api/auth/reset-password
 router.post('/reset-password', [
     body('email').isEmail().withMessage('Please provide a valid email'),
-    body('newPassword').isLength({ min: AUTH_CONSTANTS.MIN_PASSWORD_LENGTH }).withMessage(`Password must be at least ${AUTH_CONSTANTS.MIN_PASSWORD_LENGTH} characters`),
+    body('newPassword')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/)
+        .withMessage('Password must be at least 8 characters, including upper, lower, number, and special character'),
     body('confirmPassword').notEmpty().withMessage('Please confirm your password'),
     body('resetToken').notEmpty().withMessage('Reset token is required'),
     validateRequest

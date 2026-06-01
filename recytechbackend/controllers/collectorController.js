@@ -2,10 +2,21 @@ const Collector = require('../models/Collector');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { sendWelcomeEmail } = require('../services/emailService');
 
 const getCollectors = asyncHandler(async (req, res) => {
-    const collectors = await Collector.find();
-    res.json(collectors);
+    const collectors = await Collector.find().populate('user', 'email');
+    
+    // Flatten the email so the frontend can easily read it directly on the collector object
+    const formattedCollectors = collectors.map(collector => {
+        const colObj = collector.toObject();
+        return {
+            ...colObj,
+            email: colObj.user?.email || ''
+        };
+    });
+    
+    res.json(formattedCollectors);
 });
 
 const createCollector = asyncHandler(async (req, res) => {
@@ -41,16 +52,23 @@ const createCollector = asyncHandler(async (req, res) => {
         vehicleType,
         status: status || 'Active'
     });
+
+    try {
+        await sendWelcomeEmail(email, firstName, 'Collector');
+    } catch (err) {
+        console.error('Failed to send welcome email to collector:', err);
+    }
+
     res.status(201).json(newCollector);
 });
 
 const updateCollector = asyncHandler(async (req, res) => {
-    const { firstName, lastName, status } = req.body;
+    const { firstName, lastName, status, phone, vehiclePlate, vehicleType } = req.body;
 
     // 1. Update the collector document
     const updatedCollector = await Collector.findByIdAndUpdate(
         req.params.id,
-        req.body,
+        { firstName, lastName, status, phone, vehiclePlate, vehicleType },
         { new: true }
     );
 
@@ -74,11 +92,12 @@ const deleteCollector = asyncHandler(async (req, res) => {
     // Find collector to get the associated user ID before deletion
     const collector = await Collector.findById(req.params.id);
     if (collector) {
-        // Remove associated login account
-        await User.findByIdAndDelete(collector.user);
-        // Remove the collector profile
-        await collector.deleteOne();
-        res.json({ message: 'Collector removed' });
+        // Soft Delete: Mark the login account as inactive so they cannot log in
+        await User.findByIdAndUpdate(collector.user, { status: 'Inactive' });
+        // Soft Delete: Mark the collector profile as inactive so they don't appear in new assignments
+        collector.status = 'Inactive';
+        await collector.save();
+        res.json({ message: 'Collector disabled successfully. Historical records have been preserved.' });
     } else {
         res.status(404);
         throw new Error('Collector not found');

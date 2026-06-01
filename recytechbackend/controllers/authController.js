@@ -5,18 +5,22 @@ const { AUTH_CONSTANTS } = require('../config/constants');
 const { sendPinEmail } = require('../services/emailService');
 const { asyncHandler } = require('../utils/asyncHandler');
 
-const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: AUTH_CONSTANTS.JWT_EXPIRES_IN });
+const generateToken = (res, id) => {
+    const token = jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: AUTH_CONSTANTS.JWT_EXPIRES_IN });
+    res.cookie('jwt', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development', // Uses HTTPS in production
+        sameSite: 'strict', // Prevents CSRF attacks
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days in milliseconds
+    });
+};
 const generatePin = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 const loginUser = asyncHandler(async (req, res) => {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
     const user = await User.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.password))) {
-        if (user.role !== role) {
-            res.status(403);
-            throw new Error(`Access denied. Your account is registered as ${user.role}, not ${role}.`);
-        }
         if (user.status === 'Inactive') {
             res.status(403);
             throw new Error('Account is deactivated. Please contact your Super Admin.');
@@ -24,7 +28,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
         user.lastLogin = new Date();
         await user.save();
-        res.json({ _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role, token: generateToken(user._id) });
+        generateToken(res, user._id);
+        res.json({ _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role });
     } else {
         res.status(401);
         throw new Error('Invalid email or password');
@@ -32,7 +37,7 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { firstName, lastName, email, password, role } = req.body;
+    const { firstName, lastName, email, password } = req.body;
     const userExists = await User.findOne({ email });
 
     if (userExists) {
@@ -42,14 +47,30 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    const user = await User.create({ firstName, lastName, email, password: hashedPassword, role: role || 'Staff', status: 'Active' });
+    const user = await User.create({ 
+        firstName, 
+        lastName, 
+        email, 
+        password: hashedPassword, 
+        role: 'Staff', // Hardcoded to prevent privilege escalation 
+        status: 'Inactive' // Capstone workaround: Forces admin approval before login
+    });
 
     if (user) {
-        res.status(201).json({ _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role, token: generateToken(user._id) });
+        // Do not generate a token so they aren't automatically logged in
+        res.status(201).json({ message: 'Registration successful! Your account is pending administrator approval before you can log in.' });
     } else {
         res.status(400);
         throw new Error('Invalid user data');
     }
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+    res.cookie('jwt', '', {
+        httpOnly: true,
+        expires: new Date(0)
+    });
+    res.status(200).json({ message: 'Logged out successfully' });
 });
 
 const forgotPassword = asyncHandler(async (req, res) => {
@@ -130,4 +151,4 @@ const resetPassword = asyncHandler(async (req, res) => {
     res.json({ message: 'Password has been reset successfully. You can now login with your new password.' });
 });
 
-module.exports = { loginUser, registerUser, forgotPassword, verifyPin, resetPassword };
+module.exports = { loginUser, registerUser, logoutUser, forgotPassword, verifyPin, resetPassword };

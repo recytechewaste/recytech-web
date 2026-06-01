@@ -46,11 +46,14 @@ const UserFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit }) =>
 
         if (!isEditing && !formData.password) {
             newErrors.password = 'Password is required';
-        } else if (formData.password && formData.password.length < 6) {
-            newErrors.password = 'Password must be at least 6 characters';
+        } else if (formData.password) {
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+            if (!passwordRegex.test(formData.password)) {
+                newErrors.password = 'Must be at least 8 chars, including upper, lower, number, and special char.';
+            }
         }
 
-        if (formData.password !== formData.confirmPassword) {
+        if (formData.password && formData.password !== formData.confirmPassword) {
             newErrors.confirmPassword = 'Passwords do not match';
         }
 
@@ -59,15 +62,24 @@ const UserFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit }) =>
     };
 
     const handleInputChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-        if (errors[e.target.name]) {
-            setErrors({ ...errors, [e.target.name]: '' });
+        const { name, value } = e.target;
+        let finalValue = value;
+        
+        if (name === 'firstName' || name === 'lastName') {
+            finalValue = value.replace(/\d/g, ''); // Instantly strip out digits
+        }
+        
+        setFormData({ ...formData, [name]: finalValue });
+        if (errors[name]) {
+            setErrors({ ...errors, [name]: '' });
         }
     };
 
     const handleGeneratePassword = () => {
         const newPass = generateStrongPassword();
         setFormData({ ...formData, password: newPass, confirmPassword: newPass });
+        setShowPassword(true);
+        setShowConfirmPassword(true);
         setErrors({ ...errors, password: '', confirmPassword: '' });
     };
 
@@ -95,17 +107,17 @@ const UserFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit }) =>
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.formGroup}>
                         <label>First Name</label>
-                        <input name="firstName" value={formData.firstName} onChange={handleInputChange} className={`${styles.input} ${errors.firstName ? styles.inputError : ''}`} />
+                        <input name="firstName" placeholder="e.g., Juan" value={formData.firstName} onChange={handleInputChange} className={`${styles.input} ${errors.firstName ? styles.inputError : ''}`} />
                         {errors.firstName && <span className={styles.error}>{errors.firstName}</span>}
                     </div>
                     <div className={styles.formGroup}>
                         <label>Last Name</label>
-                        <input name="lastName" value={formData.lastName} onChange={handleInputChange} className={`${styles.input} ${errors.lastName ? styles.inputError : ''}`} />
+                        <input name="lastName" placeholder="e.g., Dela Cruz" value={formData.lastName} onChange={handleInputChange} className={`${styles.input} ${errors.lastName ? styles.inputError : ''}`} />
                         {errors.lastName && <span className={styles.error}>{errors.lastName}</span>}
                     </div>
                     <div className={styles.formGroup}>
                         <label>Email Address</label>
-                        <input name="email" type="email" value={formData.email} onChange={handleInputChange} className={`${styles.input} ${errors.email ? styles.inputError : ''}`} />
+                        <input name="email" type="email" placeholder="e.g., user@recytech.com" value={formData.email} onChange={handleInputChange} className={`${styles.input} ${errors.email ? styles.inputError : ''}`} disabled={isEditing} />
                         {errors.email && <span className={styles.error}>{errors.email}</span>}
                     </div>
                     <div className={styles.formGroup}>
@@ -123,30 +135,36 @@ const UserFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit }) =>
                             <option value="Inactive">Inactive</option>
                         </select>
                     </div>
+                    {!isEditing && (
+                    <>
                     <div className={styles.formGroup}>
-                        <div className={styles.passwordHeader} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px'}}>
-                            <label>Password {isEditing && <span style={{fontSize:'10px', color:'#666'}}>(Leave blank to keep current)</span>}</label>
-                            {!isEditing && (
-                                <button type="button" onClick={handleGeneratePassword} style={{fontSize: '11px', background: '#f3f4f6', border: '1px solid #d1d5db', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer'}}>Generate Password</button>
-                            )}
+                        <div className={styles.passwordHeader}>
+                            <label>Password <span style={{color: '#ef4444'}}>*</span></label>
+                            <button type="button" onClick={handleGeneratePassword} className={styles.generateBtn}>Generate Password</button>
                         </div>
-                        <div style={{position: 'relative'}}>
-                            <input name="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleInputChange} className={`${styles.input} ${errors.password ? styles.inputError : ''}`} />
-                            <div style={{position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: '8px'}}>
-                                {formData.password && !isEditing && <button type="button" onClick={copyToClipboard} style={{background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280'}}>{copied ? <Check size={16} color="#059669" /> : <Copy size={16} />}</button>}
-                                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280'}}>{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
-                            </div>
+                        <div className={styles.passwordWrapper}>
+                            <input name="password" type={showPassword ? "text" : "password"} placeholder="Login password" value={formData.password || ''} onChange={handleInputChange} className={`${styles.input} ${errors.password ? styles.inputError : ''}`} style={{ width: '100%', paddingRight: '65px' }} />
+                            <button type="button" onClick={copyToClipboard} className={styles.copyBtn} title="Copy to clipboard">
+                                {copied ? <Check size={16} color="#059669" /> : <Copy size={16} />}
+                            </button>
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className={styles.eyeBtn}>
+                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
                         </div>
                         {errors.password && <span className={styles.error}>{errors.password}</span>}
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Confirm Password</label>
-                        <div style={{position: 'relative'}}>
-                            <input name="confirmPassword" type={showConfirmPassword ? "text" : "password"} value={formData.confirmPassword} onChange={handleInputChange} className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ''}`} />
-                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280'}}>{showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                        <label>Confirm Password <span style={{color: '#ef4444'}}>*</span></label>
+                        <div className={styles.passwordWrapper}>
+                            <input name="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="Re-enter password" value={formData.confirmPassword || ''} onChange={handleInputChange} className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ''}`} style={{ width: '100%', paddingRight: '40px' }} />
+                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className={styles.eyeBtn}>
+                                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
                         </div>
                         {errors.confirmPassword && <span className={styles.error}>{errors.confirmPassword}</span>}
                     </div>
+                    </>
+                    )}
                     <div className={styles.modalFooter}>
                         <button type="button" onClick={onClose} className={styles.cancelBtn}>Cancel</button>
                         <button type="submit" className={styles.submitBtn}><Save size={16} style={{marginRight:'6px'}}/> Save User</button>

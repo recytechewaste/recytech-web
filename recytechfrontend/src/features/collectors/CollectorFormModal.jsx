@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Save, X, Copy, Check, Eye, EyeOff } from 'lucide-react';
+import { Copy, Check, Eye, EyeOff } from 'lucide-react';
 import styles from '../../styles/Collectors.module.css';
+import Modal from '../../components/Modal';
 
 const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit }) => {
     const [formData, setFormData] = useState(initialData);
     const [errors, setErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        setFormData(initialData);
+        setFormData({ ...initialData, confirmPassword: '' });
         setErrors({});
         setShowPassword(false);
+        setShowConfirmPassword(false);
         setCopied(false);
     }, [initialData, isOpen]);
 
@@ -37,9 +40,8 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
         if (!formData.phone.trim()) {
             newErrors.phone = 'Phone number is required.';
         } else {
-            const phoneDigits = formData.phone.replace(/\D/g, '');
-            if (phoneDigits.length < 10 || phoneDigits.length > 15) {
-                newErrors.phone = 'Enter valid phone (10-15 digits).';
+            if (formData.phone.length !== 11) {
+                newErrors.phone = 'Phone number must be exactly 11 digits.';
             }
         }
         if (!formData.vehiclePlate.trim()) newErrors.vehiclePlate = 'Vehicle plate is required.';
@@ -49,8 +51,14 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
             if (!formData.email?.trim()) newErrors.email = 'Email is required for login.';
             if (!formData.password?.trim()) {
                 newErrors.password = 'Password is required for login.';
-            } else if (formData.password.length < 8) {
-                newErrors.password = 'Password must be at least 8 characters.';
+            } else {
+                const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+                if (!passwordRegex.test(formData.password)) {
+                    newErrors.password = 'Must be at least 8 chars, including upper, lower, number, and special char.';
+                }
+            }
+            if (formData.password && formData.password !== formData.confirmPassword) {
+                newErrors.confirmPassword = 'Passwords do not match.';
             }
         }
 
@@ -60,8 +68,11 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
 
     const handleGeneratePassword = () => {
         const newPass = generateStrongPassword();
-        setFormData(prev => ({ ...prev, password: newPass }));
-        setErrors(prev => ({ ...prev, password: '' }));
+        setFormData(prev => ({ ...prev, password: newPass, confirmPassword: newPass }));
+        setShowPassword(true);
+        setShowConfirmPassword(true);
+        if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+        if (errors.confirmPassword) setErrors(prev => ({ ...prev, confirmPassword: '' }));
     };
 
     const copyToClipboard = () => {
@@ -72,7 +83,17 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
     };
 
     const handleChange = (e) => {
-        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        let finalValue = value;
+        
+        if (name === 'phone') {
+            finalValue = value.replace(/\D/g, '').slice(0, 11);
+        } else if (name === 'firstName' || name === 'lastName') {
+            finalValue = value.replace(/\d/g, ''); // Instantly strip out digits
+        }
+        
+        setFormData(prev => ({ ...prev, [name]: finalValue }));
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
     };
 
     const handleSubmit = (e) => {
@@ -83,12 +104,7 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
     };
 
     return (
-        <div className={styles.modalOverlay}>
-            <div className={styles.modalContent}>
-                <div className={styles.modalHeader}>
-                    <h2>{isEditing ? 'Edit Collector' : 'Add New Collector'}</h2>
-                    <button onClick={onClose} className={styles.closeBtn}><X size={20}/></button>
-                </div>
+        <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Collector' : 'Add New Collector'} maxWidth="600px">
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.formGroup}>
                         <label>First Name</label>
@@ -117,53 +133,71 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
                         <input 
                             name="email" 
                             type="email"
-                            value={formData.email} 
+                            value={formData.email || ''} 
                             onChange={handleChange} 
                             className={errors.email ? styles.inputError : styles.input}
                             placeholder="e.g. driver@recytech.com"
-                            disabled={!!isEditing}
+                            disabled={isEditing}
                         />
                         {errors.email && <span className={styles.error}>{errors.email}</span>}
                     </div>
                     {!isEditing && (
+                    <>
                     <div className={styles.formGroup}>
                         <div className={styles.passwordHeader}>
                             <label>Password <span style={{color:'red'}}>*</span></label>
                             <button type="button" className={styles.generateBtn} onClick={handleGeneratePassword}>
-                                Generate Strong Password
+                                Generate Password
                             </button>
                         </div>
                         <div className={styles.passwordWrapper}>
                             <input 
                                 name="password" 
                                 type={showPassword ? "text" : "password"}
-                                value={formData.password} 
+                                value={formData.password || ''} 
                                 onChange={handleChange} 
                                 className={errors.password ? styles.inputError : styles.input}
                                 placeholder="Login password"
                                 style={{paddingRight: '65px'}}
                             />
-                            {formData.password && (
-                                <button type="button" className={styles.copyBtn} onClick={copyToClipboard} title="Copy to clipboard">
-                                    {copied ? <Check size={16} color="#059669" /> : <Copy size={16} />}
-                                </button>
-                            )}
+                            <button type="button" className={styles.copyBtn} onClick={copyToClipboard} title="Copy to clipboard">
+                                {copied ? <Check size={16} color="#059669" /> : <Copy size={16} />}
+                            </button>
                             <button type="button" className={styles.eyeBtn} onClick={() => setShowPassword(!showPassword)}>
                                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                         </div>
                         {errors.password && <span className={styles.error}>{errors.password}</span>}
                     </div>
+                    <div className={styles.formGroup}>
+                        <label>Confirm Password <span style={{color:'red'}}>*</span></label>
+                        <div className={styles.passwordWrapper}>
+                            <input 
+                                name="confirmPassword" 
+                                type={showConfirmPassword ? "text" : "password"}
+                                value={formData.confirmPassword || ''} 
+                                onChange={handleChange} 
+                                className={errors.confirmPassword ? styles.inputError : styles.input}
+                                placeholder="Re-enter password"
+                                style={{paddingRight: '40px'}}
+                            />
+                            <button type="button" className={styles.eyeBtn} onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                        </div>
+                        {errors.confirmPassword && <span className={styles.error}>{errors.confirmPassword}</span>}
+                    </div>
+                    </>
                     )}
                     <div className={styles.formGroup}>
                         <label>Phone Number</label>
-                        <input name="phone" value={formData.phone} onChange={handleChange} className={errors.phone ? styles.inputError : styles.input} placeholder="e.g. 09123456789" />
+                        <input name="phone" maxLength="11" value={formData.phone} onChange={handleChange} className={errors.phone ? styles.inputError : styles.input} placeholder="e.g. 09123456789" />
                         {errors.phone && <span className={styles.error}>{errors.phone}</span>}
                     </div>
                     <div className={styles.formGroup}>
                         <label>Vehicle Type</label>
                         <select name="vehicleType" value={formData.vehicleType} onChange={handleChange} className={errors.vehicleType ? styles.inputError : styles.input}>
-                            <option value="">Select Type</option><option value="E-Trike">E-Trike</option><option value="Truck">Truck</option><option value="Bike">Bike</option>
+                            <option value="">Select Type</option><option value="Motorcycle">Motorcycle</option><option value="Van">Van</option><option value="Truck">Truck</option>
                         </select>
                         {errors.vehicleType && <span className={styles.error}>{errors.vehicleType}</span>}
                     </div>
@@ -183,8 +217,7 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
                         <button type="submit" className={styles.submitBtn} style={{backgroundColor: '#2563EB'}}>{isEditing ? 'Save Changes' : 'Create Collector'}</button>
                     </div>
                 </form>
-            </div>
-        </div>
+        </Modal>
     );
 };
 

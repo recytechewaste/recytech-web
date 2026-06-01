@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { sendWelcomeEmail, sendAccountApprovedEmail } = require('../services/emailService');
 
 const getUsers = asyncHandler(async (req, res) => {
     const { includeCollectors } = req.query;
@@ -54,6 +55,13 @@ const createUser = asyncHandler(async (req, res) => {
     });
 
     if (user) {
+        try {
+            // Send the welcome email with instructions to use the Forgot Password flow
+            await sendWelcomeEmail(email, firstName, role);
+        } catch (err) {
+            console.error('Failed to send welcome email:', err);
+        }
+
         res.status(201).json({
             _id: user._id,
             firstName: user.firstName,
@@ -69,30 +77,29 @@ const createUser = asyncHandler(async (req, res) => {
 });
 
 const updateUser = asyncHandler(async (req, res) => {
-    const { firstName, lastName, email, password, role, status } = req.body;
+    const { firstName, lastName, role, status } = req.body;
     const user = await User.findById(req.params.id);
 
     if (user) {
-        if (email && email !== user.email) {
-            const emailExists = await User.findOne({ email });
-            if (emailExists && emailExists._id.toString() !== req.params.id) {
-                res.status(400);
-                throw new Error('Email already in use by another user');
-            }
-        }
+        const wasInactive = user.status === 'Inactive';
+        const isNowActive = status === 'Active';
 
         user.firstName = firstName || user.firstName;
         user.lastName = lastName || user.lastName;
-        user.email = email || user.email;
         user.role = role || user.role;
         user.status = status || user.status;
 
-        if (password) {
-            const salt = await bcrypt.genSalt(10);
-            user.password = await bcrypt.hash(password, salt);
+        const updatedUser = await user.save();
+
+        // If the admin just approved an inactive account, send them the good news!
+        if (wasInactive && isNowActive) {
+            try {
+                await sendAccountApprovedEmail(updatedUser.email, updatedUser.firstName);
+            } catch (err) {
+                console.error('Failed to send account approval email:', err);
+            }
         }
 
-        const updatedUser = await user.save();
         res.status(200).json({
             _id: updatedUser._id,
             firstName: updatedUser.firstName,
@@ -108,6 +115,12 @@ const updateUser = asyncHandler(async (req, res) => {
 });
 
 const deleteUser = asyncHandler(async (req, res) => {
+    // Prevent users from deleting themselves
+    if (req.params.id === req.user._id.toString()) {
+        res.status(400);
+        throw new Error('You cannot delete your own currently logged-in account.');
+    }
+
     const user = await User.findById(req.params.id);
     if (!user) {
         res.status(404);

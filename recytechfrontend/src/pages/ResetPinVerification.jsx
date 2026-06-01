@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Recycle, Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import api from '../api/client';
 import styles from '../styles/ForgotPassword.module.css';
+import logo from '../assets/recytech_logo.png';
 
 const ResetPinVerification = () => {
     const navigate = useNavigate();
@@ -70,9 +71,11 @@ const ResetPinVerification = () => {
         <div className={styles.pageContainer}>
             <div className={styles.topBar}>
                 <div className={styles.logoContainer}>
-                    <div className={styles.logoIcon}><Recycle size={20} color="white" /></div>
+                    <div className={styles.logoIcon} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+                        <img src={logo} alt="RecyTech Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+                    </div>
                     <span className={styles.logoText}>
-                        RecyTech <span style={{ fontWeight: '400', opacity: '0.9' }}>Admin Portal</span>
+                        RecyTech<span style={{ fontWeight: '400', opacity: '0.9' }}>: E-waste Management System</span>
                     </span>
                 </div>
             </div>

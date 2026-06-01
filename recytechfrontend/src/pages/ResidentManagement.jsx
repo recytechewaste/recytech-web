@@ -5,13 +5,15 @@ import ResidentTable from '../features/residents/ResidentTable';
 import ResidentFormModal from '../features/residents/ResidentFormModal';
 import ConfirmDeleteModal from '../features/residents/ConfirmDeleteModal';
 import styles from '../styles/UserManagement.module.css';
-import { Plus } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useResidents } from '../features/residents/useResidents';
+import { useToast } from '../context/ToastContext';
 
 const emptyForm = {
     firstName: '',
     lastName: '',
     email: '',
+    password: '',
     phone: '',
     status: 'Active'
 };
@@ -21,7 +23,8 @@ const ResidentManagement = () => {
         loading,
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
-        filteredResidents, fetchResidents
+        filteredResidents, paginatedResidents, fetchResidents,
+        page, limit, pages, goToPage, hasNextPage, hasPrevPage
     } = useResidents();
 
     const [showModal, setShowModal] = useState(false);
@@ -29,6 +32,7 @@ const ResidentManagement = () => {
     const [currentResidentId, setCurrentResidentId] = useState(null);
     const [deletingResident, setDeletingResident] = useState(null);
     const [formData, setFormData] = useState(emptyForm);
+    const { showToast } = useToast();
 
     const openAddModal = () => {
         setFormData(emptyForm);
@@ -42,6 +46,7 @@ const ResidentManagement = () => {
             firstName: resident.firstName || '',
             lastName: resident.lastName || '',
             email: resident.email || '',
+            password: '', // Keep blank during edit so it only changes if the admin types a new one
             phone: resident.phone || '',
             status: resident.status || 'Active'
         });
@@ -54,24 +59,27 @@ const ResidentManagement = () => {
         try {
             if (isEditing) {
                 await api.put(`/residents/${currentResidentId}`, submittedData);
+                showToast('Resident updated successfully.', 'success');
             } else {
                 await api.post('/residents', submittedData);
+                showToast('Resident added successfully.', 'success');
             }
 
             setShowModal(false);
             fetchResidents();
         } catch (error) {
-            alert(error.response?.data?.message || 'Unable to save resident');
+            showToast(error.response?.data?.message || 'Unable to save resident', 'error');
         }
     };
 
     const confirmDelete = async () => {
         try {
             await api.delete(`/residents/${deletingResident._id}`, { params: { hardDelete: true } });
+            showToast('Resident deleted successfully.', 'success');
             setDeletingResident(null);
             fetchResidents();
         } catch (error) {
-            alert(error.response?.data?.message || 'Unable to delete resident');
+            showToast(error.response?.data?.message || 'Unable to delete resident', 'error');
         }
     };
 
@@ -108,11 +116,30 @@ const ResidentManagement = () => {
                 </div>
 
                 <ResidentTable 
-                    residents={filteredResidents} 
+                    residents={paginatedResidents} 
                     loading={loading} 
                     onEdit={openEditModal} 
                     onDelete={setDeletingResident} 
                 />
+
+                {/* Pagination Controls */}
+                <div className={styles.filterBar} style={{ marginTop: '20px', justifyContent: 'center' }}>
+                    <button 
+                        disabled={!hasPrevPage} 
+                        onClick={() => goToPage(page - 1)}
+                        className={styles.iconBtn}
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
+                    <span style={{ padding: '0 20px' }}>Page {page} of {pages}</span>
+                    <button 
+                        disabled={!hasNextPage} 
+                        onClick={() => goToPage(page + 1)}
+                        className={styles.iconBtn}
+                    >
+                        <ChevronRight size={20} />
+                    </button>
+                </div>
 
                 <ResidentFormModal 
                     isOpen={showModal} 

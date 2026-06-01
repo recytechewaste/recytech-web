@@ -1,3 +1,4 @@
+import MapWidget from '../../components/MapWidget';
 import styles from '../../styles/RequestManagement.module.css';
 
 const getCollectorName = (collector) => collector?.firstName ? `${collector.firstName} ${collector.lastName}` : 'Unassigned';
@@ -14,38 +15,83 @@ const ViewRequestModal = ({ request, onClose, onApprove }) => {
                 </div>
 
                 <div className={styles.modalBody}>
-                    <div className={styles.detailsSection}>
-                        <img src={request.imageUrl || 'https://placehold.co/600x400'} className={styles.evidenceImage} alt="Evidence" />
-                        <div className={styles.detailRow}><strong>Resident:</strong> {request.residentName}</div>
-                        <div className={styles.detailRow}><strong>Resident Email:</strong> {request.resident?.email || request.residentEmail || 'N/A'}</div>
-                        <div className={styles.detailRow}><strong>Quantity:</strong> {request.quantity || 1} item(s)</div>
-                        <div className={styles.detailRow}><strong>Location:</strong> {request.location?.address}</div>
-                        <div className={styles.detailRow}><strong>Assigned To:</strong> {getCollectorName(request.assignedCollector)}</div>
-                        {request.assignedCollector?.firstName && (
-                            <>
-                                <div className={styles.detailRow}><strong>Collector Phone:</strong> {request.assignedCollector.phone}</div>
-                                <div className={styles.detailRow}><strong>Vehicle Type:</strong> {request.assignedCollector.vehicleType}</div>
-                                <div className={styles.detailRow}><strong>Plate Number:</strong> {request.assignedCollector.vehiclePlate}</div>
-                            </>
-                        )}
-                        <div className={styles.detailRow}><strong>Status:</strong> {request.status}</div>
-                        <div className={styles.detailRow}>
-                            <strong>Pickup Schedule:</strong> {request.scheduledAt ? new Date(request.scheduledAt).toLocaleString() : 'Not scheduled'}
+                    {/* Left Column: Visuals */}
+                    <div className={styles.visualsSection}>
+                        <div className={styles.visualBlock}>
+                            <p className={styles.sectionLabel}>Evidence Image</p>
+                            <img src={request.imageUrl || 'https://placehold.co/600x400'} className={styles.evidenceImage} alt="Evidence" />
+                        </div>
+                        <div className={styles.visualBlock}>
+                            <p className={styles.sectionLabel}>Pickup Location</p>
+                            <div className={styles.mapSection}>
+                                {request.location?.address ? (
+                                    <MapWidget address={request.location.address} />
+                                ) : (
+                                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f3f4f6', color: '#6b7280' }}>No location provided</div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                    <div className={styles.mapSection}>
-                        <iframe
-                            width="100%"
-                            height="100%"
-                            frameBorder="0"
-                            style={{ border: 0 }}
-                            src={`https://maps.google.com/maps?q=${encodeURIComponent(request.location?.address || 'Philippines')}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                            allowFullScreen
-                        />
+
+                    {/* Right Column: Information */}
+                    <div className={styles.infoSection}>
+                        <h3 className={styles.infoTitle}>Request Information</h3>
+                        <div className={styles.detailsGrid}>
+                            <div className={styles.detailCard}>
+                                <strong>Resident Name</strong>
+                                <span>{request.residentName}</span>
+                            </div>
+                            <div className={styles.detailCard}>
+                                <strong>Contact Email</strong>
+                                <span>{request.resident?.email || request.residentEmail || 'N/A'}</span>
+                            </div>
+                            <div className={styles.detailCard}>
+                                <strong>Waste Category</strong>
+                                <span>{request.wasteType}</span>
+                            </div>
+                            <div className={styles.detailCard}>
+                                <strong>Quantity</strong>
+                                <span>{request.quantity || 1} item(s)</span>
+                            </div>
+                            <div className={styles.detailCard} style={{ gridColumn: '1 / -1' }}>
+                                <strong>Full Address</strong>
+                                <span>{request.location?.address}</span>
+                            </div>
+                        </div>
+
+                        <h3 className={styles.infoTitle}>Assignment Details</h3>
+                        <div className={styles.detailsGrid}>
+                            <div className={styles.detailCard}>
+                                <strong>Status</strong>
+                                <span style={{ color: request.status === 'Completed' ? '#059669' : request.status === 'Rejected' ? '#dc2626' : '#0f766e', fontWeight: 'bold' }}>
+                                    {request.status}
+                                </span>
+                            </div>
+                            <div className={styles.detailCard}>
+                                <strong>Assigned Collector</strong>
+                                <span>{getCollectorName(request.assignedCollector)}</span>
+                            </div>
+                            <div className={styles.detailCard} style={{ gridColumn: '1 / -1' }}>
+                                <strong>Pickup Schedule</strong>
+                                <span>{request.scheduledAt ? new Date(request.scheduledAt).toLocaleString() : 'Not scheduled'}</span>
+                            </div>
+                            {request.assignedCollector?.firstName && (
+                                <>
+                                    <div className={styles.detailCard}>
+                                        <strong>Collector Phone</strong>
+                                        <span>{request.assignedCollector.phone}</span>
+                                    </div>
+                                    <div className={styles.detailCard}>
+                                        <strong>Vehicle Details</strong>
+                                        <span>{request.assignedCollector.vehicleType} - {request.assignedCollector.vehiclePlate}</span>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <div style={{ marginTop: '32px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                     {request.status === 'Pending' && (
                         <button onClick={() => onApprove(request)} className={styles.approveBtn}>Proceed to Approve</button>
                     )}

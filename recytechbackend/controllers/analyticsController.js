@@ -9,6 +9,11 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 const roundCurrency = (value = 0) => Math.round(value * 100) / 100;
 
+const getTargetYear = async () => {
+    const latest = await Request.findOne().sort({ createdAt: -1 });
+    return latest ? latest.createdAt.getFullYear() : new Date().getFullYear();
+};
+
 const getRequestSummary = async () => {
     const [statusCounts, totals, topCategory] = await Promise.all([
         Request.aggregate([
@@ -83,9 +88,9 @@ const getPayoutSummary = async () => {
 };
 
 const getMonthlyTrends = async () => {
-    const currentYear = new Date().getFullYear();
-    const start = new Date(currentYear, 0, 1);
-    const end = new Date(currentYear + 1, 0, 1);
+    const targetYear = await getTargetYear();
+    const start = new Date(targetYear, 0, 1);
+    const end = new Date(targetYear + 1, 0, 1);
 
     const [requestTrend, payoutTrend] = await Promise.all([
         Request.aggregate([
@@ -140,9 +145,9 @@ const getMonthlyTrends = async () => {
 };
 
 const getPredictiveAnalytics = async () => {
-    const currentYear = new Date().getFullYear();
-    const start = new Date(currentYear - 1, 0, 1); // Last 12 months
-    const end = new Date(currentYear + 1, 0, 1);
+    const targetYear = await getTargetYear();
+    const start = new Date(targetYear - 1, 0, 1); // Last 12 months
+    const end = new Date(targetYear + 1, 0, 1);
 
     // Get historical data for the past 12 months
     const monthlyData = await Request.aggregate([
@@ -168,6 +173,19 @@ const getPredictiveAnalytics = async () => {
         },
         { $sort: { '_id.year': 1, '_id.month': 1 } }
     ]);
+
+    // Prevent math crashes/division-by-zero if no data exists
+    if (!monthlyData || monthlyData.length === 0) {
+        return {
+            trendAnalysis: { requestSlope: 0, requestRSquared: 0, completionSlope: 0, completionRSquared: 0 },
+            seasonalAnalysis: { seasonalIndices: [], trend: [] },
+            correlation: { requestCompletionCorrelation: 0, strength: 'N/A' },
+            statisticalSummary: { mean: 0, median: 0, mode: 0, min: 0, max: 0, stdDev: 0 },
+            outliers: [],
+            predictions: [],
+            insights: { trendDirection: 'Stable', seasonalityDetected: false, outlierCount: 0, predictionConfidence: 0 }
+        };
+    }
 
     // Prepare data for analysis
     const requestData = monthlyData.map((item, index) => ({
@@ -255,9 +273,16 @@ const getCategoryDistribution = async () => {
                 completed: { $sum: { $cond: [{ $eq: ['$status', 'Completed'] }, 1, 0] } },
                 items: { $sum: { $ifNull: ['$quantity', 1] } }
             }
+        },
+        {
+            $project: {
+                _id: 0,
+                name: '$_id',
+                value: '$requests',
+                completed: 1,
+                items: 1
+            }
         }
-        // ... (rest remains unchanged)
-        // Note: keeping aggregate inline for brevity, it's identical to original
     ]);
 };
 
@@ -285,7 +310,7 @@ const getResidentSummary = async () => {
 };
 
 const getRoleDistribution = async (userRole) => {
-    if (userRole !== 'Super Admin') return [];
+    if (!['Admin', 'Super Admin'].includes(userRole)) return [];
 
     const roles = await User.aggregate([
         { $group: { _id: '$role', value: { $sum: 1 } } },
@@ -326,6 +351,9 @@ const getPayoutSummaryData = asyncHandler(async (req, res) => {
 });
 
 const getDashboardData = asyncHandler(async (req, res) => {
+    const userRole = req.user?.role || req.query.role || 'Staff';
+
+    // Perform the heavy DB queries and computations
     const [requests, payouts, residents, monthlyTrends, categoryDistribution, roleDistribution, recentRequests, predictiveAnalytics] = await Promise.all([
         getRequestSummary(),
         getPayoutSummary(),
@@ -340,14 +368,16 @@ const getDashboardData = asyncHandler(async (req, res) => {
         getPredictiveAnalytics()
     ]);
 
-    res.json({
+    const responseData = {
         summary: { requests, payouts, residents },
         monthlyTrends,
         categoryDistribution,
         roleDistribution,
         recentRequests,
         predictiveAnalytics
-    });
+    };
+
+    res.json(responseData);
 });
 
 module.exports = {

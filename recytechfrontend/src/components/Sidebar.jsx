@@ -9,7 +9,6 @@ import {
     BarChart3, 
     Settings, 
     LogOut, 
-    Recycle, 
     X,
     ClipboardList,
     BookOpen,
@@ -19,6 +18,7 @@ import {
     ChevronLeft,
     ChevronRight
 } from 'lucide-react';
+import logo from '../assets/recytech_logo.png';
 
 const Sidebar = ({ activePage }) => {
     const navigate = useNavigate();
@@ -63,7 +63,7 @@ const Sidebar = ({ activePage }) => {
         { name: 'Exchange Rates', icon: <Coins size={20} />, path: '/exchange-rates', roles: ['Admin', 'Super Admin'] },
         { name: 'Payout History', icon: <History size={20} />, path: '/transactions', roles: ['Admin', 'Super Admin'] },
         { name: 'Educational Content', icon: <BookOpen size={20} />, path: '/education', roles: ['Staff', 'Admin', 'Super Admin'] },
-        { name: 'Reports and Analytics', icon: <BarChart3 size={20} />, path: '/reports', roles: ['Admin', 'Super Admin'] },
+        { name: 'Reports and Analytics', icon: <BarChart3 size={20} />, path: '/reports', roles: ['Staff', 'Admin', 'Super Admin'] },
        
     ];
 
@@ -84,7 +84,9 @@ const Sidebar = ({ activePage }) => {
                 </button>
 
                 <div className={styles.logoContainer}>
-                    <div className={styles.logoIcon}><Recycle size={20} /></div>
+                    <div className={styles.logoIcon} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+                        <img src={logo} alt="RecyTech Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+                    </div>
                     <span className={styles.logoText}>RecyTech</span>
                 </div>
 

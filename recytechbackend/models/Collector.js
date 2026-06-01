@@ -12,7 +12,7 @@ const collectorSchema = mongoose.Schema({
     vehiclePlate: { type: String, default: 'Not Assigned' },
     vehicleType: { 
         type: String, 
-        enum: ['E-Trike', 'Truck', 'Bike'],
+        enum: ['Motorcycle', 'Van', 'Truck'],
         required: [true, 'Vehicle type is required']
     },
     status: { type: String, default: 'Active' }

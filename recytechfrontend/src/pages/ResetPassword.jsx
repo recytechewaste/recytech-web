@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Recycle, Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Loader2, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import api from '../api/client';
 import styles from '../styles/ForgotPassword.module.css';
+import logo from '../assets/recytech_logo.png';
+import { useToast } from '../context/ToastContext';
 
 const ResetPassword = () => {
     const navigate = useNavigate();
@@ -12,10 +14,9 @@ const ResetPassword = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
     const [email, setEmail] = useState('');
     const [resetToken, setResetToken] = useState('');
+    const { showToast } = useToast();
 
     useEffect(() => {
         // Get email and token from location state or redirect
@@ -31,20 +32,19 @@ const ResetPassword = () => {
         e.preventDefault();
         
         if (!newPassword || !confirmPassword) {
-            return setError('Please fill in all fields');
+            return showToast('Please fill in all fields', 'error');
         }
 
-        if (newPassword.length < 6) {
-            return setError('Password must be at least 6 characters');
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+        if (!passwordRegex.test(newPassword)) {
+            return showToast('Password must be at least 8 chars, including upper, lower, number, and special char.', 'error');
         }
 
         if (newPassword !== confirmPassword) {
-            return setError('Passwords do not match');
+            return showToast('Passwords do not match', 'error');
         }
 
         setLoading(true);
-        setError('');
-        setMessage('');
 
         try {
             await api.post('/auth/reset-password', { 
@@ -54,13 +54,13 @@ const ResetPassword = () => {
                 resetToken 
             });
             
-            setMessage('✓ Password reset successfully! Redirecting to login...');
+            showToast('Password reset successfully! Redirecting to login...', 'success');
             
             setTimeout(() => {
                 navigate('/login');
             }, 2000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to reset password');
+            showToast(err.response?.data?.message || 'Failed to reset password', 'error');
         } finally {
             setLoading(false);
         }
@@ -70,9 +70,11 @@ const ResetPassword = () => {
         <div className={styles.pageContainer}>
             <div className={styles.topBar}>
                 <div className={styles.logoContainer}>
-                    <div className={styles.logoIcon}><Recycle size={20} color="white" /></div>
+                    <div className={styles.logoIcon} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+                        <img src={logo} alt="RecyTech Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+                    </div>
                     <span className={styles.logoText}>
-                        RecyTech <span style={{ fontWeight: '400', opacity: '0.9' }}>Admin Portal</span>
+                        RecyTech<span style={{ fontWeight: '400', opacity: '0.9' }}>: E-waste Management System</span>
                     </span>
                 </div>
             </div>
@@ -81,9 +83,6 @@ const ResetPassword = () => {
                 <div className={styles.card}>
                     <h1 className={styles.header}>Create New Password</h1>
                     <p className={styles.subtext}>Enter a strong password for your account</p>
-
-                    {message && <p className={styles.successMessage}>{message}</p>}
-                    {error && <p className={styles.errorMessage}>{error}</p>}
 
                     <form onSubmit={handleResetPassword}>
                         <div className={styles.inputGroup}>
@@ -129,7 +128,7 @@ const ResetPassword = () => {
                         <div style={{ padding: '12px', backgroundColor: '#f3f4f6', borderRadius: '6px', marginBottom: '16px', fontSize: '12px', color: '#374151' }}>
                             <p style={{ margin: '0 0 8px 0', fontWeight: '600' }}>Password requirements:</p>
                             <ul style={{ margin: '0', paddingLeft: '20px' }}>
-                                <li>At least 6 characters long</li>
+                                <li>At least 8 characters long</li>
                                 <li>Mix of uppercase and lowercase letters</li>
                                 <li>Include numbers and special characters</li>
                             </ul>

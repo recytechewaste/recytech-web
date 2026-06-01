@@ -17,6 +17,12 @@ const residentSchema = mongoose.Schema({
         type: String,
         required: false
     },
+    password: {
+        type: String,
+        required: false, // Kept false so automated requests can still create temporary anonymous residents
+        select: false, // Security: Prevents the hashed password from being sent when fetching residents
+        description: "Hashed password for mobile app authentication"
+    },
     phone: {
         type: String,
         required: false
@@ -44,6 +50,12 @@ const residentSchema = mongoose.Schema({
         min: 0,
         description: "Total amount earned from all completed requests in PHP"
     },
+    walletBalance: {
+        type: Number,
+        default: 0,
+        min: 0,
+        description: "Current withdrawable balance in PHP"
+    },
     requestCount: {
         type: Number,
         default: 0,
@@ -59,5 +71,8 @@ const residentSchema = mongoose.Schema({
 }, {
     timestamps: true
 });
+
+// Performance: Index for chronological sorting and analytics date-range queries
+residentSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Resident', residentSchema);

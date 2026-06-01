@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
-import { Recycle, Eye, EyeOff, CheckCircle, AlertCircle, X, Loader2, Check, Circle } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle, AlertCircle, X, Loader2, Check, Circle } from 'lucide-react';
 import styles from '../styles/Register.module.css';
+import logo from '../assets/recytech_logo.png';
+import { useToast } from '../context/ToastContext';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -11,16 +13,16 @@ const Register = () => {
         lastName: '', 
         email: '', 
         password: '', 
-        confirmPassword: '', 
-        role: 'Staff'
+        confirmPassword: ''
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState(0);
     const [errors, setErrors] = useState({});
+    const { showToast } = useToast();
 
     const getPasswordRequirements = (password) => [
         { label: 'At least 8 characters', met: password.length >= 8 },
@@ -39,10 +41,16 @@ const Register = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({...formData, [name]: value});
+        let finalValue = value;
+        
+        if (name === 'firstName' || name === 'lastName') {
+            finalValue = value.replace(/\d/g, ''); // Instantly strip out digits
+        }
+        
+        setFormData({...formData, [name]: finalValue});
         
         if (name === 'password') {
-            setPasswordStrength(calculateStrength(value));
+            setPasswordStrength(calculateStrength(finalValue));
         }
 
         // Clear error when user types
@@ -65,8 +73,11 @@ const Register = () => {
 
         if (!formData.password) {
             newErrors.password = 'Password is required';
-        } else if (formData.password.length < 8) {
-            newErrors.password = 'Password must be at least 8 characters';
+        } else {
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+            if (!passwordRegex.test(formData.password)) {
+                newErrors.password = 'Must be at least 8 chars, including upper, lower, number, and special char.';
+            }
         }
 
         if (formData.confirmPassword !== formData.password) {
@@ -83,10 +94,11 @@ const Register = () => {
 
         setLoading(true);
         try {
-            await api.post('/auth/register', formData);
+            const { data } = await api.post('/auth/register', formData);
+            setSuccessMessage(data.message || 'Registration successful! Your account is pending administrator approval before you can log in.');
             setShowSuccessModal(true);
         } catch (error) {
-            setErrorMessage(error.response?.data?.message || "Registration failed. Email might be taken.");
+            showToast(error.response?.data?.message || "Registration failed. Email might be taken.", 'error');
         } finally {
             setLoading(false);
         }
@@ -97,9 +109,11 @@ const Register = () => {
             {/* TOP HEADER BAR */}
             <div className={styles.topBar}>
                 <div className={styles.logoContainer}>
-                    <div className={styles.logoIcon}><Recycle size={20} color="white" /></div>
+                    <div className={styles.logoIcon} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+                        <img src={logo} alt="RecyTech Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
+                    </div>
                     <span className={styles.logoText}>
-                        RecyTech <span style={{ fontWeight: '400', opacity: '0.9' }}>Admin Portal</span>
+                        RecyTech<span style={{ fontWeight: '400', opacity: '0.9' }}>: E-waste Management System</span>
                     </span>
                 </div>
             </div>
@@ -133,7 +147,7 @@ const Register = () => {
                                 />
                                 {errors.lastName && <span className={styles.errorText}>{errors.lastName}</span>}
                             </div>
-                            <div className={styles.inputGroup}>
+                            <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>
                                 <label className={styles.label}>Email</label>
                                 <input 
                                     name="email" 
@@ -144,19 +158,6 @@ const Register = () => {
                                     onChange={handleChange} 
                                 />
                                 {errors.email && <span className={styles.errorText}>{errors.email}</span>}
-                            </div>
-                            <div className={styles.inputGroup}>
-                                <label className={styles.label}>Account Role</label>
-                                <select 
-                                    name="role" 
-                                    className={styles.input} 
-                                    value={formData.role} 
-                                    onChange={handleChange}
-                                >
-                                    <option value="Staff">Staff</option>
-                                    <option value="Admin">Admin</option>
-                                    <option value="Super Admin">Super Admin</option>
-                                </select>
                             </div>
                             <div className={styles.inputGroup}>
                                 <label className={styles.label}>Password</label>
@@ -173,24 +174,6 @@ const Register = () => {
                                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                     </button>
                                 </div>
-                                {formData.password && (
-                                    <div className={styles.strengthMeter}>
-                                        <div className={`${styles.strengthBar} ${styles[`strength-${passwordStrength}`]}`} />
-                                        <span className={styles.strengthText}>
-                                            {['Very Weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'][passwordStrength]}
-                                        </span>
-                                    </div>
-                                )}
-                                {formData.password && (
-                                    <div className={styles.requirementList}>
-                                        {getPasswordRequirements(formData.password).map((req, index) => (
-                                            <div key={index} className={`${styles.requirementItem} ${req.met ? styles.met : ''}`}>
-                                                {req.met ? <Check size={12} strokeWidth={3} /> : <Circle size={12} />}
-                                                <span>{req.label}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
                                 {errors.password && <span className={styles.errorText}>{errors.password}</span>}
                             </div>
                             <div className={styles.inputGroup}>
@@ -210,6 +193,24 @@ const Register = () => {
                                 </div>
                                 {errors.confirmPassword && <span className={styles.errorText}>{errors.confirmPassword}</span>}
                             </div>
+                            {formData.password && (
+                                <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '-8px' }}>
+                                    <div className={styles.strengthMeter}>
+                                        <div className={`${styles.strengthBar} ${styles[`strength-${passwordStrength}`]}`} />
+                                        <span className={styles.strengthText}>
+                                            {['Very Weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'][passwordStrength]}
+                                        </span>
+                                    </div>
+                                    <div className={styles.requirementList}>
+                                        {getPasswordRequirements(formData.password).map((req, index) => (
+                                            <div key={index} className={`${styles.requirementItem} ${req.met ? styles.met : ''}`}>
+                                                {req.met ? <Check size={12} strokeWidth={3} /> : <Circle size={12} />}
+                                                <span>{req.label}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Button */}
@@ -247,30 +248,13 @@ const Register = () => {
                         <div className={styles.modalBody}>
                             <CheckCircle size={60} color="#059669" className={styles.modalIcon} />
                             <h2 className={styles.modalTitle}>Success!</h2>
-                            <p className={styles.modalText}>Your account has been successfully created. You can now proceed to login.</p>
+                            <p className={styles.modalText}>{successMessage}</p>
                             <button 
                                 className={styles.modalBtn} 
                                 onClick={() => navigate('/login')}
                                 style={{background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}}
                             >
                                 Go to Login
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ERROR MODAL */}
-            {errorMessage && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modalContent}>
-                        <button className={styles.closeModalBtn} onClick={() => setErrorMessage('')}><X size={20}/></button>
-                        <div className={styles.modalBody}>
-                            <AlertCircle size={60} color="#ef4444" className={styles.modalIcon} />
-                            <h2 className={styles.modalTitle}>Registration Failed</h2>
-                            <p className={styles.modalText}>{errorMessage}</p>
-                            <button className={styles.modalBtn} onClick={() => setErrorMessage('')} style={{background: 'linear-gradient(135deg, #0f766e 0%, #065f46 100%)'}}>
-                                Try Again
                             </button>
                         </div>
                     </div>

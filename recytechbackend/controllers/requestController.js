@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Request = require('../models/Request');
 const Resident = require('../models/Resident');
 const Transaction = require('../models/Transaction');
@@ -73,6 +74,17 @@ const createRequest = asyncHandler(async (req, res) => {
         throw new Error('wasteType is required');
     }
 
+    // Security: Validate wasteImage to prevent XSS and malicious payloads
+    if (wasteImage) {
+        const isValidUrl = /^https?:\/\//.test(wasteImage);
+        const isValidBase64Image = /^data:image\/(jpeg|png|jpg|gif|webp);base64,/.test(wasteImage);
+        
+        if (!isValidUrl && !isValidBase64Image) {
+            res.status(400);
+            throw new Error('Invalid image format. Must be a valid URL or base64 image data URI.');
+        }
+    }
+
     const exchangeRate = await ExchangeRate.findOne({
         wasteType: wasteType.trim(),
         isActive: true
@@ -102,6 +114,7 @@ const createRequest = asyncHandler(async (req, res) => {
         residentEmail: resident.email,
         wasteImage
     });
+
     res.status(201).json(request);
 });
 
@@ -143,39 +156,43 @@ const updateRequest = asyncHandler(async (req, res) => {
 
     // Handle payout when request is marked as Completed
     if (newStatus === 'Completed' && request.status !== 'Completed' && !request.paymentProcessed) {
+        const session = await mongoose.startSession();
+        session.startTransaction();
         try {
             const quantity = request.quantity || 1;
             const payoutResult = await calculatePayoutAmount(request.wasteType, quantity);
             
             if (payoutResult.success) {
                 let resident = request.resident
-                    ? await Resident.findById(request.resident)
-                    : await Resident.findOne({ email: request.residentEmail });
+                    ? await Resident.findById(request.resident).session(session)
+                    : await Resident.findOne({ email: request.residentEmail }).session(session);
 
                 if (!resident) {
                     const residentEmail = request.residentEmail || `temp-request-${request._id}@recytech.local`;
                     const parsedName = splitResidentName(request.residentName);
 
-                    resident = await Resident.create({
+                    // .create() requires an array when used with a session
+                    const [newResident] = await Resident.create([{
                         email: residentEmail,
                         firstName: parsedName.firstName,
                         lastName: parsedName.lastName,
                         source: 'Mobile Simulation',
                         isTemporary: true
-                    });
+                    }], { session });
+                    resident = newResident;
                 }
                 
                 resident.walletBalance += payoutResult.amount;
                 resident.totalEarned += payoutResult.amount;
-                await resident.save();
+                await resident.save({ session });
                 
-                const transaction = await Transaction.create({
+                const [transaction] = await Transaction.create([{
                     resident: resident._id,
                     type: 'Payment',
                     amount: payoutResult.amount,
                     requestId: request._id,
                     description: `Payment for ${quantity} ${request.wasteType} recycling item(s)`
-                });
+                }], { session });
                 
                 request.monetaryValue = payoutResult.amount;
                 request.paymentProcessed = true;
@@ -185,7 +202,11 @@ const updateRequest = asyncHandler(async (req, res) => {
                 request.assignedCollector = newAssignedCollector;
                 request.scheduledAt = newScheduledAt;
                 
-                const updatedRequest = await request.save();
+                const updatedRequest = await request.save({ session });
+                
+                await session.commitTransaction();
+                session.endSession();
+                
                 return res.json({ ...updatedRequest.toObject(), payout: { amount: payoutResult.amount, resident: resident.email, transactionId: transaction._id, message: payoutResult.message } });
             } else {
                 console.warn(`Payout calculation failed for request ${request._id}: ${payoutResult.message}`);
@@ -195,10 +216,16 @@ const updateRequest = asyncHandler(async (req, res) => {
                 request.monetaryValue = 0;
                 request.paymentProcessed = false; 
                 const updatedRequest = await request.save();
+                
+                await session.abortTransaction();
+                session.endSession();
                 return res.status(206).json({ ...updatedRequest.toObject(), warning: `Request completed but payout failed: ${payoutResult.message}` });
             }
         } catch (payoutError) {
             console.error('Error processing payout:', payoutError);
+            await session.abortTransaction();
+            session.endSession();
+            
             request.status = newStatus;
             request.assignedCollector = newAssignedCollector;
             request.scheduledAt = newScheduledAt;

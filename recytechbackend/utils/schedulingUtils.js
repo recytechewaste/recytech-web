@@ -2,8 +2,8 @@ const ARIMA = require('arima');
 
 const VEHICLE_CAPACITY = {
     'Truck': 30,
-    'E-Trike': 12,
-    'Bike': 6
+    'Van': 15,
+    'Motorcycle': 5
 };
 
 const HIGH_VALUE_THRESHOLD = 500;

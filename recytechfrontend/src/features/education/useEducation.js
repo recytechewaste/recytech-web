@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/client';
+import { usePagination } from '../../hooks/usePagination';
+import { useDebounce } from '../../hooks/useDebounce';
 
 export const useEducation = () => {
     const [materials, setMaterials] = useState([]);
@@ -7,6 +9,9 @@ export const useEducation = () => {
     const [fetchError, setFetchError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
+
+    const { page, limit, pages, total, goToPage, updatePaginationInfo, hasNextPage, hasPrevPage } = usePagination(1, 8); // Showing 8 per page fits grid layouts well
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
     const fetchMaterials = async () => {
         setLoading(true);
@@ -27,12 +32,24 @@ export const useEducation = () => {
     }, []);
 
     const filteredMaterials = materials.filter(m => 
-        m?.title?.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        m?.title?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) &&
         (categoryFilter === '' || m?.category === categoryFilter)
     );
 
+    // Sync client-side filtered data length with pagination hook
+    useEffect(() => {
+        updatePaginationInfo({
+            total: filteredMaterials.length,
+            pages: Math.ceil(filteredMaterials.length / limit) || 1
+        });
+    }, [filteredMaterials.length, limit, updatePaginationInfo]);
+
+    const paginatedMaterials = filteredMaterials.slice((page - 1) * limit, page * limit);
+
     return {
         materials, filteredMaterials, loading, fetchError, fetchMaterials,
-        searchTerm, setSearchTerm, categoryFilter, setCategoryFilter
+        paginatedMaterials,
+        searchTerm, setSearchTerm, categoryFilter, setCategoryFilter,
+        page, limit, pages, total, goToPage, hasNextPage, hasPrevPage
     };
 };

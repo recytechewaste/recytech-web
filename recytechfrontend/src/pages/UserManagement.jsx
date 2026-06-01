@@ -2,18 +2,22 @@ import { useEffect, useState } from 'react';
 import api from '../api/client';
 import Sidebar from '../components/Sidebar';
 import styles from '../styles/UserManagement.module.css';
-import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUsers } from '../features/users/useUsers';
 import UserFormModal from '../features/users/UserFormModal';
+import Modal from '../components/Modal';
+import { useToast } from '../context/ToastContext';
+import Skeleton from '../components/Skeleton';
 
 const UserManagement = () => {
     const { 
         loading, 
-        filteredUsers, 
+        filteredUsers, paginatedUsers,
         fetchUsers, 
         searchTerm, setSearchTerm, 
         roleFilter, setRoleFilter, 
-        statusFilter, setStatusFilter 
+        statusFilter, setStatusFilter,
+        page, limit, pages, goToPage, hasNextPage, hasPrevPage
     } = useUsers();
     
     // Modal State
@@ -30,6 +34,7 @@ const UserManagement = () => {
         status: 'Active'
     });
     const [deletingUserId, setDeletingUserId] = useState(null);
+    const { showToast } = useToast();
 
     const openAddModal = () => {
         setFormData({ firstName: '', lastName: '', email: '', password: '', confirmPassword: '', role: 'Staff', status: 'Active' });
@@ -56,13 +61,15 @@ const UserManagement = () => {
         try {
             if (isEditing) {
                 await api.put(`/users/${currentUserId}`, submittedData);
+                showToast('User updated successfully.', 'success');
             } else {
                 await api.post('/users', submittedData);
+                showToast('User created successfully.', 'success');
             }
             setShowModal(false);
             fetchUsers();
         } catch (error) {
-            alert(error.response?.data?.message || "Operation failed");
+            showToast(error.response?.data?.message || "Operation failed", 'error');
         }
     };
 
@@ -74,15 +81,16 @@ const UserManagement = () => {
         try {
             const userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')) : null;
             
-            if (!userInfo || !userInfo.token) {
-                return alert("You must be logged in.");
+            if (!userInfo || !userInfo._id) {
+                return showToast("You must be logged in.", 'error');
             }
 
             await api.delete(`/users/${deletingUserId}`);
+            showToast('User deleted successfully.', 'success');
             fetchUsers();
         } catch (error) {
             console.error("Error deleting user:", error);
-            alert("Failed to delete user.");
+            showToast("Failed to delete user.", 'error');
         }
         setDeletingUserId(null);
     };
@@ -144,17 +152,43 @@ const UserManagement = () => {
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr>
-                                    <td colSpan="7" className={styles.td} style={{textAlign: 'center'}}>Loading users...</td>
-                                </tr>
-                            ) : filteredUsers.length === 0 ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <tr key={`skeleton-${i}`}>
+                                        <td className={styles.td}><Skeleton width="20px" /></td>
+                                        <td className={styles.td}>
+                                            <div className={styles.userCell}>
+                                                <Skeleton width="32px" height="32px" borderRadius="50%" />
+                                                <div className={styles.userInfo}>
+                                                    <Skeleton width="120px" height="16px" style={{marginBottom: '4px'}} />
+                                                    <Skeleton width="80px" height="12px" />
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className={styles.td}><Skeleton width="160px" height="16px" /></td>
+                                        <td className={styles.td}><Skeleton width="60px" height="16px" /></td>
+                                        <td className={styles.td}><Skeleton width="60px" height="24px" borderRadius="12px" /></td>
+                                        <td className={styles.td}>
+                                            <div style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                                                <Skeleton width="80px" height="16px" />
+                                                <Skeleton width="50px" height="12px" />
+                                            </div>
+                                        </td>
+                                        <td className={styles.td}>
+                                            <div className={styles.actionIcons}>
+                                                <Skeleton width="28px" height="28px" borderRadius="4px" />
+                                                <Skeleton width="28px" height="28px" borderRadius="4px" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : paginatedUsers.length === 0 ? (
                                 <tr>
                                     <td colSpan="7" className={styles.td} style={{textAlign: 'center'}}>No users found.</td>
                                 </tr>
                             ) : (
-                                filteredUsers.map((user, index) => (
+                                paginatedUsers.map((user, index) => (
                                     <tr key={user._id || index}>
-                                        <td className={styles.td}>{index + 1}</td>
+                                        <td className={styles.td}>{(page - 1) * limit + index + 1}</td>
                                         <td className={styles.td}>
                                             <div className={styles.userCell}>
                                                 <div className={styles.avatar}>
@@ -196,6 +230,25 @@ const UserManagement = () => {
                     </table>
                 </div>
 
+                {/* Pagination Controls */}
+                <div className={styles.filterBar} style={{ marginTop: '20px', justifyContent: 'center' }}>
+                    <button 
+                        disabled={!hasPrevPage} 
+                        onClick={() => goToPage(page - 1)}
+                        className={styles.iconBtn}
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
+                    <span style={{ padding: '0 20px' }}>Page {page} of {pages}</span>
+                    <button 
+                        disabled={!hasNextPage} 
+                        onClick={() => goToPage(page + 1)}
+                        className={styles.iconBtn}
+                    >
+                        <ChevronRight size={20} />
+                    </button>
+                </div>
+
                 <UserFormModal 
                     isOpen={showModal} 
                     isEditing={isEditing} 
@@ -205,21 +258,13 @@ const UserManagement = () => {
                 />
 
                 {/* DELETE CONFIRMATION MODAL */}
-                {deletingUserId && (
-                    <div className={styles.modalOverlay}>
-                        <div className={styles.modalContent} style={{maxWidth: '400px'}}>
-                            <div className={styles.modalHeader}>
-                                <h2 className={styles.modalTitle}>Confirm Deletion</h2>
-                                <button onClick={() => setDeletingUserId(null)} className={styles.closeBtn}><X size={20}/></button>
-                            </div>
-                            <p style={{color:'#666', marginBottom:'24px'}}>Are you sure you want to delete this user? This action cannot be undone.</p>
-                            <div className={styles.modalFooter}>
-                                <button onClick={() => setDeletingUserId(null)} className={styles.cancelBtn}>Cancel</button>
-                                <button onClick={confirmDelete} className={styles.deleteBtn}>Delete</button>
-                            </div>
-                        </div>
+                <Modal isOpen={!!deletingUserId} onClose={() => setDeletingUserId(null)} title="Confirm Deletion" maxWidth="400px">
+                    <p style={{color:'#666', marginBottom:'24px'}}>Are you sure you want to delete this user? This action cannot be undone.</p>
+                    <div className={styles.modalFooter}>
+                        <button onClick={() => setDeletingUserId(null)} className={styles.cancelBtn}>Cancel</button>
+                        <button onClick={confirmDelete} className={styles.deleteBtn}>Delete</button>
                     </div>
-                )}
+                </Modal>
             </div>
         </div>
     );

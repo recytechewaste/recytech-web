@@ -1,6 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const connectDB = require('./recytechbackend/config/db');
 // Load config
 dotenv.config();
@@ -11,9 +12,18 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors()); // Allows your React Frontend to talk to this Backend
+app.use(cors({
+    origin: 'http://localhost:5173', // Change to your frontend dev URL
+    credentials: true // Required for HTTP-only cookies to be sent
+})); 
 app.use(express.json({ limit: '10mb' })); 
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Parse cookies attached to the client request
+app.use(cookieParser());
+
+// Prevent NoSQL Injection by sanitizing incoming data globally
+
 
 // Basic Route (Test to see if it works)
 app.get('/', (req, res) => {
