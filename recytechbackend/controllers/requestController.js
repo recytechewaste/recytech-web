@@ -67,21 +67,29 @@ const getRequests = asyncHandler(async (req, res) => {
 });
 
 const createRequest = asyncHandler(async (req, res) => {
-    const { residentName, wasteType, location, quantity, residentEmail, wasteImage, phone, firstName, lastName, mobileUserId } = req.body;
+    let { residentName, wasteType, location, quantity, residentEmail, wasteImage, phone, firstName, lastName, mobileUserId } = req.body;
     
     if (!wasteType || typeof wasteType !== 'string') {
         res.status(400);
         throw new Error('wasteType is required');
     }
 
-    // Security: Validate wasteImage to prevent XSS and malicious payloads
+    // Security & Formatting: Validate wasteImage to prevent XSS and handle raw mobile Base64
     if (wasteImage) {
         const isValidUrl = /^https?:\/\//.test(wasteImage);
-        const isValidBase64Image = /^data:image\/(jpeg|png|jpg|gif|webp);base64,/.test(wasteImage);
+        const isDataUri = /^data:image\/(jpeg|png|jpg|gif|webp);base64,/.test(wasteImage);
         
-        if (!isValidUrl && !isValidBase64Image) {
+        // Detect if the mobile app sent a raw base64 string without the data:image prefix
+        const isRawBase64 = /^[A-Za-z0-9+/]+={0,2}$/.test(wasteImage.replace(/\s/g, '')) && wasteImage.length > 100;
+        
+        if (!isValidUrl && !isDataUri && !isRawBase64) {
             res.status(400);
-            throw new Error('Invalid image format. Must be a valid URL or base64 image data URI.');
+            throw new Error('Invalid image format. Must be a valid URL, Base64 data URI, or raw Base64 string.');
+        }
+
+        // Auto-fix raw base64 strings so the React frontend can render them in <img> tags
+        if (isRawBase64 && !isDataUri) {
+            wasteImage = `data:image/jpeg;base64,${wasteImage}`;
         }
     }
 

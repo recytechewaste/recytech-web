@@ -20,8 +20,8 @@ app.use(cors({
     ],
     credentials: true // Required for HTTP-only cookies to be sent
 })); 
-app.use(express.json({ limit: '10mb' })); 
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.json({ limit: '50mb' })); 
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Parse cookies attached to the client request
 app.use(cookieParser());
