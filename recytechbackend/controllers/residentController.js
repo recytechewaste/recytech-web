@@ -2,7 +2,6 @@ const Resident = require('../models/Resident');
 const Transaction = require('../models/Transaction');
 const bcrypt = require('bcryptjs');
 const { asyncHandler } = require('../utils/asyncHandler');
-const { sendWelcomeEmail } = require('../services/emailService');
 
 const getResidents = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
@@ -61,12 +60,6 @@ const createResident = asyncHandler(async (req, res) => {
     
     const residentResponse = resident.toObject();
     delete residentResponse.password; // Ensure password is removed from API response
-
-    try {
-        await sendWelcomeEmail(generatedEmail, firstName, 'Mobile User');
-    } catch (err) {
-        console.error('Failed to send welcome email to resident:', err);
-    }
 
     res.status(201).json({
         message: 'Resident created successfully',
