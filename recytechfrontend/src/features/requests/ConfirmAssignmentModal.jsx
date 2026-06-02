@@ -1,31 +1,32 @@
 import styles from '../../styles/RequestManagement.module.css';
 
-const getCollectorName = (collectors, selectedCollector) => {
+const ConfirmAssignmentModal = ({ collectors, selectedCollector, onCancel, onConfirm }) => {
+    // Check if the selectedCollector ID actually matches a valid collector object
     const collector = collectors.find((item) => item._id === selectedCollector);
-    return collector ? `${collector.firstName} ${collector.lastName}` : 'this collector';
-};
+    const hasValidCollector = !!collector;
 
-const ConfirmAssignmentModal = ({ collectors, selectedCollector, onCancel, onConfirm }) => (
-    <div className={styles.modalOverlay}>
-        <div className={styles.modalContent}>
-            <div className={styles.modalHeader}>
-                <h2 className={styles.modalTitle}>
-                    {selectedCollector ? 'Confirm Assignment' : 'Confirm Approval'}
-                </h2>
-            </div>
-            <p>
-                {selectedCollector ? (
-                    <>Are you sure you want to assign <strong>{getCollectorName(collectors, selectedCollector)}</strong> to this request?</>
-                ) : (
-                    <>Are you sure you want to approve this request and send it to Smart Scheduling?</>
-                )}
-            </p>
-            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button onClick={onCancel} className={styles.viewBtn}>Cancel</button>
-                <button onClick={onConfirm} className={styles.approveBtn}>Confirm</button>
+    return (
+        <div className={styles.modalOverlay}>
+            <div className={styles.modalContent}>
+                <div className={styles.modalHeader}>
+                    <h2 className={styles.modalTitle}>
+                        {hasValidCollector ? 'Confirm Assignment' : 'Confirm Approval'}
+                    </h2>
+                </div>
+                <p>
+                    {hasValidCollector ? (
+                        <>Are you sure you want to assign <strong>{collector.firstName} {collector.lastName}</strong> to this request?</>
+                    ) : (
+                        <>Are you sure you want to approve this request and send it to Smart Scheduling?</>
+                    )}
+                </p>
+                <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                    <button onClick={onCancel} className={styles.viewBtn}>Cancel</button>
+                    <button onClick={onConfirm} className={styles.approveBtn}>Confirm</button>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 export default ConfirmAssignmentModal;
