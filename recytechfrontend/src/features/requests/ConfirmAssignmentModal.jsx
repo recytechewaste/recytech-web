@@ -9,10 +9,16 @@ const ConfirmAssignmentModal = ({ collectors, selectedCollector, onCancel, onCon
     <div className={styles.modalOverlay}>
         <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-                <h2 className={styles.modalTitle}>Confirm Assignment</h2>
+                <h2 className={styles.modalTitle}>
+                    {selectedCollector ? 'Confirm Assignment' : 'Confirm Approval'}
+                </h2>
             </div>
             <p>
-                Are you sure you want to assign <strong>{getCollectorName(collectors, selectedCollector)}</strong> to this request?
+                {selectedCollector ? (
+                    <>Are you sure you want to assign <strong>{getCollectorName(collectors, selectedCollector)}</strong> to this request?</>
+                ) : (
+                    <>Are you sure you want to approve this request and send it to Smart Scheduling?</>
+                )}
             </p>
             <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                 <button onClick={onCancel} className={styles.viewBtn}>Cancel</button>

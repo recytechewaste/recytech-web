@@ -1,4 +1,5 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const mongoose = require('mongoose');
 const Request = require('./models/Request');
 const Resident = require('./models/Resident');
@@ -65,6 +66,7 @@ const seedData = async () => {
                     wasteType: 'Smartphone',
                     quantity: Math.floor(Math.random() * 3) + 1,
                     status: 'Completed',
+                    location: { address: 'Sampaloc, Manila City' },
                     createdAt: specificDate,
                     updatedAt: specificDate
                 });
