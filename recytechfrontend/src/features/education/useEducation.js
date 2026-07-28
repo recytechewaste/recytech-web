@@ -10,7 +10,7 @@ export const useEducation = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
 
-    const { page, limit, pages, total, goToPage, updatePaginationInfo, hasNextPage, hasPrevPage } = usePagination(1, 8); // Showing 8 per page fits grid layouts well
+    const { page, limit, pages, total, goToPage, updatePaginationInfo, hasNextPage, hasPrevPage } = usePagination([], 1, 8); // Pass empty array to prevent crash
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
     const fetchMaterials = async () => {

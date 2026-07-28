@@ -6,35 +6,22 @@ const VEHICLE_CAPACITY = {
     'Motorcycle': 5
 };
 
-const HIGH_VALUE_THRESHOLD = 500;
-const MEDIUM_VALUE_THRESHOLD = 200;
-
-function buildRateLookup(exchangeRates = []) {
-    return exchangeRates.reduce((lookup, rate) => {
-        if (!rate?.wasteType) return lookup;
-
-        lookup[rate.wasteType.toLowerCase()] = rate.ratePerItem ?? rate.ratePerKg ?? 0;
-        return lookup;
-    }, {});
-}
-
+// getVehicleCapacity remains as it is likely based on weight/volume, not item count
 function getVehicleCapacity(vehicleType) {
     return VEHICLE_CAPACITY[vehicleType] || 8;
 }
 
 function getRequestLoad(request) {
-    return request.weight || request.quantity || 1;
+    const fillLevel = request.bin?.fillLevel || 0;
+    if (fillLevel >= 90) return 25; // Critical load
+    if (fillLevel >= 70) return 15; // High load
+    return 10; // Standard load
 }
 
 function getRequestAgeDays(request, now = new Date()) {
     const createdAt = request.createdAt ? new Date(request.createdAt) : now;
     const ageMs = now.getTime() - createdAt.getTime();
     return Math.max(0, Math.floor(ageMs / (1000 * 60 * 60 * 24)));
-}
-
-function estimateRequestValue(request, rateLookup) {
-    const rate = rateLookup[String(request.wasteType || '').toLowerCase()] || 0;
-    return Math.round(rate * (request.quantity || 1) * 100) / 100;
 }
 
 function getPriorityLevel(score) {
@@ -44,60 +31,54 @@ function getPriorityLevel(score) {
     return 'Standard';
 }
 
-function buildPriorityTags({ estimatedValue, ageDays, load }) {
+function buildPriorityTags({ fillLevel, ageDays }) {
     const tags = [];
 
-    if (estimatedValue >= HIGH_VALUE_THRESHOLD) {
-        tags.push('High Value');
-    } else if (estimatedValue >= MEDIUM_VALUE_THRESHOLD) {
-        tags.push('Valuable');
+    if (fillLevel >= 90) {
+        tags.push('Critically Full');
+    } else if (fillLevel >= 75) {
+        tags.push('Nearing Capacity');
     }
 
     if (ageDays >= 3) tags.push('Aging Request');
-    if (load >= 10) tags.push('Large Load');
-
+    
     return tags;
 }
 
-function scoreRequestPriority(request, rateLookup, now = new Date()) {
+function scoreRequestPriority(request, now = new Date()) {
     const load = getRequestLoad(request);
-    const estimatedValue = estimateRequestValue(request, rateLookup);
     const ageDays = getRequestAgeDays(request, now);
+    const fillLevel = request.bin?.fillLevel || 0;
 
-    const valueScore = Math.min(45, estimatedValue / 20);
-    const ageScore = Math.min(30, ageDays * 7);
-    const loadScore = Math.min(20, load * 2);
-    const pendingBonus = request.status === 'Approved' ? 5 : 0;
-    const score = Math.round(valueScore + ageScore + loadScore + pendingBonus);
+    // Score components: fill level is dominant, age is secondary
+    const fillScore = Math.min(60, (fillLevel / 100) * 60);
+    const ageScore = Math.min(30, ageDays * 7); 
+    const loadScore = Math.min(10, (load / 25) * 10);
+
+    const score = Math.round(fillScore + ageScore + loadScore);
 
     return {
         priorityScore: Math.min(100, score),
         priorityLevel: getPriorityLevel(score),
-        estimatedValue,
         ageDays,
         load,
-        tags: buildPriorityTags({ estimatedValue, ageDays, load })
+        fillLevel,
+        tags: buildPriorityTags({ fillLevel, ageDays })
     };
 }
 
-function enrichRequestsWithPriority(requests, exchangeRates = []) {
-    const rateLookup = buildRateLookup(exchangeRates);
+function enrichRequestsWithPriority(requests) {
     const now = new Date();
 
     return requests
         .map((request) => ({
             ...request,
-            priority: scoreRequestPriority(request, rateLookup, now)
+            priority: scoreRequestPriority(request, now)
         }))
         .sort((a, b) => {
             if (b.priority.priorityScore !== a.priority.priorityScore) {
                 return b.priority.priorityScore - a.priority.priorityScore;
             }
-
-            if (b.priority.estimatedValue !== a.priority.estimatedValue) {
-                return b.priority.estimatedValue - a.priority.estimatedValue;
-            }
-
             return b.priority.ageDays - a.priority.ageDays;
         });
 }
@@ -107,10 +88,10 @@ function buildAssignmentReasons(request, collector, requestWeight) {
     const remainingCapacity = Math.max(0, collector.capacity - collector.loadAssigned);
     const projectedUtilization = Math.round(((collector.loadAssigned + requestWeight) / collector.capacity) * 100);
 
-    if (request.priority.estimatedValue >= HIGH_VALUE_THRESHOLD) {
-        reasons.push(`High recyclable value estimated at PHP ${request.priority.estimatedValue.toLocaleString()}.`);
-    } else if (request.priority.estimatedValue >= MEDIUM_VALUE_THRESHOLD) {
-        reasons.push(`Valuable recyclable material estimated at PHP ${request.priority.estimatedValue.toLocaleString()}.`);
+    if (request.priority.fillLevel >= 90) {
+        reasons.push(`Bin is critically full at ${request.priority.fillLevel}%.`);
+    } else if (request.priority.fillLevel >= 75) {
+        reasons.push(`Bin is nearing capacity at ${request.priority.fillLevel}%.`);
     }
 
     if (request.priority.ageDays >= 3) {
@@ -118,16 +99,12 @@ function buildAssignmentReasons(request, collector, requestWeight) {
     }
 
     if (requestWeight <= remainingCapacity) {
-        reasons.push(`${collector.collectorName} has enough remaining capacity for this load.`);
+        reasons.push(`${collector.collectorName} has enough remaining capacity.`);
     } else {
-        reasons.push(`Assigned as overflow because all active collectors are near capacity.`);
+        reasons.push(`Assigned as overflow because other collectors are near capacity.`);
     }
-
-    if (projectedUtilization <= 85) {
-        reasons.push(`Keeps projected collector utilization at ${projectedUtilization}%.`);
-    } else {
-        reasons.push(`Uses ${projectedUtilization}% of collector capacity; review before confirming.`);
-    }
+    
+    reasons.push(`Projected utilization: ${projectedUtilization}%.`);
 
     return reasons;
 }
@@ -151,7 +128,6 @@ function buildResourceAllocationSummary(recommendations) {
     const highPriorityRequests = assignedRequests.filter((request) =>
         ['Critical', 'High'].includes(request.priorityLevel)
     ).length;
-    const totalEstimatedValue = assignedRequests.reduce((sum, request) => sum + (request.estimatedValue || 0), 0);
     const utilizationRate = totalCapacity > 0 ? Math.round((totalLoad / totalCapacity) * 100) : 0;
     const averageCapacity = activeCollectors > 0 ? totalCapacity / activeCollectors : 0;
 
@@ -162,7 +138,6 @@ function buildResourceAllocationSummary(recommendations) {
         totalCapacity,
         utilizationRate,
         highPriorityRequests,
-        totalEstimatedValue: Math.round(totalEstimatedValue * 100) / 100,
         suggestedCollectorsNeeded: averageCapacity > 0 ? Math.max(1, Math.ceil(totalLoad / averageCapacity)) : 0
     };
 }
@@ -171,9 +146,6 @@ function buildActionRecommendations(recommendations) {
     const assignedRequests = flattenAssignedRequests(recommendations);
     const actions = [];
     const highPriority = assignedRequests.filter((request) => ['Critical', 'High'].includes(request.priorityLevel));
-    const highValue = [...assignedRequests]
-        .filter((request) => request.estimatedValue >= MEDIUM_VALUE_THRESHOLD)
-        .sort((a, b) => b.estimatedValue - a.estimatedValue);
     const aging = assignedRequests.filter((request) => request.ageDays >= 3);
     const nearCapacityCollectors = recommendations.filter((collector) =>
         collector.capacity > 0 && collector.loadAssigned / collector.capacity >= 0.85
@@ -183,17 +155,8 @@ function buildActionRecommendations(recommendations) {
         actions.push({
             type: 'Schedule Priority Pickups',
             severity: 'High',
-            message: `Confirm ${highPriority.length} high-priority pickup(s) first to reduce operational backlog.`,
+            message: `Confirm ${highPriority.length} high-priority pickup(s) first to address full bins and reduce backlog.`,
             metric: `${highPriority.length} urgent`
-        });
-    }
-
-    if (highValue.length > 0) {
-        actions.push({
-            type: 'Prioritize Recyclable Value',
-            severity: 'Medium',
-            message: `Prioritize ${highValue[0].wasteType} from ${highValue[0].residentName}; estimated recyclable value is PHP ${highValue[0].estimatedValue.toLocaleString()}.`,
-            metric: `PHP ${highValue[0].estimatedValue.toLocaleString()}`
         });
     }
 
@@ -201,7 +164,7 @@ function buildActionRecommendations(recommendations) {
         actions.push({
             type: 'Reduce Waiting Time',
             severity: 'Medium',
-            message: `${aging.length} request(s) have waited at least 3 days and should be scheduled before newer low-value requests.`,
+            message: `${aging.length} request(s) have waited at least 3 days.`,
             metric: `${aging.length} aging`
         });
     }
@@ -210,7 +173,7 @@ function buildActionRecommendations(recommendations) {
         actions.push({
             type: 'Review Collector Load',
             severity: 'Medium',
-            message: `${nearCapacityCollectors.length} collector(s) are projected above 85% capacity; review before confirming all assignments.`,
+            message: `${nearCapacityCollectors.length} collector(s) are projected above 85% capacity.`,
             metric: `${nearCapacityCollectors.length} near full`
         });
     }
@@ -219,7 +182,7 @@ function buildActionRecommendations(recommendations) {
         actions.push({
             type: 'Maintain Current Allocation',
             severity: 'Low',
-            message: 'No urgent scheduling risks detected. Current collector allocation is balanced for the pending requests.',
+            message: 'No urgent scheduling risks detected. Current collector allocation is balanced.',
             metric: 'Balanced'
         });
     }
@@ -263,8 +226,8 @@ function buildForecast(series, days = 7) {
     return predictions.map(normalizePrediction);
 }
 
-function buildCollectionRecommendations(pendingRequests, collectors, exchangeRates = []) {
-    const sortedRequests = enrichRequestsWithPriority(pendingRequests, exchangeRates);
+function buildCollectionRecommendations(pendingRequests, collectors) {
+    const sortedRequests = enrichRequestsWithPriority(pendingRequests);
 
     const recommendations = collectors.map((collector) => ({
         collectorId: collector._id,
@@ -287,16 +250,16 @@ function buildCollectionRecommendations(pendingRequests, collectors, exchangeRat
 
         target.assignedRequests.push({
             requestId: request._id,
-            residentName: request.residentName,
-            wasteType: request.wasteType,
+            binId: request.bin?.binId,
+            address: request.bin?.address,
             load: requestWeight,
             priorityScore: request.priority.priorityScore,
             priorityLevel: request.priority.priorityLevel,
-            estimatedValue: request.priority.estimatedValue,
+            fillLevel: request.priority.fillLevel,
             ageDays: request.priority.ageDays,
             tags: request.priority.tags,
             reasons,
-            location: request.location?.address || 'Unknown location',
+            location: request.bin?.location,
             scheduledAt: request.scheduledAt || null
         });
         target.loadAssigned += requestWeight;

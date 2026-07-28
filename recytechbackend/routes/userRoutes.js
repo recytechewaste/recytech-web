@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, superAdmin } = require('../middleware/authMiddleware');
+const { protect, admin } = require('../middleware/authMiddleware');
 const {
     getUsers,
     getUserById,
@@ -11,22 +11,22 @@ const {
 
 // @desc    Get all users
 // @route   GET /api/users
-router.get('/', protect, superAdmin, getUsers);
+router.get('/', protect, admin, getUsers);
 
 // @desc    Get single user
 // @route   GET /api/users/:id
-router.get('/:id', protect, superAdmin, getUserById);
+router.get('/:id', protect, admin, getUserById);
 
 // @desc    Create a new user
 // @route   POST /api/users
-router.post('/', protect, superAdmin, createUser);
+router.post('/', protect, admin, createUser);
 
 // @desc    Update user
 // @route   PUT /api/users/:id
-router.put('/:id', protect, superAdmin, updateUser);
+router.put('/:id', protect, admin, updateUser);
 
 // @desc    Delete a user
 // @route   DELETE /api/users/:id
-router.delete('/:id', protect, superAdmin, deleteUser);
+router.delete('/:id', protect, admin, deleteUser);
 
 module.exports = router;

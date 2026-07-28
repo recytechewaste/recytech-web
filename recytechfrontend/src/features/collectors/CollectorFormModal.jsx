@@ -37,12 +37,10 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
         const newErrors = {};
         if (!formData.firstName?.trim()) newErrors.firstName = 'First Name is required.';
         if (!formData.lastName?.trim()) newErrors.lastName = 'Last Name is required.';
-        if (!formData.phone.trim()) {
+        if (!formData.phone?.trim()) {
             newErrors.phone = 'Phone number is required.';
-        } else {
-            if (formData.phone.length !== 11) {
-                newErrors.phone = 'Phone number must be exactly 11 digits.';
-            }
+        } else if (!/^\d{11}$/.test(formData.phone)) {
+            newErrors.phone = 'Phone number must be exactly 11 digits.';
         }
         if (!formData.vehiclePlate.trim()) newErrors.vehiclePlate = 'Vehicle plate is required.';
         if (!formData.vehicleType) newErrors.vehicleType = 'Vehicle type is required.';
@@ -104,7 +102,7 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Collector' : 'Add New Collector'} maxWidth="600px">
+        <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Collector' : 'Add New Bin Collector'} maxWidth="600px">
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.formGroup}>
                         <label>First Name</label>

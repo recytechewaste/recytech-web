@@ -11,7 +11,6 @@ export const useCollectors = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const { page, limit, pages, total, goToPage, updatePaginationInfo, hasNextPage, hasPrevPage } = usePagination(1, 10);
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
     const fetchCollectors = async () => {
@@ -19,7 +18,7 @@ export const useCollectors = () => {
         setError(null);
         try {
             const { data } = await api.get('/collectors');
-            setCollectors(data);
+            setCollectors(data || []);
         } catch (error) {
             console.error("Error fetching collectors", error);
             setError(error.message || "Failed to fetch collectors");
@@ -47,25 +46,24 @@ export const useCollectors = () => {
         return matchesSearch && matchesStatus && matchesVehicleType;
     });
 
-    // Update pagination metadata whenever the filtered list changes
-    useEffect(() => {
-        updatePaginationInfo({
-            total: filteredCollectors.length,
-            pages: Math.ceil(filteredCollectors.length / limit) || 1
-        });
-    }, [filteredCollectors.length, limit, updatePaginationInfo]);
-
-    // Apply pagination slice for client-side rendering
-    const paginatedCollectors = filteredCollectors.slice((page - 1) * limit, page * limit);
+    const { currentData: paginatedCollectors, currentPage, totalPages, setPage } = usePagination(filteredCollectors, 10);
 
     return {
-        collectors, filteredCollectors, fetchCollectors,
+        collectors, 
+        filteredCollectors, 
+        fetchCollectors,
         paginatedCollectors,
-        isLoading, error,
-        searchTerm, setSearchTerm,
-        statusFilter, setStatusFilter,
-        vehicleTypeFilter, setVehicleTypeFilter,
+        isLoading, 
+        error,
+        searchTerm, 
+        setSearchTerm,
+        statusFilter, 
+        setStatusFilter,
+        vehicleTypeFilter, 
+        setVehicleTypeFilter,
         handleClearFilters,
-        page, limit, pages, total, goToPage, hasNextPage, hasPrevPage
+        currentPage, 
+        totalPages, 
+        setPage,
     };
 };

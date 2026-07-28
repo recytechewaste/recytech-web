@@ -6,11 +6,9 @@
     flex-direction: column;
     flex-shrink: 0;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    
-    height: 100vh;
-    position: sticky;
-    top: 0;
-    z-index: 50;
+    min-height: 0; /* Allow flex item to shrink if content overflows */
+    position: relative; /* This is crucial for positioning the collapse button */
+    z-index: 50; /* z-index is still useful for elements like the collapse button */
     transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: visible;
 }

@@ -1,69 +1,53 @@
 const mongoose = require('mongoose');
 
-const requestSchema = mongoose.Schema({
-    residentName: {
-        type: String,
-        required: true
-    },
-    resident: {
+const requestSchema = new mongoose.Schema({
+    bin: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Resident',
-        required: false
+        ref: 'Bin',
+        required: [true, 'A bin ID is required for the collection request.']
     },
-    wasteType: {
-        type: String, // e.g., "Monitor", "Battery", "Phone"
-        required: true
-    },
-    weight: {
-        type: Number,
-        default: 0
-    },
-    quantity: {
-        type: Number,
-        default: 1,
-        min: 1
-    },
-    wasteImage: {
-        type: String, // URL to the image stored in Cloud/Firebase
-        required: false // Optional for now
-    },
-    location: {
-        address: { type: String, required: true },
-        // We can add lat/long coordinates later for the map
+    lgu: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'LguAccount',
+        required: [true, 'The LGU account ID is required.']
     },
     status: {
         type: String,
-        enum: ['Pending', 'Approved', 'Rejected', 'In-Transit', 'Completed'],
-        default: 'Pending'
+        enum: ['pending', 'scheduled', 'in-progress', 'completed', 'cancelled'],
+        default: 'pending',
+        description: "The current status of the collection request."
+    },
+    requestType: {
+        type: String,
+        enum: ['automated', 'manual'],
+        default: 'manual',
+        description: "The type of request, either automated or manual."
     },
     assignedCollector: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Collector', // Links this request to a specific Collector
+        ref: 'Collector',
         required: false
     },
-    scheduledAt: {
-        type: Date,
-        required: false
+    scheduledDate: {
+        type: Date
     },
-    residentEmail: {
-        type: String, // Email to link request to resident account
-        required: false // Optional for anonymous submissions
+    completionDate: {
+        type: Date
     },
-    monetaryValue: {
-        type: Number, // Calculated payout in PHP
-        default: 0
-    },
-    paymentProcessed: {
-        type: Boolean, // Tracks if payment has been issued
-        default: false
+    collectedWaste: {
+        type: [{
+            category: { type: String, required: true },
+            quantity: { type: Number, required: true, min: 0 },
+            unit: { type: String, required: true }
+        }],
+        default: [],
+        description: "Data on collected items, submitted by the collector via the mobile app upon completion."
     }
 }, {
     timestamps: true
 });
 
-// Performance: Add indexes for frequently queried fields in Analytics & Dashboards
-requestSchema.index({ status: 1 });
-requestSchema.index({ createdAt: -1 });
-requestSchema.index({ wasteType: 1 });
+requestSchema.index({ status: 1, scheduledDate: -1 });
+requestSchema.index({ bin: 1, status: 1 });
 
 module.exports = mongoose.model('Request', requestSchema);

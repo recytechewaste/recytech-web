@@ -1,185 +1,117 @@
-const Request = require('../models/Request');
+const BinDropoff = require('../models/BinDropoff');
+const RecyclingCenter = require('../models/RecyclingCenter');
 const Resident = require('../models/Resident');
-const Transaction = require('../models/Transaction');
-const User = require('../models/User');
 const { asyncHandler } = require('../utils/asyncHandler');
-const { linearRegression, pearsonCorrelation, seasonalDecomposition, statisticalSummary, detectOutliers } = require('../utils/predictiveAnalytics');
+const { linearRegression, seasonalDecomposition, statisticalSummary, detectOutliers } = require('../utils/predictiveAnalytics');
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const roundCurrency = (value = 0) => Math.round(value * 100) / 100;
-
-const getTargetYear = async () => {
-    const latest = await Request.findOne().sort({ createdAt: -1 });
-    return latest ? latest.createdAt.getFullYear() : new Date().getFullYear();
-};
-
-const getRequestSummary = async () => {
-    const [statusCounts, totals, topCategory] = await Promise.all([
-        Request.aggregate([
-            { $group: { _id: '$status', count: { $sum: 1 } } }
-        ]),
-        Request.aggregate([
+const getDropoffSummary = async () => {
+    const [totals, wasteTypeBreakdown, binStats] = await Promise.all([
+        BinDropoff.aggregate([
             {
                 $group: {
                     _id: null,
-                    totalRequests: { $sum: 1 },
-                    completedRequests: {
-                        $sum: { $cond: [{ $eq: ['$status', 'Completed'] }, 1, 0] }
-                    },
-                    totalCompletedItems: {
+                    totalDropoffs: { $sum: 1 },
+                    totalKilograms: { $sum: '$kilograms' },
+                    totalPoints: { $sum: '$pointsAwarded' }
+                }
+            }
+        ]),
+        BinDropoff.aggregate([
+            { $group: { _id: '$wasteType', count: { $sum: 1 }, totalKg: { $sum: '$kilograms' } } },
+            { $sort: { count: -1, _id: 1 } }
+        ]),
+        RecyclingCenter.aggregate([
+            {
+                $group: {
+                _id: null,
+                    totalBins: { $sum: 1 },
+                    operationalBins: { $sum: { $cond: [{ $ne: ['$status', 'Maintenance'] }, 1, 0] } },
+                    nearCapacity: {
                         $sum: {
                             $cond: [
-                                { $eq: ['$status', 'Completed'] },
-                                { $ifNull: ['$quantity', 1] },
+                                { $and: [{ $gt: ['$capacityKg', 0] }, { $gte: [{ $divide: ['$currentFillKg', '$capacityKg'] }, 0.8] }] },
+                                1,
                                 0
                             ]
                         }
                     }
                 }
             }
-        ]),
-        Request.aggregate([
-            { $group: { _id: '$wasteType', count: { $sum: 1 } } },
-            { $sort: { count: -1, _id: 1 } },
-            { $limit: 1 }
         ])
     ]);
 
-    const byStatus = statusCounts.reduce((acc, item) => {
-        acc[item._id || 'Unknown'] = item.count;
-        return acc;
-    }, {});
-    const totalStats = totals[0] || {};
-    const totalRequests = totalStats.totalRequests || 0;
-    const completedRequests = totalStats.completedRequests || 0;
+    const dropoffTotals = totals[0] || { totalDropoffs: 0, totalKilograms: 0, totalPoints: 0 };
+    const bins = binStats[0] || { totalBins: 0, operationalBins: 0, nearCapacity: 0 };
+    const topWasteType = wasteTypeBreakdown[0] || { _id: 'N/A' };
 
     return {
-        totalRequests,
-        pendingRequests: byStatus.Pending || 0,
-        approvedRequests: byStatus.Approved || 0,
-        inTransitRequests: byStatus['In-Transit'] || 0,
-        completedRequests,
-        rejectedRequests: byStatus.Rejected || 0,
-        totalCompletedItems: totalStats.totalCompletedItems || 0,
-        completionRate: totalRequests > 0 ? Math.round((completedRequests / totalRequests) * 1000) / 10 : 0,
-        topCategory: topCategory[0]?._id || 'N/A'
+        totalDropoffs: dropoffTotals.totalDropoffs,
+        totalKilograms: Math.round(dropoffTotals.totalKilograms * 100) / 100,
+        totalPoints: Math.round(dropoffTotals.totalPoints * 100) / 100,
+        totalBins: bins.totalBins,
+        operationalBins: bins.operationalBins,
+        binsNearCapacity: bins.nearCapacity,
+        topWasteType: topWasteType._id
     };
 };
 
-const getPayoutSummary = async () => {
-    const summary = await Transaction.aggregate([
-        { $match: { type: 'Payment' } },
+const getMonthlyDropoffTrends = async () => {
+    const targetYear = new Date().getFullYear();
+    const start = new Date(targetYear, 0, 1);
+    const end = new Date(targetYear + 1, 0, 1);
+
+    const trends = await BinDropoff.aggregate([
+        { $match: { createdAt: { $gte: start, $lt: end } } },
         {
             $group: {
-                _id: null,
-                totalPayout: { $sum: '$amount' },
-                transactionCount: { $sum: 1 },
-                averagePayout: { $avg: '$amount' }
+                _id: { month: { $month: '$createdAt' } },
+                dropoffs: { $sum: 1 },
+                kilograms: { $sum: '$kilograms' },
+                points: { $sum: '$pointsAwarded' }
             }
         }
     ]);
 
-    return {
-        totalPayout: roundCurrency(summary[0]?.totalPayout || 0),
-        payoutCount: summary[0]?.transactionCount || 0,
-        averagePayout: roundCurrency(summary[0]?.averagePayout || 0)
-    };
-};
-
-const getMonthlyTrends = async () => {
-    const targetYear = await getTargetYear();
-    const start = new Date(targetYear, 0, 1);
-    const end = new Date(targetYear + 1, 0, 1);
-
-    const [requestTrend, payoutTrend] = await Promise.all([
-        Request.aggregate([
-            { $match: { createdAt: { $gte: start, $lt: end } } },
-            {
-                $group: {
-                    _id: { month: { $month: '$createdAt' } },
-                    requests: { $sum: 1 },
-                    completed: { $sum: { $cond: [{ $eq: ['$status', 'Completed'] }, 1, 0] } },
-                    items: {
-                        $sum: {
-                            $cond: [
-                                { $eq: ['$status', 'Completed'] },
-                                { $ifNull: ['$quantity', 1] },
-                                0
-                            ]
-                        }
-                    }
-                }
-            }
-        ]),
-        Transaction.aggregate([
-            { $match: { type: 'Payment', createdAt: { $gte: start, $lt: end } } },
-            {
-                $group: {
-                    _id: { month: { $month: '$createdAt' } },
-                    payout: { $sum: '$amount' }
-                }
-            }
-        ])
-    ]);
-
-    const requestMap = requestTrend.reduce((acc, item) => {
+    const trendMap = trends.reduce((acc, item) => {
         acc[item._id.month] = item;
-        return acc;
-    }, {});
-    const payoutMap = payoutTrend.reduce((acc, item) => {
-        acc[item._id.month] = item.payout;
         return acc;
     }, {});
 
     return MONTHS.map((name, index) => {
         const month = index + 1;
+        const data = trendMap[month] || {};
         return {
             name,
-            requests: requestMap[month]?.requests || 0,
-            completed: requestMap[month]?.completed || 0,
-            items: requestMap[month]?.items || 0,
-            payout: roundCurrency(payoutMap[month] || 0)
+            dropoffs: data.dropoffs || 0,
+            kilograms: Math.round((data.kilograms || 0) * 100) / 100,
+            points: Math.round((data.points || 0) * 100) / 100
         };
     });
 };
 
-const getPredictiveAnalytics = async () => {
-    const targetYear = await getTargetYear();
-    const start = new Date(targetYear - 1, 0, 1); // Last 12 months
-    const end = new Date(targetYear + 1, 0, 1);
+const getDropoffPredictiveAnalytics = async () => {
+    const start = new Date(new Date().getFullYear() - 1, 0, 1);
+    const end = new Date(new Date().getFullYear() + 1, 0, 1);
 
-    // Get historical data for the past 12 months
-    const monthlyData = await Request.aggregate([
+    const monthlyData = await BinDropoff.aggregate([
         { $match: { createdAt: { $gte: start, $lt: end } } },
         {
             $group: {
-                _id: {
-                    year: { $year: '$createdAt' },
-                    month: { $month: '$createdAt' }
-                },
-                requests: { $sum: 1 },
-                completed: { $sum: { $cond: [{ $eq: ['$status', 'Completed'] }, 1, 0] } },
-                items: {
-                    $sum: {
-                        $cond: [
-                            { $eq: ['$status', 'Completed'] },
-                            { $ifNull: ['$quantity', 1] },
-                            0
-                        ]
-                    }
-                }
+                _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+                dropoffs: { $sum: 1 },
+                kilograms: { $sum: '$kilograms' },
+                points: { $sum: '$pointsAwarded' }
             }
         },
         { $sort: { '_id.year': 1, '_id.month': 1 } }
     ]);
 
-    // Prevent math crashes/division-by-zero if no data exists
     if (!monthlyData || monthlyData.length === 0) {
         return {
-            trendAnalysis: { requestSlope: 0, requestRSquared: 0, completionSlope: 0, completionRSquared: 0 },
+            trendAnalysis: { dropoffSlope: 0, dropoffRSquared: 0 },
             seasonalAnalysis: { seasonalIndices: [], trend: [] },
-            correlation: { requestCompletionCorrelation: 0, strength: 'N/A' },
             statisticalSummary: { mean: 0, median: 0, mode: 0, min: 0, max: 0, stdDev: 0 },
             outliers: [],
             predictions: [],
@@ -187,197 +119,198 @@ const getPredictiveAnalytics = async () => {
         };
     }
 
-    // Prepare data for analysis
-    const requestData = monthlyData.map((item, index) => ({
-        x: index,
-        y: item.requests
-    }));
+    const dropoffData = monthlyData.map((item, index) => ({ x: index, y: item.dropoffs }));
+    const dropoffRegression = linearRegression(dropoffData);
+    const dropoffValues = monthlyData.map(item => item.dropoffs);
+    const seasonalAnalysis = seasonalDecomposition(dropoffValues, 12);
+    const stats = statisticalSummary(dropoffValues);
+    const outliers = detectOutliers(dropoffValues);
 
-    const completionData = monthlyData.map((item, index) => ({
-        x: index,
-        y: item.completed
-    }));
-
-    // Linear regression for trend forecasting
-    const requestRegression = linearRegression(requestData);
-    const completionRegression = linearRegression(completionData);
-
-    // Seasonal analysis
-    const requestValues = monthlyData.map(item => item.requests);
-    const seasonalAnalysis = seasonalDecomposition(requestValues, 12);
-
-    // Correlation between requests and completions
-    const requests = monthlyData.map(item => item.requests);
-    const completions = monthlyData.map(item => item.completed);
-    const correlation = pearsonCorrelation(requests, completions);
-
-    // Statistical summary
-    const stats = statisticalSummary(requests);
-
-    // Outlier detection
-    const outliers = detectOutliers(requests);
-
-    // Generate predictions for next 3 months
     const predictions = [];
     for (let i = 1; i <= 3; i++) {
-        const nextMonth = monthlyData.length + i - 1;
-        const predictedRequests = Math.max(0, Math.round(requestRegression.predict(nextMonth)));
-        const predictedCompletions = Math.max(0, Math.round(completionRegression.predict(nextMonth)));
+        const nextIndex = monthlyData.length + i - 1;
+        const predictedDropoffs = Math.max(0, Math.round(dropoffRegression.predict(nextIndex)));
         predictions.push({
             month: `Month +${i}`,
-            predictedRequests,
-            predictedCompletions,
-            confidence: Math.round(requestRegression.rSquared * 100)
+            predictedDropoffs,
+            confidence: Math.round(dropoffRegression.rSquared * 100)
         });
     }
 
     return {
         trendAnalysis: {
-            requestSlope: requestRegression.slope,
-            requestRSquared: requestRegression.rSquared,
-            completionSlope: completionRegression.slope,
-            completionRSquared: completionRegression.rSquared
+            dropoffSlope: dropoffRegression.slope,
+            dropoffRSquared: dropoffRegression.rSquared
         },
         seasonalAnalysis: {
             seasonalIndices: seasonalAnalysis.seasonal,
             trend: seasonalAnalysis.trend
         },
-        correlation: {
-            requestCompletionCorrelation: correlation,
-            strength: Math.abs(correlation) > 0.7 ? 'Strong' :
-                     Math.abs(correlation) > 0.3 ? 'Moderate' : 'Weak'
-        },
         statisticalSummary: stats,
         outliers: outliers.map(index => ({
             month: `${monthlyData[index]._id.year}-${String(monthlyData[index]._id.month).padStart(2, '0')}`,
-            value: requests[index],
-            deviation: Math.abs(requests[index] - stats.mean)
+            value: dropoffValues[index],
+            deviation: Math.abs(dropoffValues[index] - stats.mean)
         })),
         predictions,
         insights: {
-            trendDirection: requestRegression.slope > 0 ? 'Increasing' :
-                           requestRegression.slope < 0 ? 'Decreasing' : 'Stable',
+            trendDirection: dropoffRegression.slope > 0 ? 'Increasing' :
+                           dropoffRegression.slope < 0 ? 'Decreasing' : 'Stable',
             seasonalityDetected: seasonalAnalysis.seasonal.some(index => Math.abs(index) > stats.stdDev * 0.5),
             outlierCount: outliers.length,
-            predictionConfidence: Math.round(requestRegression.rSquared * 100)
+            predictionConfidence: Math.round(dropoffRegression.rSquared * 100)
         }
     };
 };
 
-const getCategoryDistribution = async () => {
-    return Request.aggregate([
+const getRecentDropoffs = async () => {
+    return BinDropoff.find()
+        .populate('binId', 'name address status')
+        .sort({ createdAt: -1 })
+        .limit(10);
+};
+
+const getDashboardData = asyncHandler(async (req, res) => {
+    const [summary, monthlyTrends, dropoffPredictive, recentDropoffs, wasteTypeBreakdown] = await Promise.all([
+        getDropoffSummary(),
+        getMonthlyDropoffTrends(),
+        getDropoffPredictiveAnalytics(),
+        getRecentDropoffs(),
+        BinDropoff.aggregate([
+            { $group: { _id: '$wasteType', count: { $sum: 1 }, totalKg: { $sum: '$kilograms' } } },
+            { $sort: { count: -1, _id: 1 } }
+        ])
+    ]);
+
+    const categoryDistribution = wasteTypeBreakdown.map(item => ({
+        name: item._id,
+        value: item.count,
+        kilograms: Math.round(item.totalKg * 100) / 100
+    }));
+
+    const residentCount = await Resident.countDocuments({ status: 'Active' });
+
+    res.json({
+        summary: {
+            ...summary,
+            activeResidents: residentCount
+        },
+        monthlyTrends,
+        categoryDistribution,
+        recentDropoffs,
+        predictiveAnalytics: dropoffPredictive
+    });
+});
+
+const getSummaryData = asyncHandler(async (req, res) => {
+    const summary = await getDropoffSummary();
+    res.json(summary);
+});
+
+const getCategoryDistributionData = asyncHandler(async (req, res) => {
+    const wasteTypeBreakdown = await BinDropoff.aggregate([
+        { $group: { _id: '$wasteType', count: { $sum: 1 }, totalKg: { $sum: '$kilograms' } } },
+        { $sort: { count: -1, _id: 1 } }
+    ]);
+
+    const categories = wasteTypeBreakdown.map(item => ({
+        name: item._id,
+        value: item.count,
+        kilograms: Math.round(item.totalKg * 100) / 100
+    }));
+
+    res.json({ categories });
+});
+
+const getMonthlyTrendsData = asyncHandler(async (req, res) => {
+    const monthlyTrends = await getMonthlyDropoffTrends();
+    res.json({ monthlyTrends });
+});
+
+const getPredictiveAnalyticsData = asyncHandler(async (req, res) => {
+    const predictiveData = await getDropoffPredictiveAnalytics();
+    res.json({ predictiveAnalytics: predictiveData });
+});
+
+const getReportData = asyncHandler(async (req, res) => {
+    const { timeframe = 'month', wasteType } = req.query;
+
+    let dateFilter = {};
+    const now = new Date();
+
+    if (timeframe === 'week') {
+        dateFilter = { $gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
+    } else if (timeframe === 'month') {
+        dateFilter = { $gte: new Date(now.getFullYear(), now.getMonth(), 1) };
+    } else if (timeframe === 'year') {
+        dateFilter = { $gte: new Date(now.getFullYear(), 0, 1) };
+    }
+
+    let matchQuery = { createdAt: dateFilter };
+    if (wasteType && wasteType !== 'All') {
+        matchQuery.wasteType = wasteType;
+    }
+
+    const [report] = await BinDropoff.aggregate([
+        { $match: matchQuery },
         {
             $group: {
-                _id: '$wasteType',
-                requests: { $sum: 1 },
-                completed: { $sum: { $cond: [{ $eq: ['$status', 'Completed'] }, 1, 0] } },
-                items: { $sum: { $ifNull: ['$quantity', 1] } }
+                _id: null,
+                totalDropoffs: { $sum: 1 },
+                totalKilograms: { $sum: '$kilograms' },
+                totalPoints: { $sum: '$pointsAwarded' },
+                completedDropoffs: { $sum: { $cond: [{ $eq: ['$status', 'Completed'] }, 1, 0] } },
+                uniqueResidents: { $addToSet: '$participantEmail' }
             }
         },
         {
             $project: {
                 _id: 0,
-                name: '$_id',
-                value: '$requests',
-                completed: 1,
-                items: 1
+                totalDropoffs: 1,
+                totalKilograms: 1,
+                totalPoints: 1,
+                successRate: {
+                    $cond: [{ $eq: ['$totalDropoffs', 0] }, 0, { $multiply: [{ $divide: ['$completedDropoffs', '$totalDropoffs'] }, 100] }]
+                },
+                uniqueResidents: { $size: '$uniqueResidents' }
             }
         }
     ]);
-};
 
-const getResidentSummary = async () => {
-    const summary = await Resident.aggregate([
+    const summaryByWasteType = await BinDropoff.aggregate([
+        { $match: matchQuery },
         {
             $group: {
-                _id: null,
-                totalResidents: { $sum: 1 },
-                activeResidents: { $sum: { $cond: [{ $eq: ['$status', 'Active'] }, 1, 0] } },
-                temporaryResidents: { $sum: { $cond: ['$isTemporary', 1, 0] } },
-                totalEarned: { $sum: '$totalEarned' }
+                _id: '$wasteType',
+                count: { $sum: 1 },
+                totalKg: { $sum: '$kilograms' },
+                totalPoints: { $sum: '$pointsAwarded' }
             }
-        }
+        },
+        { $sort: { count: -1 } }
+    ]);
+    
+    const weeklyTrend = await BinDropoff.aggregate([
+        { $match: matchQuery },
+        {
+            $group: {
+                _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                count: { $sum: 1 }
+            }
+        },
+        { $sort: { _id: 1 } }
     ]);
 
-    const stats = summary[0] || {};
+    const recentActivity = await BinDropoff.find(matchQuery)
+        .sort({ createdAt: -1 })
+        .limit(10);
 
-    return {
-        totalResidents: stats.totalResidents || 0,
-        activeResidents: stats.activeResidents || 0,
-        temporaryResidents: stats.temporaryResidents || 0,
-        totalEarned: roundCurrency(stats.totalEarned || 0)
-    };
-};
-
-const getRoleDistribution = async (userRole) => {
-    if (!['Admin', 'Super Admin'].includes(userRole)) return [];
-
-    const roles = await User.aggregate([
-        { $group: { _id: '$role', value: { $sum: 1 } } },
-        { $sort: { value: -1, _id: 1 } },
-        { $project: { _id: 0, name: '$_id', value: 1 } }
-    ]);
-
-    return roles;
-};
-
-const getSummaryData = asyncHandler(async (req, res) => {
-    const [requests, payouts, residents] = await Promise.all([
-        getRequestSummary(),
-        getPayoutSummary(),
-        getResidentSummary()
-    ]);
-    res.json({ requests, payouts, residents });
-});
-
-const getCategoryDistributionData = asyncHandler(async (req, res) => {
-    const categories = await getCategoryDistribution();
-    res.json({ categories });
-});
-
-const getMonthlyTrendsData = asyncHandler(async (req, res) => {
-    const monthlyTrends = await getMonthlyTrends();
-    res.json({ monthlyTrends });
-});
-
-const getPredictiveAnalyticsData = asyncHandler(async (req, res) => {
-    const predictiveData = await getPredictiveAnalytics();
-    res.json({ predictiveAnalytics: predictiveData });
-});
-
-const getPayoutSummaryData = asyncHandler(async (req, res) => {
-    const payouts = await getPayoutSummary();
-    res.json({ payouts });
-});
-
-const getDashboardData = asyncHandler(async (req, res) => {
-    const userRole = req.user?.role || req.query.role || 'Staff';
-
-    // Perform the heavy DB queries and computations
-    const [requests, payouts, residents, monthlyTrends, categoryDistribution, roleDistribution, recentRequests, predictiveAnalytics] = await Promise.all([
-        getRequestSummary(),
-        getPayoutSummary(),
-        getResidentSummary(),
-        getMonthlyTrends(),
-        getCategoryDistribution(),
-        getRoleDistribution(req.user?.role),
-        Request.find()
-            .populate('resident', 'email firstName lastName isTemporary')
-            .sort({ createdAt: -1 })
-            .limit(5),
-        getPredictiveAnalytics()
-    ]);
-
-    const responseData = {
-        summary: { requests, payouts, residents },
-        monthlyTrends,
-        categoryDistribution,
-        roleDistribution,
-        recentRequests,
-        predictiveAnalytics
-    };
-
-    res.json(responseData);
+    res.json({
+        summary: report || { totalDropoffs: 0, totalKilograms: 0, totalPoints: 0, successRate: 0, uniqueResidents: 0 },
+        summaryByWasteType,
+        weeklyTrend,
+        recentActivity
+    });
 });
 
 module.exports = {
@@ -385,6 +318,6 @@ module.exports = {
     getCategoryDistributionData,
     getMonthlyTrendsData,
     getPredictiveAnalyticsData,
-    getPayoutSummaryData,
-    getDashboardData
+    getDashboardData,
+    getReportData
 };

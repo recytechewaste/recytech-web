@@ -5,18 +5,23 @@ const { asyncHandler } = require('../utils/asyncHandler');
 const { sendWelcomeEmail } = require('../services/emailService');
 
 const getCollectors = asyncHandler(async (req, res) => {
-    const collectors = await Collector.find().populate('user', 'email');
-    
-    // Flatten the email so the frontend can easily read it directly on the collector object
-    const formattedCollectors = collectors.map(collector => {
-        const colObj = collector.toObject();
-        return {
-            ...colObj,
-            email: colObj.user?.email || ''
-        };
-    });
-    
-    res.json(formattedCollectors);
+    const collectors = await Collector.aggregate([
+        {
+            $lookup: {
+                from: 'users', // The collection name for the User model
+                localField: 'user',
+                foreignField: '_id',
+                as: 'userDetails'
+            }
+        },
+        { $unwind: { path: '$userDetails', preserveNullAndEmptyArrays: true } },
+        {
+            $addFields: {
+                email: '$userDetails.email'
+            }
+        }
+    ]);
+    res.json(collectors);
 });
 
 const createCollector = asyncHandler(async (req, res) => {

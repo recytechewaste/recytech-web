@@ -36,14 +36,17 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/auth', require('./recytechbackend/routes/authRoutes'));
-app.use('/api/requests', require('./recytechbackend/routes/requestRoutes'));
 app.use('/api/collectors', require('./recytechbackend/routes/collectorRoutes'));
 app.use('/api/users', require('./recytechbackend/routes/userRoutes'));
 app.use('/api/education', require('./recytechbackend/routes/educationRoutes'));
 app.use('/api/residents', require('./recytechbackend/routes/residentRoutes'));
-app.use('/api/exchange-rates', require('./recytechbackend/routes/exchangeRateRoutes'));
+app.use('/api/lgus', require('./recytechbackend/routes/lguRoutes'));
+app.use('/api/reward-points', require('./recytechbackend/routes/rewardPointRoutes'));
 app.use('/api/transactions', require('./recytechbackend/routes/transactionRoutes'));
-//app.use('/api/recycling-centers', require('./recytechbackend/routes/recyclingCenterRoutes'));
+app.use('/api/bins', require('./recytechbackend/routes/binRoutes'));
+app.use('/api/requests', require('./recytechbackend/routes/requestRoutes'));
+app.use('/api/bin-locations', require('./recytechbackend/routes/recyclingCenterRoutes'));
+app.use('/api/bin-dropoffs', require('./recytechbackend/routes/binDropoffRoutes'));
 app.use('/api/analytics', require('./recytechbackend/routes/analyticsRoutes'));
 app.use('/api/scheduling', require('./recytechbackend/routes/schedulingRoutes'));
 

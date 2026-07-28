@@ -6,7 +6,11 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    try {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    } catch (error) {
+        console.error("Failed to parse user info from localStorage in api client", error);
+    }
 
     // We no longer need to manually attach the token to the header 
     // because withCredentials automatically sends the secure HTTP-Only cookie!

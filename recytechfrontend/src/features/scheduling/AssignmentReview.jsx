@@ -46,10 +46,10 @@ const AssignmentReview = ({
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
                                             <div style={{ flex: 1 }}>
                                                 <div style={{ fontWeight: '500', color: '#111827' }}>
-                                                    {request.residentName} - {request.wasteType}
+                                                    Bin {request.binId}
                                                 </div>
                                                 <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
-                                                    {request.location}
+                                                    {request.address}
                                                 </div>
                                                 <RequestPriorityTags request={request} />
                                                 {(request.reasons || []).length > 0 && (

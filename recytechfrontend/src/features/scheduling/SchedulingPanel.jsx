@@ -102,7 +102,7 @@ const SchedulingPanel = () => {
         const assignments = Object.values(selectedAssignments).map(({ requestId, collectorId }) => ({
             requestId,
             collectorId,
-            scheduledAt: scheduledTimes[requestId]
+            scheduledDate: scheduledTimes[requestId]
         }));
 
         if (assignments.length === 0) {

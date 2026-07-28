@@ -1,100 +1,85 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../../api/client';
-import { usePagination } from '../../hooks/usePagination';
+import { useDebounce } from '../../hooks/useDebounce';
 
-const calculateStats = (requests) => ({
-    total: requests.length,
-    pending: requests.filter((request) => request.status === 'Pending').length,
-    approved: requests.filter((request) => request.status === 'Approved').length,
-    completed: requests.filter((request) => request.status === 'Completed').length
-});
-
-const filterRequests = (requests, filters) => {
-    let result = [...requests];
-
-    if (filters.status) {
-        result = result.filter((request) => request.status === filters.status);
-    }
-
-    if (filters.wasteType) {
-        result = result.filter((request) => request.wasteType === filters.wasteType);
-    }
-
-    if (filters.assignment === 'assigned') {
-        result = result.filter((request) => Boolean(request.assignedCollector));
-    } else if (filters.assignment === 'unassigned') {
-        result = result.filter((request) => !request.assignedCollector);
-    } else if (filters.assignment === 'scheduled') {
-        result = result.filter((request) => Boolean(request.scheduledAt));
-    } else if (filters.assignment === 'unscheduled') {
-        result = result.filter((request) => !request.scheduledAt);
-    }
-
-    return result;
-};
-
-export const useRequests = () => {
+export const useRequests = (itemsPerPage = 10) => {
     const [requests, setRequests] = useState([]);
-    const [filteredRequests, setFilteredRequests] = useState([]);
-    const [collectors, setCollectors] = useState([]);
-    const [wasteCategories, setWasteCategories] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, completed: 0 });
-    const [filters, setFilters] = useState({
-        status: '',
-        wasteType: '',
-        assignment: ''
-    });
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const { page, limit, pages, total, goToPage, updatePaginationInfo, hasNextPage, hasPrevPage } = usePagination(1, 10);
+    // Filter and search state
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    const [typeFilter, setTypeFilter] = useState('');
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-    const fetchData = async () => {
-        setLoading(true);
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalRequests, setTotalRequests] = useState(0);
+
+    const fetchRequests = useCallback(async (page, limit, search, status, type) => {
+        setIsLoading(true);
+        setError(null);
         try {
-            const [reqData, colData, rateData] = await Promise.all([
-                api.get('/requests'),
-                api.get('/collectors'),
-                api.get('/exchange-rates')
-            ]);
+            const params = new URLSearchParams({
+                page,
+                limit,
+                search,
+                status,
+                type,
+            });
+            const response = await api.get(`/requests?${params.toString()}`);
 
-            setRequests(reqData.data);
-            setFilteredRequests(filterRequests(reqData.data, filters));
-            setCollectors(colData.data);
-            setWasteCategories((rateData.data.rates || []).map((rate) => rate.wasteType));
-            setStats(calculateStats(reqData.data));
-        } catch (error) {
-            console.error('Error fetching requests data', error);
+            setRequests(Array.isArray(response.data.requests) ? response.data.requests : []);
+            setTotalPages(response.data.totalPages || 1);
+            setTotalRequests(response.data.totalRequests || 0);
+            setCurrentPage(response.data.currentPage || 1);
+
+        } catch (err) {
+            console.error("Error fetching collection requests:", err);
+            setError("Failed to fetch collection requests. Please ensure the server is running and you are logged in.");
+            setRequests([]);
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
-    };
-
-    useEffect(() => {
-        fetchData();
     }, []);
 
     useEffect(() => {
-        setFilteredRequests(filterRequests(requests, filters));
-    }, [filters, requests]);
+        fetchRequests(currentPage, itemsPerPage, debouncedSearchTerm, statusFilter, typeFilter);
+    }, [fetchRequests, currentPage, itemsPerPage, debouncedSearchTerm, statusFilter, typeFilter]);
 
-    useEffect(() => {
-        updatePaginationInfo({
-            total: filteredRequests.length,
-            pages: Math.ceil(filteredRequests.length / limit) || 1
-        });
-    }, [filteredRequests.length, limit, updatePaginationInfo]);
-
-    const paginatedRequests = filteredRequests.slice((page - 1) * limit, page * limit);
-
-    const handleClearFilters = () => {
-        setFilters({ status: '', wasteType: '', assignment: '' });
+    const setPage = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
     };
 
-    return {
-        requests, filteredRequests, paginatedRequests, loading,
-        collectors, wasteCategories,
-        stats, filters, setFilters,
-        handleClearFilters, fetchData,
-        page, limit, pages, total, goToPage, hasNextPage, hasPrevPage
+    const handleClearFilters = () => {
+        setSearchTerm('');
+        setStatusFilter('');
+        setTypeFilter('');
+        setCurrentPage(1);
+    };
+
+    return { 
+        requests, 
+        isLoading, 
+        error,
+        paginatedRequests: requests, // For compatibility with older components if needed
+
+        // Filters
+        searchTerm, setSearchTerm,
+        statusFilter, setStatusFilter,
+        typeFilter, setTypeFilter,
+        handleClearFilters,
+
+        // Pagination
+        currentPage,
+        totalPages,
+        totalRequests,
+        setPage,
+
+        refetchRequests: () => fetchRequests(currentPage, itemsPerPage, debouncedSearchTerm, statusFilter, typeFilter) 
     };
 };

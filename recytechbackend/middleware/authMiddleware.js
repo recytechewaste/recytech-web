@@ -43,4 +43,20 @@ const superAdmin = (req, res, next) => {
     }
 };
 
-module.exports = { protect, admin, superAdmin };
+const lgu = (req, res, next) => {
+    if (req.user && req.user.role === 'LGU') {
+        next();
+    } else {
+        res.status(401).send('Not authorized as an LGU');
+    }
+};
+
+const collector = (req, res, next) => {
+    if (req.user && req.user.role === 'Collector') {
+        next();
+    } else {
+        res.status(401).send('Not authorized as a Collector');
+    }
+};
+
+module.exports = { protect, admin, superAdmin, lgu, collector };

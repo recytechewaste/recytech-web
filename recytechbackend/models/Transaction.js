@@ -13,11 +13,11 @@ const transactionSchema = mongoose.Schema({
         required: true,
         description: "Type of transaction"
     },
-    amount: {
+    points: {
         type: Number,
         required: true,
         min: 0,
-        description: "Amount in PHP"
+        description: "Points awarded or deducted"
     },
     requestId: {
         type: mongoose.Schema.Types.ObjectId,

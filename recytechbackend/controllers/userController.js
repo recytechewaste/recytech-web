@@ -127,9 +127,11 @@ const deleteUser = asyncHandler(async (req, res) => {
         throw new Error('User not found');
     }
     
-    await user.deleteOne();
-    
-    res.json({ message: 'User removed' });
+    // Soft-delete the user by setting their status to Inactive
+    // This prevents login and removes them from active lists, but preserves historical data.
+    user.status = 'Inactive';
+    await user.save();
+    res.json({ message: 'User has been deactivated successfully.' });
 });
 
 module.exports = {

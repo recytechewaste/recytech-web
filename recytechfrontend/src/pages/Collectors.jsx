@@ -8,15 +8,16 @@ import CollectorFormModal from '../features/collectors/CollectorFormModal';
 import Modal from '../components/Modal';
 import { useToast } from '../context/ToastContext';
 import Skeleton from '../components/Skeleton';
+import Pagination from '../components/Pagination';
 
 const Collectors = () => {
     const { 
-        filteredCollectors, paginatedCollectors, fetchCollectors, isLoading,
+        paginatedCollectors, fetchCollectors, isLoading,
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
         vehicleTypeFilter, setVehicleTypeFilter,
         handleClearFilters,
-        page, limit, pages, goToPage, hasNextPage, hasPrevPage
+        currentPage, totalPages, setPage
     } = useCollectors();
 
     const [formData, setFormData] = useState({ firstName: '', lastName: '', phone: '', vehiclePlate: '', vehicleType: '', email: '', password: '', status: 'Active' });
@@ -81,10 +82,10 @@ const Collectors = () => {
                 <div className={styles.header}>
                     <div className={styles.titleGroup}>
                         <h1 className={styles.pageTitle}>Collector Management</h1>
-                        <p className={styles.subTitle}>Manage driver profiles and vehicle assignments.</p>
+                        <p className={styles.subTitle}>Manage collector profiles and bin service assignments.</p>
                     </div>
                     <button onClick={handleOpenAdd} className={styles.addBtn} style={{backgroundColor: '#2563EB'}}>
-                        <Plus size={18} /> Add Collector
+                        <Plus size={18} /> Add Bin Collector
                     </button>
                 </div>
 
@@ -173,7 +174,7 @@ const Collectors = () => {
                             ) : (
                                 paginatedCollectors.map((c, index) => (
                                     <tr key={c._id} className={styles.tr}>
-                                        <td className={styles.td}>{(page - 1) * limit + index + 1}</td>
+                                        <td className={styles.td}>{(currentPage - 1) * 10 + index + 1}</td>
                                         <td className={styles.td}>
                                             <div className={styles.driverCell}>
                                                 <div className={styles.avatar}>{c.firstName ? c.firstName.charAt(0).toUpperCase() : '?'}</div>
@@ -206,25 +207,9 @@ const Collectors = () => {
                         </tbody>
                     </table>
                 </div>
-
-                {/* Pagination Controls */}
-                <div className={styles.filterBar} style={{ marginTop: '20px', justifyContent: 'center' }}>
-                    <button 
-                        disabled={!hasPrevPage} 
-                        onClick={() => goToPage(page - 1)}
-                        className={styles.iconBtn}
-                    >
-                        <ChevronLeft size={20} />
-                    </button>
-                    <span style={{ padding: '0 20px' }}>Page {page} of {pages}</span>
-                    <button 
-                        disabled={!hasNextPage} 
-                        onClick={() => goToPage(page + 1)}
-                        className={styles.iconBtn}
-                    >
-                        <ChevronRight size={20} />
-                    </button>
-                </div>
+                {totalPages > 1 && (
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
+                )}
 
                 <CollectorFormModal 
                     isOpen={showModal} 
@@ -236,7 +221,7 @@ const Collectors = () => {
 
                 {/* --- DELETE CONFIRMATION MODAL --- */}
                 <Modal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Confirm Deletion" maxWidth="400px">
-                    <p style={{color:'#666', marginBottom:'24px'}}>Are you sure you want to remove this collector? This action cannot be undone.</p>
+                    <p style={{color:'#666', marginBottom:'24px'}}>Are you sure you want to remove this collector assignment? This action cannot be undone.</p>
                     <div className={styles.modalFooter}>
                         <button onClick={() => setDeletingId(null)} className={styles.cancelBtn}>Cancel</button>
                         <button onClick={confirmDelete} className={styles.deleteBtn} style={{backgroundColor: '#ef4444'}}>Delete</button>

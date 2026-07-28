@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import styles from '../styles/Sidebar.module.css';
 import { 
     LayoutDashboard, 
-    FileText, 
     Truck, 
-    Users, 
-    BarChart3, 
-    Settings, 
-    LogOut, 
+    Users,
+    BarChart3,
+    LogOut,
+    Warehouse,
+    ScanLine,
     X,
-    ClipboardList,
     BookOpen,
     Coins,
     Users2,
@@ -55,16 +54,13 @@ const Sidebar = ({ activePage }) => {
 
     const menuItems = [
         { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
-        { name: 'Request Management', icon: <FileText size={20} />, path: '/requests', roles: ['Admin', 'Super Admin'] },
         { name: 'User Management', icon: <Users size={20} />, path: '/users', roles: ['Super Admin'] },
         { name: 'Collector Management', icon: <Truck size={20} />, path: '/collectors', roles: ['Admin', 'Super Admin'] },
-        { name: 'Requests Summary', icon: <ClipboardList size={20} />, path: '/requests-summary' },
-        { name: 'Mobile User Management', icon: <Users2 size={20} />, path: '/residents', roles: ['Admin', 'Super Admin'] },
-        { name: 'Exchange Rates', icon: <Coins size={20} />, path: '/exchange-rates', roles: ['Admin', 'Super Admin'] },
-        { name: 'Payout History', icon: <History size={20} />, path: '/transactions', roles: ['Admin', 'Super Admin'] },
-        { name: 'Educational Content', icon: <BookOpen size={20} />, path: '/education', roles: ['Staff', 'Admin', 'Super Admin'] },
+        { name: 'Smart Bin Network', icon: <Warehouse size={20} />, path: '/bin-network', roles: ['Admin', 'Super Admin'] },
+        { name: 'Bin Collections', icon: <ScanLine size={20} />, path: '/bin-collection-requests', roles: ['Admin', 'Super Admin'] },
+        { name: 'LGU Management', icon: <Users2 size={20} />, path: '/lgu-management', roles: ['Admin', 'Super Admin'] },
+        { name: 'Reward Points', icon: <Coins size={20} />, path: '/reward-points', roles: ['Admin', 'Super Admin'] },
         { name: 'Reports and Analytics', icon: <BarChart3 size={20} />, path: '/reports', roles: ['Staff', 'Admin', 'Super Admin'] },
-       
     ];
 
     // Filter menu items based on user role

@@ -35,7 +35,7 @@ const RequestPriorityTags = ({ request }) => (
                 color: '#166534'
             }}
         >
-            PHP {(request.estimatedValue || 0).toLocaleString()}
+            Fill Level {request.fillLevel || 0}%
         </span>
         <span
             style={{

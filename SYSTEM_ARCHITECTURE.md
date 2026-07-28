@@ -49,8 +49,8 @@ Main API groups:
 - `/api/requests` - recycling pickup/request management
 - `/api/residents` - resident profile and earnings management
 - `/api/collectors` - collector management
-- `/api/transactions` - payout and transaction history
-- `/api/exchange-rates` - waste-type payout rates
+- `/api/transactions` - point-based transaction history
+- `/api/reward-points` - waste-type reward point rules
 - `/api/education` - educational content management
 - `/api/analytics` - dashboard reports, trends, summaries, predictive analytics
 - `/api/scheduling` - forecasting, recommendations, assignment confirmation
@@ -80,11 +80,11 @@ The backend uses Mongoose models to read and write MongoDB data.
 Core collections:
 
 - `User` - staff/admin/super admin login accounts
-- `Resident` - recycling residents, lifetime earnings, request count
+- `Resident` - recycling residents, total points, and point balance
 - `Collector` - collector profile, linked user account, vehicle information
-- `Request` - recycling request details, status, assigned collector, payout data
-- `Transaction` - resident payments, refunds, adjustments
-- `ExchangeRate` - active payout rates by waste type
+- `Request` - recycling request details, status, assigned collector, points data
+- `Transaction` - resident point transactions
+- `RewardPoint` - active reward point rules by waste type
 - `Education` - articles, videos, PDFs, thumbnails, publication status
 
 ## Main Data Flow
@@ -107,7 +107,7 @@ sequenceDiagram
     UI-->>User: Updates page state
 ```
 
-## Example Business Flow: Recycling Request to Payout
+## Example Business Flow: Recycling Request to Points
 
 ```mermaid
 flowchart TD
@@ -118,9 +118,9 @@ flowchart TD
     D -- Yes --> F[Assign collector and schedule pickup]
     F --> G[Request moves to In-Transit]
     G --> H[Request completed]
-    H --> I[Calculate payout from exchange rate]
+    H --> I[Calculate points from reward point rules]
     I --> J[Create transaction]
-    J --> K[Update resident total earnings]
+    J --> K[Update resident total points]
 ```
 
 ## Deployment Shape

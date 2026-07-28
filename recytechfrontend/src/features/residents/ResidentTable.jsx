@@ -1,4 +1,4 @@
-import { Edit2, RefreshCw, Trash2 } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import styles from '../../styles/UserManagement.module.css';
 import Skeleton from '../../components/Skeleton';
 
@@ -13,9 +13,9 @@ const ResidentTable = ({ residents, loading, onEdit, onDelete }) => {
                         <th className={styles.th}>Email</th>
                         <th className={styles.th}>Contact Number</th>
                         <th className={styles.th}>Status</th>
-                        <th className={styles.th}>Total Earned</th>
-                        <th className={styles.th}>Requests</th>
-                        <th className={styles.th}>Actions</th>
+                        <th className={styles.th}>Point Balance</th>
+                        <th className={styles.th}>Drop-offs</th>
+                        <th className={styles.th}>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -37,12 +37,7 @@ const ResidentTable = ({ residents, loading, onEdit, onDelete }) => {
                                 <td className={styles.td}><Skeleton width="60px" height="24px" borderRadius="12px" /></td>
                                 <td className={styles.td}><Skeleton width="80px" height="16px" /></td>
                                 <td className={styles.td}><Skeleton width="30px" height="16px" /></td>
-                                <td className={styles.td}>
-                                    <div className={styles.actionIcons}>
-                                        <Skeleton width="28px" height="28px" borderRadius="4px" />
-                                        <Skeleton width="28px" height="28px" borderRadius="4px" />
-                                    </div>
-                                </td>
+                                <td className={styles.td}><Skeleton width="60px" height="24px" borderRadius="12px" /></td>
                             </tr>
                         ))
                     ) : residents.length === 0 ? (
@@ -72,10 +67,9 @@ const ResidentTable = ({ residents, loading, onEdit, onDelete }) => {
                                 <td className={styles.td} style={{color: '#059669', fontWeight: 700}}>PHP {resident.totalEarned?.toFixed(2) || '0.00'}</td>
                                 <td className={styles.td}>{resident.requestCount || 0}</td>
                                 <td className={styles.td}>
-                                    <div className={styles.actionIcons}>
-                                        <button title="Edit resident" className={styles.iconBtn} onClick={() => onEdit(resident)}><Edit2 size={16}/></button>
-                                        <button title="Delete resident" className={styles.iconBtnDanger} onClick={() => onDelete(resident)}><Trash2 size={16}/></button>
-                                    </div>
+                                    <span className={resident.status === 'Active' ? styles.statusActive : styles.statusInactive}>
+                                        {resident.status || 'Active'}
+                                    </span>
                                 </td>
                             </tr>
                         ))

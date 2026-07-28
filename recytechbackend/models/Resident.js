@@ -44,17 +44,17 @@ const residentSchema = mongoose.Schema({
         trim: true,
         description: "Future link to the mobile app account/user ID"
     },
-    totalEarned: {
+    totalPoints: {
         type: Number,
         default: 0,
         min: 0,
-        description: "Total amount earned from all completed requests in PHP"
+        description: "Total points earned from all completed requests"
     },
-    walletBalance: {
+    pointsBalance: {
         type: Number,
         default: 0,
         min: 0,
-        description: "Current withdrawable balance in PHP"
+        description: "Current redeemable points balance"
     },
     requestCount: {
         type: Number,

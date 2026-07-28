@@ -1,6 +1,6 @@
 const Request = require('../models/Request');
 const Collector = require('../models/Collector');
-const ExchangeRate = require('../models/ExchangeRate');
+const RewardPoint = require('../models/RewardPoint');
 const {
     buildDailySeries,
     buildForecast,
@@ -57,16 +57,12 @@ async function getCollectionForecast(days = 7) {
 
 async function getSchedulingRecommendations() {
     const pendingRequests = await Request.find({
-        status: 'Approved',
-        assignedCollector: { $exists: false }
-    }).lean();
+        status: 'Pending',
+    }).populate('bin').lean();
 
-    const [collectors, exchangeRates] = await Promise.all([
-        Collector.find({ status: 'Active' }).lean(),
-        ExchangeRate.find({ isActive: true }).lean()
-    ]);
+    const collectors = await Collector.find({ status: 'Active' }).lean();
 
-    const recommendations = buildCollectionRecommendations(pendingRequests, collectors, exchangeRates);
+    const recommendations = buildCollectionRecommendations(pendingRequests, collectors);
 
     return {
         totalPendingRequests: pendingRequests.length,
@@ -74,7 +70,7 @@ async function getSchedulingRecommendations() {
         resourceSummary: buildResourceAllocationSummary(recommendations),
         actionRecommendations: buildActionRecommendations(recommendations),
         recommendations,
-        note: 'These are suggested collector assignments based on priority score, estimated recyclable value, request age, load, and vehicle capacity. Review and confirm before scheduling.'
+        note: 'These are suggested collector assignments based on bin fill-level and request age. Review and confirm before scheduling.'
     };
 }
 
@@ -88,20 +84,20 @@ async function confirmCollectorAssignments(assignments = []) {
 
     // 1. Initial Validation
     for (const assignment of assignments) {
-        const { requestId, collectorId, scheduledAt } = assignment;
+        const { requestId, collectorId, scheduledDate } = assignment;
 
-        if (!requestId || !collectorId || !scheduledAt) {
-            errors.push({ requestId, error: 'Missing requestId, collectorId, or scheduledAt' });
+        if (!requestId || !collectorId || !scheduledDate) {
+            errors.push({ requestId, error: 'Missing requestId, collectorId, or scheduledDate' });
             continue;
         }
 
-        const scheduledDate = new Date(scheduledAt);
-        if (Number.isNaN(scheduledDate.getTime())) {
+        const a_scheduledDate = new Date(scheduledDate);
+        if (Number.isNaN(a_scheduledDate.getTime())) {
             errors.push({ requestId, error: 'Invalid scheduled date/time' });
             continue;
         }
 
-        validAssignments.push({ requestId, collectorId, scheduledDate });
+        validAssignments.push({ requestId, collectorId, scheduledDate: a_scheduledDate });
         requestIds.push(requestId);
         collectorIds.push(collectorId);
     }
@@ -122,8 +118,8 @@ async function confirmCollectorAssignments(assignments = []) {
         Collector.find({ _id: { $in: collectorIds } }),
         Request.find({
             assignedCollector: { $in: collectorIds },
-            status: { $in: ['Approved', 'In-Transit'] }
-        }).select('_id assignedCollector scheduledAt')
+            status: { $in: ['Scheduled', 'In Progress'] }
+        }).select('_id assignedCollector scheduledDate')
     ]);
 
     // 3. Create maps for O(1) access
@@ -132,10 +128,10 @@ async function confirmCollectorAssignments(assignments = []) {
     
     const scheduleMap = new Map();
     activeSchedules.forEach(req => {
-        if (!req.scheduledAt) return;
+        if (!req.scheduledDate) return;
         const cId = req.assignedCollector.toString();
         if (!scheduleMap.has(cId)) scheduleMap.set(cId, []);
-        scheduleMap.get(cId).push({ requestId: req._id.toString(), time: req.scheduledAt.getTime() });
+        scheduleMap.get(cId).push({ requestId: req._id.toString(), time: req.scheduledDate.getTime() });
     });
 
     // 4. Process assignments against in-memory data
@@ -148,7 +144,7 @@ async function confirmCollectorAssignments(assignments = []) {
 
         const request = requestsMap.get(reqStr);
         if (!request) { errors.push({ requestId, error: 'Request not found' }); continue; }
-        if (request.status !== 'Approved') { errors.push({ requestId, error: `Request status is ${request.status}, not Approved` }); continue; }
+        if (request.status !== 'Pending') { errors.push({ requestId, error: `Request status is ${request.status}, not Pending` }); continue; }
 
         const collector = collectorsMap.get(colStr);
         if (!collector) { errors.push({ requestId, error: 'Collector not found' }); continue; }
@@ -164,7 +160,8 @@ async function confirmCollectorAssignments(assignments = []) {
         }
 
         request.assignedCollector = collectorId;
-        request.scheduledAt = scheduledDate;
+        request.scheduledDate = scheduledDate;
+        request.status = 'Scheduled';
         
         // Update local map to prevent conflicts within this batch
         collectorSchedules.push({ requestId: reqStr, time: newTime });
