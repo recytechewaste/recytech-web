@@ -1,4 +1,5 @@
 import Skeleton from '../../components/Skeleton';
+import EmptyState from '../../components/EmptyState';
 import { Edit2, Trash2 } from 'lucide-react';
 import styles from '../../styles/UserManagement.module.css';
 
@@ -93,7 +94,13 @@ const UserTable = ({ users, loading, page, limit, onEdit, onDelete }) => {
                         Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={`skeleton-${i}`} />)
                     ) : users.length === 0 ? (
                         <tr>
-                            <td colSpan="7" className={styles.td} style={{textAlign: 'center'}}>No users found.</td>
+                            <td colSpan="7" style={{ padding: 0 }}>
+                                <EmptyState
+                                    icon="users"
+                                    title="No users found"
+                                    subtitle="Try adjusting your filters or add a new user."
+                                />
+                            </td>
                         </tr>
                     ) : (
                         users.map((user, index) => (

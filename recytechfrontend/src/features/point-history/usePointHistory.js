@@ -5,12 +5,14 @@ import { usePagination } from '../../hooks/usePagination';
 export const usePointHistory = () => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     
     const { page, limit, pages, total, goToPage, updatePaginationInfo, hasNextPage, hasPrevPage } = usePagination(1, 10);
 
     const fetchTransactions = async (currentPage) => {
         setLoading(true);
+        setError(null);
         try {
             const res = await api.get(`/transactions?page=${currentPage}&limit=${limit}`);
             setTransactions(res.data.transactions || res.data || []);
@@ -19,6 +21,7 @@ export const usePointHistory = () => {
             updatePaginationInfo(res.data.pagination);
         } catch (error) {
             console.error("Error fetching transactions:", error);
+            setError("Failed to fetch point history");
         } finally {
             setLoading(false);
         }
@@ -33,7 +36,7 @@ export const usePointHistory = () => {
     );
 
     return { 
-        loading, 
+        loading, error,
         searchTerm, setSearchTerm, 
         filteredTransactions,
         // Pagination exports

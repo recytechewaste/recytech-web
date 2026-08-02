@@ -29,6 +29,15 @@ const MapFocusController = ({ center, zoom }) => {
     return null;
 };
 
+const toLeafletCoords = (coords) => {
+    if (!Array.isArray(coords) || coords.length !== 2) return DEFAULT_CENTER;
+    const [c0, c1] = coords.map(Number);
+    if (Math.abs(c0) > 90 && Math.abs(c1) <= 90) {
+        return [c1, c0];
+    }
+    return [c0, c1];
+};
+
 const MapWidget = ({ bins = [], selectedBinId, onSelectBin, userGeolocation }) => {
     // Filter for bins that have valid coordinates from the API
     const locations = bins.filter(bin =>
@@ -37,17 +46,10 @@ const MapWidget = ({ bins = [], selectedBinId, onSelectBin, userGeolocation }) =
         bin.location.coordinates.length === 2
     );
 
-    if (locations.length === 0) {
-        return (
-            <div style={{ height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f3f4f6', color: '#6b7280', fontSize: '14px' }}>
-                No bins with valid locations to display on the map.
-            </div>
-        );
-    }
-
     const selectedBin = locations.find(bin => bin._id === selectedBinId);
-    const center = selectedBin?.location?.coordinates || locations[0]?.location?.coordinates || userGeolocation || DEFAULT_CENTER;
-    const zoom = selectedBin ? 15 : 13;
+    const rawCenter = selectedBin?.location?.coordinates || (locations.length > 0 ? locations[0].location?.coordinates : null) || userGeolocation || DEFAULT_CENTER;
+    const center = toLeafletCoords(rawCenter);
+    const zoom = selectedBin ? 15 : 12;
 
     // Custom icon for the selected marker
     const selectedIcon = L.divIcon({
@@ -58,7 +60,31 @@ const MapWidget = ({ bins = [], selectedBinId, onSelectBin, userGeolocation }) =
     });
 
     return (
-        <div style={{ height: '100%', width: '100%', zIndex: 0 }}>
+        <div style={{ height: '100%', width: '100%', zIndex: 0, position: 'relative' }}>
+            {locations.length === 0 && (
+                <div style={{
+                    position: 'absolute',
+                    top: '16px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    zIndex: 1000,
+                    backgroundColor: 'rgba(255, 255, 255, 0.94)',
+                    backdropFilter: 'blur(6px)',
+                    padding: '8px 16px',
+                    borderRadius: '20px',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    color: '#374151',
+                    border: '1px solid #e5e7eb',
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                }}>
+                    📍 <span>No registered bins yet — click <strong>+ Add Bin</strong> to place one on the map</span>
+                </div>
+            )}
             <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }}>
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -71,7 +97,7 @@ const MapWidget = ({ bins = [], selectedBinId, onSelectBin, userGeolocation }) =
                     return (
                         <Marker
                             key={bin._id}
-                            position={bin.location.coordinates}
+                            position={toLeafletCoords(bin.location.coordinates)}
                             icon={isSelected ? selectedIcon : DefaultIcon}
                             eventHandlers={{ click: () => onSelectBin?.(bin._id) }}
                         >

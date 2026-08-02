@@ -7,18 +7,15 @@ const {
   updateLguAccount,
   deleteLguAccount,
 } = require('../controllers/lguController');
-const { protect, admin } = require('../middleware/authMiddleware');
-
-// All routes in this file are protected and require admin privileges.
-router.use(protect, admin);
+const { protect, admin, staffOrAdmin } = require('../middleware/authMiddleware');
 
 router.route('/')
-  .post(createLguAccount)
-  .get(getAllLguAccounts);
+  .post(protect, admin, createLguAccount)
+  .get(protect, staffOrAdmin, getAllLguAccounts);
 
 router.route('/:id')
-  .get(getLguAccountById)
-  .put(updateLguAccount)
-  .delete(deleteLguAccount);
+  .get(protect, staffOrAdmin, getLguAccountById)
+  .put(protect, admin, updateLguAccount)
+  .delete(protect, admin, deleteLguAccount);
 
 module.exports = router;

@@ -1,4 +1,3 @@
-import React from 'react';
 
 const Skeleton = ({ width = '100%', height = '20px', borderRadius = '6px', style = {} }) => {
     return (

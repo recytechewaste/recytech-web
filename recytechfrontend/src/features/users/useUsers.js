@@ -10,16 +10,19 @@ export const useUsers = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
+    const [error, setError] = useState(null);
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
     const { showToast } = useToast();
 
     const fetchUsers = useCallback(async () => {
         setLoading(true);
+        setError(null);
         try {
             const response = await api.get('/users'); 
             setUsers(response.data || []);
         } catch (error) {
             console.error("Error fetching users:", error);
+            setError("Failed to fetch users");
             showToast('Failed to fetch users.', 'error');
         } finally {
             setLoading(false);
@@ -86,7 +89,7 @@ export const useUsers = () => {
 
 
     return {
-        loading, paginatedUsers,
+        loading, paginatedUsers, error,
         addUser, updateUser, deleteUser,
         searchTerm, setSearchTerm, roleFilter, setRoleFilter, statusFilter, setStatusFilter,
         handleClearFilters,

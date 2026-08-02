@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '../../components/Modal';
-import styles from '../../styles/UserManagement.module.css'; // Using the same styles for consistency
-import { Save } from 'lucide-react';
+import styles from '../../styles/UserManagement.module.css';
+import sharedStyles from '../../styles/Layout.module.css';
+import { Save, Building2, User, Mail, Phone, MapPin, Activity, Lock } from 'lucide-react';
 
 const LguFormModal = ({ lgu, onSave, onClose }) => {
   const [formData, setFormData] = useState({
@@ -93,65 +94,89 @@ const LguFormModal = ({ lgu, onSave, onClose }) => {
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title={isEditing ? 'Edit LGU Account' : 'Add New LGU Account'}>
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.formGroup}>
-            <label>LGU Name</label>
-            <input name="name" value={formData.name} onChange={handleChange} placeholder="e.g., City of Makati" className={`${styles.input} ${errors.name ? styles.inputError : ''}`} required />
+    <Modal isOpen={true} onClose={onClose} title={isEditing ? 'Edit LGU Account' : 'Add New LGU Account'} maxWidth="700px">
+      <form onSubmit={handleSubmit} className={sharedStyles.form} noValidate>
+        <div className={sharedStyles.formGroup}>
+            <label>LGU Name <span style={{color: '#ef4444'}}>*</span></label>
+            <div className={sharedStyles.inputWrapper}>
+                <Building2 size={16} className={sharedStyles.inputIcon} />
+                <input name="name" value={formData.name} onChange={handleChange} placeholder="e.g., City of Makati" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.name ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} />
+            </div>
             {errors.name && <span className={styles.error}>{errors.name}</span>}
         </div>
         
-        <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
-                <label>Contact Person</label>
-                <input name="contactPerson" value={formData.contactPerson} onChange={handleChange} placeholder="e.g., Juan Dela Cruz" className={`${styles.input} ${errors.contactPerson ? styles.inputError : ''}`} required />
+        <div className={sharedStyles.formRow}>
+            <div className={sharedStyles.formGroup}>
+                <label>Contact Person <span style={{color: '#ef4444'}}>*</span></label>
+                <div className={sharedStyles.inputWrapper}>
+                    <User size={16} className={sharedStyles.inputIcon} />
+                    <input name="contactPerson" value={formData.contactPerson} onChange={handleChange} placeholder="e.g., Juan Dela Cruz" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.contactPerson ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} />
+                </div>
                 {errors.contactPerson && <span className={styles.error}>{errors.contactPerson}</span>}
             </div>
 
-            <div className={styles.formGroup}>
-                <label>Email Address</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="e.g., lgu@makati.gov.ph" className={`${styles.input} ${errors.email ? styles.inputError : ''}`} required disabled={isEditing} />
+            <div className={sharedStyles.formGroup}>
+                <label>Email Address <span style={{color: '#ef4444'}}>*</span></label>
+                <div className={sharedStyles.inputWrapper}>
+                    <Mail size={16} className={sharedStyles.inputIcon} />
+                    <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="e.g., lgu@makati.gov.ph" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.email ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} disabled={isEditing} />
+                </div>
                 {errors.email && <span className={styles.error}>{errors.email}</span>}
             </div>
         </div>
 
-        <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
+        <div className={sharedStyles.formRow}>
+            <div className={sharedStyles.formGroup}>
                 <label>Phone Number</label>
-                <input name="phone" value={formData.phone} onChange={handleChange} placeholder="Optional contact number" className={styles.input} />
+                <div className={sharedStyles.inputWrapper}>
+                    <Phone size={16} className={sharedStyles.inputIcon} />
+                    <input name="phone" value={formData.phone} onChange={handleChange} placeholder="Optional contact number" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`} />
+                </div>
             </div>
 
-            <div className={styles.formGroup}>
+            <div className={sharedStyles.formGroup}>
                 <label>Jurisdiction</label>
-                <input name="jurisdiction" value={formData.jurisdiction} onChange={handleChange} placeholder="e.g., District 1" className={styles.input} />
+                <div className={sharedStyles.inputWrapper}>
+                    <MapPin size={16} className={sharedStyles.inputIcon} />
+                    <input name="jurisdiction" value={formData.jurisdiction} onChange={handleChange} placeholder="e.g., District 1" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`} />
+                </div>
             </div>
         </div>
         
-        <div className={styles.formGroup}>
+        <div className={sharedStyles.formGroup}>
             <label>Status</label>
-            <select name="status" value={formData.status} onChange={handleChange} className={styles.selectInput}>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-            </select>
+            <div className={sharedStyles.inputWrapper}>
+                <Activity size={16} className={sharedStyles.inputIcon} />
+                <select name="status" value={formData.status} onChange={handleChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
         </div>
         
-        <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
-                <label>Password</label>
-                <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder={isEditing ? "Leave blank to keep current" : "Min. 8 characters"} className={`${styles.input} ${errors.password ? styles.inputError : ''}`} required={!isEditing} />
+        <div className={sharedStyles.formRow}>
+            <div className={sharedStyles.formGroup}>
+                <label>Password {!isEditing && <span style={{color: '#ef4444'}}>*</span>}</label>
+                <div className={sharedStyles.inputWrapper}>
+                    <Lock size={16} className={sharedStyles.inputIcon} />
+                    <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder={isEditing ? "Leave blank to keep current" : "Min. 8 characters"} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.password ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} />
+                </div>
                 {errors.password && <span className={styles.error}>{errors.password}</span>}
             </div>
             
-            <div className={styles.formGroup}>
-                <label>Confirm Password</label>
-                <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Re-enter password" className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ''}`} required={!isEditing && !!formData.password} />
+            <div className={sharedStyles.formGroup}>
+                <label>Confirm Password {!isEditing && <span style={{color: '#ef4444'}}>*</span>}</label>
+                <div className={sharedStyles.inputWrapper}>
+                    <Lock size={16} className={sharedStyles.inputIcon} />
+                    <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Re-enter password" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.confirmPassword ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} />
+                </div>
                 {errors.confirmPassword && <span className={styles.error}>{errors.confirmPassword}</span>}
             </div>
         </div>
 
-        <div className={styles.modalFooter}>
-          <button type="button" onClick={onClose} className={styles.cancelBtn}>Cancel</button>
-          <button type="submit" className={styles.submitBtn}>
+        <div className={sharedStyles.modalFooter}>
+          <button type="button" onClick={onClose} className={sharedStyles.cancelBtn}>Cancel</button>
+          <button type="submit" className={sharedStyles.submitBtn}>
             <Save size={16} style={{marginRight:'6px'}}/>
             {isEditing ? 'Save Changes' : 'Create LGU Account'}
           </button>

@@ -55,10 +55,10 @@ const RequestTable = ({ requests, loading, limit }) => {
                 <td className={styles.td}>
                   <span className={styles.plateBadge}>
                     <Truck size={14}/>
-                    {request.bin?.binId || 'N/A'}
+                    {request.bin?.name || request.bin?.binId || 'N/A'}
                   </span>
                 </td>
-                <td className={styles.td}>{request.lgu?.name || 'N/A'}</td>
+                <td className={styles.td}>{request.lgu?.name || request.bin?.assignedLgu?.name || 'N/A'}</td>
                 <td className={styles.td}>
                     <div className={styles.iconText}>
                         <MapPin size={14}/>

@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const Request = require('../models/Request');
 const User = require('../models/User');
 const Bin = require('../models/Bin');
+const RecyclingCenter = require('../models/RecyclingCenter');
 
 // @desc    Create a new LGU account
 // @route   POST /api/lgus
@@ -48,18 +49,36 @@ const createLguAccount = asyncHandler(async (req, res) => {
 // @route   GET /api/lgus
 // @access  Private/Admin
 const getAllLguAccounts = asyncHandler(async (req, res) => {
-  const lguAccounts = await LguAccount.find({});
-  res.json(lguAccounts);
+  const lguAccounts = await LguAccount.find({}).lean();
+  const allBins = await RecyclingCenter.find({ assignedLgu: { $exists: true, $ne: null } })
+    .select('name address qrCode capacityKg currentFillKg status assignedLgu location')
+    .lean();
+
+  const lguAccountsWithBins = lguAccounts.map(lgu => {
+    const assignedBins = allBins.filter(b => b.assignedLgu && b.assignedLgu.toString() === lgu._id.toString());
+    return {
+      ...lgu,
+      assignedBins
+    };
+  });
+
+  res.json(lguAccountsWithBins);
 });
 
 // @desc    Get LGU account by ID
 // @route   GET /api/lgus/:id
 // @access  Private/Admin
 const getLguAccountById = asyncHandler(async (req, res) => {
-  const lguAccount = await LguAccount.findById(req.params.id);
+  const lguAccount = await LguAccount.findById(req.params.id).lean();
 
   if (lguAccount) {
-    res.json(lguAccount);
+    const assignedBins = await RecyclingCenter.find({ assignedLgu: req.params.id })
+      .select('name address qrCode capacityKg currentFillKg status location')
+      .lean();
+    res.json({
+      ...lguAccount,
+      assignedBins
+    });
   } else {
     res.status(404);
     throw new Error('LGU account not found');

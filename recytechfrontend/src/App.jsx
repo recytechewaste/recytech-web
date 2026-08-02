@@ -7,6 +7,7 @@ import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Collectors from './pages/Collectors';
 import Reports from './pages/Reports';
+import Settings from './pages/Settings';
 import UserManagement from './pages/UserManagement'; 
 import ProtectedRoute from './pages/ProtectedRoute';
 import RewardPointManager from './pages/RewardPointManager';
@@ -39,7 +40,7 @@ function App() {
           <Route 
             path="/collectors" 
             element={
-              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
                 <Collectors />
               </ProtectedRoute>
             } 
@@ -47,7 +48,7 @@ function App() {
           <Route 
             path="/reward-points" 
             element={
-              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
                 <RewardPointManager />
               </ProtectedRoute>
             } 
@@ -55,7 +56,7 @@ function App() {
           <Route 
             path="/lgu-management" 
             element={
-              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
                 <LguManager />
               </ProtectedRoute>
             } 
@@ -63,7 +64,7 @@ function App() {
           <Route 
             path="/transactions" 
             element={
-              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
                 <PointHistory />
               </ProtectedRoute>
             } 
@@ -71,7 +72,7 @@ function App() {
           <Route 
             path="/bin-network" 
             element={
-              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
                 <BinNetwork />
               </ProtectedRoute>
             } 
@@ -79,7 +80,7 @@ function App() {
           <Route 
             path="/bin-collection-requests" 
             element={
-              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
                 <BinCollectionRequests />
               </ProtectedRoute>
             } 
@@ -89,6 +90,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
                 <Reports />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/settings" 
+            element={
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+                <Settings />
               </ProtectedRoute>
             } 
           />

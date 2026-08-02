@@ -6,7 +6,8 @@ export const useReports = () => {
     const [loading, setLoading] = useState(true);
     const [filters, setFilters] = useState({
         timeframe: 'month',
-        wasteType: 'All'
+        wasteType: 'All',
+        lguId: 'All'
     });
 
     const fetchReportData = useCallback(async () => {
@@ -14,13 +15,13 @@ export const useReports = () => {
         try {
             const params = {
                 timeframe: filters.timeframe,
-                ...(filters.wasteType !== 'All' && { wasteType: filters.wasteType })
+                ...(filters.wasteType !== 'All' && { wasteType: filters.wasteType }),
+                ...(filters.lguId !== 'All' && { lguId: filters.lguId })
             };
             const response = await api.get('/analytics/reports', { params });
             setReportData(response.data);
         } catch (error) {
             console.error("Error fetching report data:", error);
-            // Handle error state in UI if necessary
         } finally {
             setLoading(false);
         }
@@ -33,13 +34,16 @@ export const useReports = () => {
     const handleClearFilters = () => {
         setFilters({
             timeframe: 'month',
-            wasteType: 'All'
+            wasteType: 'All',
+            lguId: 'All'
         });
     };
 
     // Extract unique waste types for filter dropdown
-    // This could be fetched from a dedicated endpoint in a real app
     const wasteTypes = reportData?.summaryByWasteType?.map(item => item._id) || [];
+
+    // LGU accounts for filter dropdown (returned from the API)
+    const lguAccounts = reportData?.lguAccounts || [];
 
     return {
         loading,
@@ -47,6 +51,7 @@ export const useReports = () => {
         setFilters,
         handleClearFilters,
         reportData,
-        wasteTypes
+        wasteTypes,
+        lguAccounts
     };
 };

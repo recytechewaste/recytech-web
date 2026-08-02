@@ -9,9 +9,13 @@ const { completeCollectionAndDistributePoints } = require('../services/pointDist
 // @access  Private/Admin
 const getAllRequests = asyncHandler(async (req, res) => {
     const requests = await Request.find({})
-        .populate({ path: 'bin', select: 'binId address status' })
-        .populate({ path: 'lgu', select: 'name email' })
-        .populate({ path: 'assignedCollector', select: 'firstName lastName' })
+        .populate({ 
+            path: 'bin', 
+            select: 'name binId address status assignedLgu',
+            populate: { path: 'assignedLgu', select: 'name contactPerson email jurisdiction' }
+        })
+        .populate({ path: 'lgu', select: 'name email contactPerson' })
+        .populate({ path: 'assignedCollector', select: 'firstName lastName phone vehiclePlate' })
         .sort({ createdAt: -1 });
     res.json(requests);
 });

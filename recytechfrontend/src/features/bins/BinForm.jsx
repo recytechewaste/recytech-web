@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import LocationPickerMap from '../../components/LocationPickerMap';
+import { Tag, QrCode, Weight, Activity, Loader2, Building2 } from 'lucide-react';
 import styles from '../../styles/BinNetwork.module.css';
-import sharedStyles from '../../styles/EducationManager.module.css';
+import sharedStyles from '../../styles/Layout.module.css';
 
 const DEFAULT_COORDINATES = [14.5995, 120.9842];
 
@@ -12,19 +13,35 @@ const createEmptyBinForm = () => ({
     capacityKg: '500',
     status: 'Empty',
     description: '',
+    assignedLgu: '',
     location: {
         type: 'Point',
         coordinates: [...DEFAULT_COORDINATES]
     }
 });
 
-const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation }) => {
-    const [binForm, setBinForm] = useState(initialBin || createEmptyBinForm());
+const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, lgus = [] }) => {
+    const [binForm, setBinForm] = useState(() => {
+        if (initialBin) {
+            return {
+                ...initialBin,
+                assignedLgu: initialBin.assignedLgu?._id || initialBin.assignedLgu || ''
+            };
+        }
+        return createEmptyBinForm();
+    });
     const [errors, setErrors] = useState({});
-    const isEditing = !!initialBin?._id; // True if editing an existing bin, false for new bins
+    const isEditing = !!initialBin?._id;
 
     useEffect(() => {
-        setBinForm(initialBin || createEmptyBinForm());
+        if (initialBin) {
+            setBinForm({
+                ...initialBin,
+                assignedLgu: initialBin.assignedLgu?._id || initialBin.assignedLgu || ''
+            });
+        } else {
+            setBinForm(createEmptyBinForm());
+        }
     }, [initialBin]);
 
     const handleChange = (e) => {
@@ -98,53 +115,65 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation }
             <div className={sharedStyles.formRow}>
                 <div className={sharedStyles.formGroup}>
                     <label>Name <span style={{ color: '#ef4444' }}>*</span></label>
-                    <input
-                        name="name"
-                        className={`${sharedStyles.input} ${errors.name ? sharedStyles.inputError : ''}`}
-                        value={binForm.name}
-                        onChange={handleChange}
-                        placeholder="e.g. North Plaza Bin"
-                    />
+                    <div className={sharedStyles.inputWrapper}>
+                        <Tag size={16} className={sharedStyles.inputIcon} />
+                        <input
+                            name="name"
+                            className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.name ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`}
+                            value={binForm.name}
+                            onChange={handleChange}
+                            placeholder="e.g. North Plaza Bin"
+                        />
+                    </div>
                     {errors.name && <span className={styles.fieldError}>{errors.name}</span>}
                 </div>
                 <div className={sharedStyles.formGroup}>
                     <label>QR Code</label>
-                    <input
-                        name="qrCode"
-                        className={sharedStyles.input}
-                        value={binForm.qrCode}
-                        onChange={handleChange}
-                        placeholder="e.g. BIN-NORTH-001"
-                    />
+                    <div className={sharedStyles.inputWrapper}>
+                        <QrCode size={16} className={sharedStyles.inputIcon} />
+                        <input
+                            name="qrCode"
+                            className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}
+                            value={binForm.qrCode}
+                            onChange={handleChange}
+                            placeholder="e.g. BIN-NORTH-001"
+                        />
+                    </div>
                 </div>
             </div>
             <div className={sharedStyles.formRow}>
                 <div className={sharedStyles.formGroup}>
                     <label>Capacity (kg) <span style={{ color: '#ef4444' }}>*</span></label>
-                    <input
-                        name="capacityKg" // Corrected name to match state
-                        className={`${sharedStyles.input} ${errors.capacityKg ? sharedStyles.inputError : ''}`}
-                        type="number"
-                        min="1"
-                        value={binForm.capacityKg}
-                        onChange={handleChange}
-                    />
+                    <div className={sharedStyles.inputWrapper}>
+                        <Weight size={16} className={sharedStyles.inputIcon} />
+                        <input
+                            name="capacityKg"
+                            className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.capacityKg ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`}
+                            type="number"
+                            min="1"
+                            value={binForm.capacityKg}
+                            onChange={handleChange}
+                        />
+                    </div>
                     {errors.capacityKg && <span className={styles.fieldError}>{errors.capacityKg}</span>}
                 </div>
                 <div className={sharedStyles.formGroup}>
                     <label>Status</label>
-                    <select
-                        name="status"
-                        className={sharedStyles.input}
-                        value={binForm.status}
-                        onChange={handleChange}
-                        disabled={!isEditing} // Correctly disable for new bins
-                    >
-                        <option value="Empty">Empty</option>
-                        <option value="Full">Full</option>
-                        <option value="Maintenance">Maintenance</option>
-                    </select>
-                    {!isEditing && ( // Show explanatory text only for new bins
+                    <div className={sharedStyles.inputWrapper}>
+                        <Activity size={16} className={sharedStyles.inputIcon} />
+                        <select
+                            name="status"
+                            className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}
+                            value={binForm.status}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                        >
+                            <option value="Empty">Empty</option>
+                            <option value="Full">Full</option>
+                            <option value="Maintenance">Maintenance</option>
+                        </select>
+                    </div>
+                    {!isEditing && (
                         <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '6px', fontStyle: 'italic' }}>
                             New bins are automatically set to 'Empty'.
                         </p>
@@ -152,9 +181,31 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation }
                 </div>
             </div>
 
+            <div className={sharedStyles.formRow}>
+                <div className={sharedStyles.formGroup} style={{ width: '100%' }}>
+                    <label>Assigned LGU</label>
+                    <div className={sharedStyles.inputWrapper}>
+                        <Building2 size={16} className={sharedStyles.inputIcon} />
+                        <select
+                            name="assignedLgu"
+                            className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}
+                            value={binForm.assignedLgu || ''}
+                            onChange={handleChange}
+                        >
+                            <option value="">-- No LGU Assigned --</option>
+                            {lgus.map((lgu) => (
+                                <option key={lgu._id} value={lgu._id}>
+                                    {lgu.name} {lgu.jurisdiction ? `(${lgu.jurisdiction})` : ''}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <div className={sharedStyles.formGroup}>
                 <label>Location <span style={{ color: '#ef4444' }}>*</span></label>
-                <div className={`${sharedStyles.mapPickerCard} ${errors.location ? sharedStyles.mapPickerError : ''}`}>
+                <div className={`${sharedStyles.mapPickerCard} ${errors.location ? sharedStyles.mapPickerError + ' ' + sharedStyles.shake : ''}`}>
                     <div className={styles.mapPickerHeader}>
                         <span>
                             <strong>Click to pin</strong>
@@ -177,6 +228,7 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation }
             <div className={sharedStyles.modalFooter}>
                 <button type="button" onClick={onCancel} className={sharedStyles.cancelBtn}>Cancel</button>
                 <button type="submit" className={sharedStyles.submitBtn} disabled={submitting}>
+                    {submitting ? <Loader2 size={16} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} /> : null}
                     {submitting ? 'Saving...' : (initialBin ? 'Save Changes' : 'Create Bin')}
                 </button>
             </div>

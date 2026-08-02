@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protect, admin, staffOrAdmin } = require('../middleware/authMiddleware');
 const { 
     getCenters,
     getCenterByQrCode,
@@ -11,12 +11,12 @@ const {
 } = require('../controllers/recyclingCenterController');
 
 // @desc    Get all centers
-// @route   GET /api/centers
-router.get('/', protect, admin, getCenters);
+// @route   GET /api/bin-locations
+router.get('/', protect, staffOrAdmin, getCenters);
 
 // @desc    Get a center by QR code
-// @route   GET /api/centers/qr/:qrCode
-router.get('/qr/:qrCode', protect, admin, getCenterByQrCode);
+// @route   GET /api/bin-locations/qr/:qrCode
+router.get('/qr/:qrCode', protect, staffOrAdmin, getCenterByQrCode);
 
 // @desc    Get a center by QR code for the resident mobile flow
 // @route   GET /api/bin-locations/public/qr/:qrCode

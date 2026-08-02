@@ -1,16 +1,21 @@
 import { useState } from 'react';
 import api from '../api/client';
 import Sidebar from '../components/Sidebar';
-import styles from '../styles/EducationManager.module.css'; // Reusing layout styles
-import { Plus, Edit2, RefreshCw, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import styles from '../styles/Layout.module.css';
+import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useRewardPoints } from '../features/reward-points/useRewardPoints';
 import RewardPointFormModal from '../features/reward-points/RewardPointFormModal';
-import ConfirmDeleteModal from '../features/reward-points/ConfirmDeleteModal';
-import { useToast } from "../context/ToastContext.jsx";
+import Modal from '../components/Modal';
+import { useToast } from '../context/ToastContext';
 import Skeleton from '../components/Skeleton';
 import Pagination from '../components/Pagination';
+import EmptyState from '../components/EmptyState';
 
 const RewardPointManager = () => {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    const userRole = userInfo.role;
+    const canDelete = userRole === 'Admin' || userRole === 'Super Admin';
+
     const { points, loading, fetchPoints, currentPage, totalPages, setPage } = useRewardPoints();
     const [showModal, setShowModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -18,7 +23,6 @@ const RewardPointManager = () => {
     
     // State for delete confirmation
     const [pointToDelete, setPointToDelete] = useState(null);
-    const [isDeleting, setIsDeleting] = useState(false);
 
     const { showToast } = useToast();
 
@@ -38,17 +42,13 @@ const RewardPointManager = () => {
 
     const handleConfirmDelete = async () => {
         if (!pointToDelete) return;
-
-        setIsDeleting(true);
         try {
             await api.delete(`/reward-points/${pointToDelete._id}`);
             showToast('Reward point rule deleted successfully.', 'success');
             fetchPoints();
-            setPointToDelete(null); // Close modal on success
+            setPointToDelete(null);
         } catch (error) {
             showToast(error.response?.data?.message || 'Error deleting rule', 'error');
-        } finally {
-            setIsDeleting(false);
         }
     };
 
@@ -64,9 +64,6 @@ const RewardPointManager = () => {
         setPointToDelete(point);
     };
 
-    const closeDeleteModal = () => {
-        setPointToDelete(null);
-    };
 
     return (
         <div className={styles.container}>
@@ -74,8 +71,8 @@ const RewardPointManager = () => {
             <div className={styles.main}>
                 <div className={styles.header}>
                     <div className={styles.titleGroup}>
-                        <h1>Reward Points</h1>
-                        <p>Configure incentive points per item for each material category.</p> {/* Updated description */}
+                        <h1 className={styles.pageTitle}>Reward Points</h1>
+                        <p className={styles.subTitle}>Configure incentive points per item for each material category.</p>
                     </div>
                     <button onClick={() => { setEditingId(null); setFormData({ wasteType: '', pointsPerItem: 0, description: '', isActive: true }); setShowModal(true); }} className={styles.addBtn}>
                         <Plus size={18} /> Add New Rule
@@ -85,7 +82,7 @@ const RewardPointManager = () => {
                 {loading ? (
                     <div className={styles.grid}>
                         {Array.from({ length: 4 }).map((_, i) => (
-                            <div key={`skeleton-${i}`} className={styles.contentCard} style={{ borderLeft: '4px solid #e5e7eb' }}>
+                        <div key={`skeleton-${i}`} className={styles.contentCard}>
                                 <div className={styles.cardBody}>
                                     <div className={styles.cardHeader}>
                                         <Skeleton width="60px" height="24px" borderRadius="12px" />
@@ -105,7 +102,7 @@ const RewardPointManager = () => {
                 ) : (
                     <div className={styles.grid}>
                         {points.map((point) => (
-                            <div key={point._id} className={styles.contentCard} style={{ borderLeft: point.isActive ? '4px solid #10b981' : '4px solid #ef4444' }}>
+                            <div key={point._id} className={`${styles.contentCard} ${point.isActive ? styles.cardActive : styles.cardInactive}`}>
                                 <div className={styles.cardBody}>
                                     <div className={styles.cardHeader}>
                                         <span className={styles.categoryBadge}>{point.isActive ? 'Active' : 'Inactive'}</span>
@@ -114,7 +111,9 @@ const RewardPointManager = () => {
                                             <button title={point.isActive ? 'Deactivate rule' : 'Activate rule'} onClick={() => toggleStatus(point)} className={styles.iconBtn}>
                                                 {point.isActive ? <ToggleRight size={18}/> : <ToggleLeft size={18}/>}
                                             </button>
-                                            <button title="Delete rule" onClick={() => openDeleteModal(point)} className={styles.iconBtnDanger}><Trash2 size={16}/></button>
+                                            {canDelete && (
+                                                <button title="Delete rule" onClick={() => openDeleteModal(point)} className={styles.iconBtnDanger}><Trash2 size={16}/></button>
+                                            )}
                                         </div>
                                     </div>
                                     <h3 className={styles.itemTitle}>{point.wasteType}</h3>
@@ -128,6 +127,15 @@ const RewardPointManager = () => {
                     </div>
                 )}
 
+                {!loading && points.length === 0 && (
+                    <EmptyState
+                        icon="rewards"
+                        title="No reward rules configured"
+                        subtitle="Add your first rule to start rewarding residents for recycling."
+                        action={{ label: '+ Add New Rule', onClick: () => { setEditingId(null); setFormData({ wasteType: '', pointsPerItem: 0, description: '', isActive: true }); setShowModal(true); } }}
+                    />
+                )}
+
                 {totalPages > 1 && (
                     <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
                 )}
@@ -139,12 +147,13 @@ const RewardPointManager = () => {
                     onClose={() => setShowModal(false)} 
                     onSubmit={handleSubmit} 
                 />
-                <ConfirmDeleteModal
-                    point={pointToDelete}
-                    onClose={closeDeleteModal}
-                    onConfirm={handleConfirmDelete}
-                    isDeleting={isDeleting}
-                />
+                <Modal isOpen={!!pointToDelete} onClose={() => setPointToDelete(null)} title="Confirm Deletion" maxWidth="400px">
+                    <p style={{color:'#666', marginBottom:'24px'}}>Are you sure you want to permanently delete the reward point rule for <strong>"{pointToDelete?.wasteType}"</strong>? This action cannot be undone.</p>
+                    <div className={styles.modalFooter}>
+                        <button onClick={() => setPointToDelete(null)} className={styles.cancelBtn}>Cancel</button>
+                        <button onClick={handleConfirmDelete} className={styles.deleteBtn}>Delete</button>
+                    </div>
+                </Modal>
             </div>
         </div>
     );

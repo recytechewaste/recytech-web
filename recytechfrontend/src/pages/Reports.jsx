@@ -4,7 +4,7 @@ import { jsPDF } from 'jspdf';
 import Sidebar from '../components/Sidebar';
 import styles from '../styles/Reports.module.css';
 import headerStyles from '../styles/BinCollectionRequests.module.css';
-import { Download, Calendar, Filter, Loader2 } from 'lucide-react';
+import { Download, Calendar, Filter, Loader2, Landmark } from 'lucide-react';
 import { useReports } from '../features/reports/useReports';
 import ReportMetrics from '../features/reports/ReportMetrics';
 import ReportCharts from '../features/reports/ReportCharts';
@@ -14,7 +14,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 
 
 const Reports = () => {
-    const { loading, filters, setFilters, handleClearFilters, reportData, wasteTypes } = useReports();
+    const { loading, filters, setFilters, handleClearFilters, reportData, wasteTypes, lguAccounts } = useReports();
     const reportRef = useRef(null);
     const [isExporting, setIsExporting] = useState(false);
 
@@ -42,7 +42,6 @@ const Reports = () => {
             pdf.save(`RecyTech_Report_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
             console.error('Error generating PDF:', error);
-            // Consider adding a user-facing toast notification for the error
         } finally {
             setIsExporting(false);
         }
@@ -80,6 +79,15 @@ const Reports = () => {
                             <option value="All">All Waste Types</option>
                             {wasteTypes.map((type) => (
                                 <option key={type} value={type}>{type}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className={styles.filterGroup}>
+                        <Landmark size={16} className={styles.icon} />
+                        <select className={styles.select} value={filters.lguId} onChange={(e) => setFilters({ ...filters, lguId: e.target.value })}>
+                            <option value="All">All LGU Jurisdictions</option>
+                            {lguAccounts.map((lgu) => (
+                                <option key={lgu._id} value={lgu._id}>{lgu.name}</option>
                             ))}
                         </select>
                     </div>

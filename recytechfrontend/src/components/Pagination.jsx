@@ -1,15 +1,14 @@
-import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from '../styles/Pagination.module.css';
 
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+const Pagination = ({ currentPage, totalPages, onPageChange, totalCount }) => {
     if (totalPages <= 1) return null;
 
     return (
         <div className={styles.paginationContainer}>
-             <span className={styles.pageInfo}>
-                    Page {currentPage} of {totalPages || 1}
-                </span>
+            <span className={styles.pageInfo}>
+                Page {currentPage} of {totalPages || 1} {totalCount ? `(${totalCount} total)` : ''}
+            </span>
             <div className={styles.controls}>
                 <button 
                     onClick={() => onPageChange(currentPage - 1)} 

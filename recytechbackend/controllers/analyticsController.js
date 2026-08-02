@@ -1,13 +1,14 @@
 const BinDropoff = require('../models/BinDropoff');
 const RecyclingCenter = require('../models/RecyclingCenter');
 const Resident = require('../models/Resident');
+const Request = require('../models/Request');
 const { asyncHandler } = require('../utils/asyncHandler');
-const { linearRegression, seasonalDecomposition, statisticalSummary, detectOutliers } = require('../utils/predictiveAnalytics');
+const { linearRegression, seasonalDecomposition, statisticalSummary, detectOutliers, holtExponentialSmoothing } = require('../utils/predictiveAnalytics');
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const getDropoffSummary = async () => {
-    const [totals, wasteTypeBreakdown, binStats] = await Promise.all([
+    const [totals, wasteTypeBreakdown, binStats, pendingRequestsCount] = await Promise.all([
         BinDropoff.aggregate([
             {
                 $group: {
@@ -25,13 +26,18 @@ const getDropoffSummary = async () => {
         RecyclingCenter.aggregate([
             {
                 $group: {
-                _id: null,
+                    _id: null,
                     totalBins: { $sum: 1 },
                     operationalBins: { $sum: { $cond: [{ $ne: ['$status', 'Maintenance'] }, 1, 0] } },
                     nearCapacity: {
                         $sum: {
                             $cond: [
-                                { $and: [{ $gt: ['$capacityKg', 0] }, { $gte: [{ $divide: ['$currentFillKg', '$capacityKg'] }, 0.8] }] },
+                                {
+                                    $or: [
+                                        { $eq: ['$status', 'Full'] },
+                                        { $and: [{ $gt: ['$capacityKg', 0] }, { $gte: [{ $divide: ['$currentFillKg', '$capacityKg'] }, 0.8] }] }
+                                    ]
+                                },
                                 1,
                                 0
                             ]
@@ -39,7 +45,8 @@ const getDropoffSummary = async () => {
                     }
                 }
             }
-        ])
+        ]),
+        Request.countDocuments({ status: 'pending' })
     ]);
 
     const dropoffTotals = totals[0] || { totalDropoffs: 0, totalKilograms: 0, totalPoints: 0 };
@@ -53,6 +60,7 @@ const getDropoffSummary = async () => {
         totalBins: bins.totalBins,
         operationalBins: bins.operationalBins,
         binsNearCapacity: bins.nearCapacity,
+        pendingRequests: pendingRequestsCount,
         topWasteType: topWasteType._id
     };
 };
@@ -126,20 +134,27 @@ const getDropoffPredictiveAnalytics = async () => {
     const stats = statisticalSummary(dropoffValues);
     const outliers = detectOutliers(dropoffValues);
 
+    // Holt's Double Exponential Smoothing for fast, robust short-term forecasting
+    const holt = holtExponentialSmoothing(dropoffValues, 0.3, 0.2);
+
     const predictions = [];
     for (let i = 1; i <= 3; i++) {
-        const nextIndex = monthlyData.length + i - 1;
-        const predictedDropoffs = Math.max(0, Math.round(dropoffRegression.predict(nextIndex)));
+        const ci = holt.confidenceInterval(i, 1.645); // 90% confidence interval
         predictions.push({
             month: `Month +${i}`,
-            predictedDropoffs,
+            predictedDropoffs: ci.point,
+            lowerBound: ci.lower,
+            upperBound: ci.upper,
             confidence: Math.round(dropoffRegression.rSquared * 100)
         });
     }
 
+    const trendDirection = holt.trend > 0.5 ? 'Increasing' :
+                           holt.trend < -0.5 ? 'Decreasing' : 'Stable';
+
     return {
         trendAnalysis: {
-            dropoffSlope: dropoffRegression.slope,
+            dropoffSlope: holt.trend,
             dropoffRSquared: dropoffRegression.rSquared
         },
         seasonalAnalysis: {
@@ -154,11 +169,10 @@ const getDropoffPredictiveAnalytics = async () => {
         })),
         predictions,
         insights: {
-            trendDirection: dropoffRegression.slope > 0 ? 'Increasing' :
-                           dropoffRegression.slope < 0 ? 'Decreasing' : 'Stable',
+            trendDirection,
             seasonalityDetected: seasonalAnalysis.seasonal.some(index => Math.abs(index) > stats.stdDev * 0.5),
             outlierCount: outliers.length,
-            predictionConfidence: Math.round(dropoffRegression.rSquared * 100)
+            predictionConfidence: Math.min(95, Math.max(30, Math.round(dropoffRegression.rSquared * 100 || (dropoffValues.length >= 3 ? 75 : 40))))
         }
     };
 };
@@ -232,8 +246,10 @@ const getPredictiveAnalyticsData = asyncHandler(async (req, res) => {
     res.json({ predictiveAnalytics: predictiveData });
 });
 
+const LguAccount = require('../models/LguAccount');
+
 const getReportData = asyncHandler(async (req, res) => {
-    const { timeframe = 'month', wasteType } = req.query;
+    const { timeframe = 'month', wasteType, lguId } = req.query;
 
     let dateFilter = {};
     const now = new Date();
@@ -251,31 +267,68 @@ const getReportData = asyncHandler(async (req, res) => {
         matchQuery.wasteType = wasteType;
     }
 
-    const [report] = await BinDropoff.aggregate([
-        { $match: matchQuery },
-        {
-            $group: {
-                _id: null,
-                totalDropoffs: { $sum: 1 },
-                totalKilograms: { $sum: '$kilograms' },
-                totalPoints: { $sum: '$pointsAwarded' },
-                completedDropoffs: { $sum: { $cond: [{ $eq: ['$status', 'Completed'] }, 1, 0] } },
-                uniqueResidents: { $addToSet: '$participantEmail' }
+    // LGU-specific filtering: restrict to bins belonging to the selected LGU
+    let lguBinIds = null;
+    let requestLguFilter = {};
+    if (lguId && lguId !== 'All') {
+        const lguBins = await RecyclingCenter.find({ assignedLgu: lguId }).select('_id').lean();
+        lguBinIds = lguBins.map(b => b._id);
+        matchQuery.bin = { $in: lguBinIds };
+        requestLguFilter.lgu = lguId;
+    }
+
+    // Fetch all available LGU accounts for the filter dropdown
+    const lguAccounts = await LguAccount.find({}).select('_id name').lean();
+
+    const [reportResults, requestResults, binResults] = await Promise.all([
+        BinDropoff.aggregate([
+            { $match: matchQuery },
+            {
+                $group: {
+                    _id: null,
+                    totalDropoffs: { $sum: 1 },
+                    totalKilograms: { $sum: '$kilograms' },
+                    totalPoints: { $sum: '$pointsAwarded' },
+                    completedDropoffs: { $sum: { $cond: [{ $eq: ['$status', 'Completed'] }, 1, 0] } }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    totalDropoffs: 1,
+                    totalKilograms: 1,
+                    totalPoints: 1,
+                    successRate: {
+                        $cond: [{ $eq: ['$totalDropoffs', 0] }, 0, { $multiply: [{ $divide: ['$completedDropoffs', '$totalDropoffs'] }, 100] }]
+                    }
+                }
             }
-        },
-        {
-            $project: {
-                _id: 0,
-                totalDropoffs: 1,
-                totalKilograms: 1,
-                totalPoints: 1,
-                successRate: {
-                    $cond: [{ $eq: ['$totalDropoffs', 0] }, 0, { $multiply: [{ $divide: ['$completedDropoffs', '$totalDropoffs'] }, 100] }]
-                },
-                uniqueResidents: { $size: '$uniqueResidents' }
+        ]),
+        Request.aggregate([
+            { $match: { createdAt: dateFilter, ...requestLguFilter } },
+            {
+                $group: {
+                    _id: null,
+                    totalRequests: { $sum: 1 },
+                    completedRequests: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } }
+                }
             }
-        }
+        ]),
+        RecyclingCenter.aggregate([
+            ...(lguBinIds ? [{ $match: { _id: { $in: lguBinIds } } }] : []),
+            {
+                $group: {
+                    _id: null,
+                    totalBins: { $sum: 1 },
+                    activeBins: { $sum: { $cond: [{ $ne: ['$status', 'Maintenance'] }, 1, 0] } }
+                }
+            }
+        ])
     ]);
+
+    const report = reportResults[0] || { totalDropoffs: 0, totalKilograms: 0, totalPoints: 0, successRate: 0 };
+    const reqStats = requestResults[0] || { totalRequests: 0, completedRequests: 0 };
+    const bStats = binResults[0] || { totalBins: 0, activeBins: 0 };
 
     const summaryByWasteType = await BinDropoff.aggregate([
         { $match: matchQuery },
@@ -306,10 +359,17 @@ const getReportData = asyncHandler(async (req, res) => {
         .limit(10);
 
     res.json({
-        summary: report || { totalDropoffs: 0, totalKilograms: 0, totalPoints: 0, successRate: 0, uniqueResidents: 0 },
+        summary: {
+            ...report,
+            totalRequests: reqStats.totalRequests,
+            completedRequests: reqStats.completedRequests,
+            totalBins: bStats.totalBins,
+            activeBins: bStats.activeBins
+        },
         summaryByWasteType,
         weeklyTrend,
-        recentActivity
+        recentActivity,
+        lguAccounts
     });
 });
 

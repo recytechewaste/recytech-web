@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import DistributionCharts from '../features/dashboard/DistributionCharts';
 import EWasteMetrics from '../features/dashboard/EWasteMetrics';
@@ -9,18 +10,34 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import { useDashboardAnalytics } from '../features/dashboard/useDashboardAnalytics';
 
 const Dashboard = () => {
+    const navigate = useNavigate();
     const { stats, categoryData, monthlyData, recentDropoffs, predictiveInsights, loading, error } = useDashboardAnalytics();
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
     const firstName = userInfo.firstName || 'User';
+    const initials = `${(userInfo.firstName || 'U').charAt(0)}${(userInfo.lastName || '').charAt(0)}`.toUpperCase();
 
     return (
         <div className={styles.container}>
             <Sidebar activePage="Dashboard" />
 
             <main className={styles.main}>
-                <header className={styles.dashboardHeader}>
-                    <h1 className={styles.pageTitle}>Operations Dashboard</h1>
-                    <p className={styles.subTitle}>Welcome back, {firstName}. Here is your bin network overview.</p>
+                <header className={styles.headerRow}>
+                    <div className={styles.dashboardHeader}>
+                        <h1 className={styles.pageTitle}>Operations Dashboard</h1>
+                        <p className={styles.subTitle}>Welcome back, {firstName}. Here is your bin network overview.</p>
+                    </div>
+                    <div
+                        className={styles.userPill}
+                        onClick={() => navigate('/settings')}
+                        style={{ cursor: 'pointer' }}
+                        title="Click to manage account settings"
+                    >
+                        <div className={styles.userAvatar}>{initials}</div>
+                        <div className={styles.userMeta}>
+                            <span className={styles.userName}>{`${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || 'User'}</span>
+                            <span className={styles.userRole}>{userInfo.role || 'Admin'}</span>
+                        </div>
+                    </div>
                 </header>
 
                 {error && <div className={styles.errorState}>Failed to load dashboard data. Please try again later.</div>}

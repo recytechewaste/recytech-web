@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
-import { Eye, EyeOff, CheckCircle, AlertCircle, X, Loader2, Check, Circle } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle, AlertCircle, X, Loader2, Check, Circle, User, Mail, Lock } from 'lucide-react';
 import styles from '../styles/Register.module.css';
 import logo from '../assets/recytech_logo.png';
 import { useToast } from '../context/ToastContext';
@@ -47,41 +47,43 @@ const Register = () => {
             finalValue = value.replace(/\d/g, ''); // Instantly strip out digits
         }
         
-        setFormData({...formData, [name]: finalValue});
+        setFormData(prev => ({ ...prev, [name]: finalValue }));
         
         if (name === 'password') {
             setPasswordStrength(calculateStrength(finalValue));
         }
 
         // Clear error when user types
-        if (errors[name]) {
-            setErrors({...errors, [name]: ''});
+        if (errors[name] || errors.form) {
+            setErrors(prev => ({ ...prev, [name]: '', form: '' }));
         }
     };
 
     const validate = () => {
         const newErrors = {};
-        if (!formData.firstName.trim()) newErrors.firstName = 'First Name is required';
-        if (!formData.lastName.trim()) newErrors.lastName = 'Last Name is required';
+        if (!formData.firstName.trim()) newErrors.firstName = 'First name is required.';
+        if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required.';
         
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!formData.email.trim()) {
-            newErrors.email = 'Email is required';
+            newErrors.email = 'Email address is required.';
         } else if (!emailRegex.test(formData.email)) {
-            newErrors.email = 'Invalid email format';
+            newErrors.email = 'Please enter a valid email address.';
         }
 
         if (!formData.password) {
-            newErrors.password = 'Password is required';
+            newErrors.password = 'Password is required.';
         } else {
             const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
             if (!passwordRegex.test(formData.password)) {
-                newErrors.password = 'Must be at least 8 chars, including upper, lower, number, and special char.';
+                newErrors.password = 'Password must meet all security requirements below.';
             }
         }
 
-        if (formData.confirmPassword !== formData.password) {
-            newErrors.confirmPassword = 'Passwords do not match';
+        if (!formData.confirmPassword) {
+            newErrors.confirmPassword = 'Please confirm your password.';
+        } else if (formData.confirmPassword !== formData.password) {
+            newErrors.confirmPassword = 'Passwords do not match.';
         }
 
         setErrors(newErrors);
@@ -98,7 +100,13 @@ const Register = () => {
             setSuccessMessage(data.message || 'Registration successful! Your account is pending administrator approval before you can log in.');
             setShowSuccessModal(true);
         } catch (error) {
-            showToast(error.response?.data?.message || "Registration failed. Email might be taken.", 'error');
+            const msg = error.response?.data?.message || "Registration failed. Email might already be taken.";
+            if (msg.toLowerCase().includes('email')) {
+                setErrors({ email: msg, form: msg });
+            } else {
+                setErrors({ form: msg });
+            }
+            showToast(msg, 'error');
         } finally {
             setLoading(false);
         }
@@ -123,75 +131,88 @@ const Register = () => {
                     <h1 className={styles.header}>Create Account</h1>
                     <p className={styles.subHeader}>Join RecyTech to manage your operations efficiently</p>
                     
-                    <form onSubmit={handleRegister} className={styles.form}>
+                    <form onSubmit={handleRegister} className={styles.form} noValidate>
                         <div className={styles.gridRow}>
                             <div className={styles.inputGroup}>
-                                <label className={styles.label}>First Name</label>
-                                <input 
-                                    name="firstName" 
-                                    placeholder="Enter your first name" 
-                                    className={`${styles.input} ${errors.firstName ? styles.inputError : ''}`} 
-                                    value={formData.firstName}
-                                    onChange={handleChange} 
-                                />
-                                {errors.firstName && <span className={styles.errorText}>{errors.firstName}</span>}
+                                <label className={styles.label}>First Name <span style={{ color: '#ef4444' }}>*</span></label>
+                                <div className={`${styles.inputWrapper} ${errors.firstName || errors.form ? styles.shake : ''}`}>
+                                    <User size={18} className={styles.inputIcon} />
+                                    <input 
+                                        name="firstName" 
+                                        placeholder="e.g. Juan" 
+                                        className={`${styles.input} ${styles.inputWithIcon} ${errors.firstName || errors.form ? styles.inputError : ''}`} 
+                                        value={formData.firstName}
+                                        onChange={handleChange} 
+                                    />
+                                </div>
+                                {errors.firstName && <span className={styles.errorText}><AlertCircle size={13} style={{ flexShrink: 0 }} /> {errors.firstName}</span>}
                             </div>
                             <div className={styles.inputGroup}>
-                                <label className={styles.label}>Last Name</label>
-                                <input 
-                                    name="lastName" 
-                                    placeholder="Enter your last name" 
-                                    className={`${styles.input} ${errors.lastName ? styles.inputError : ''}`} 
-                                    value={formData.lastName}
-                                    onChange={handleChange} 
-                                />
-                                {errors.lastName && <span className={styles.errorText}>{errors.lastName}</span>}
+                                <label className={styles.label}>Last Name <span style={{ color: '#ef4444' }}>*</span></label>
+                                <div className={`${styles.inputWrapper} ${errors.lastName || errors.form ? styles.shake : ''}`}>
+                                    <User size={18} className={styles.inputIcon} />
+                                    <input 
+                                        name="lastName" 
+                                        placeholder="e.g. Dela Cruz" 
+                                        className={`${styles.input} ${styles.inputWithIcon} ${errors.lastName || errors.form ? styles.inputError : ''}`} 
+                                        value={formData.lastName}
+                                        onChange={handleChange} 
+                                    />
+                                </div>
+                                {errors.lastName && <span className={styles.errorText}><AlertCircle size={13} style={{ flexShrink: 0 }} /> {errors.lastName}</span>}
                             </div>
                             <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>
-                                <label className={styles.label}>Email</label>
-                                <input 
-                                    name="email" 
-                                    type="email" 
-                                    placeholder="Enter your email address" 
-                                    className={`${styles.input} ${errors.email ? styles.inputError : ''}`} 
-                                    value={formData.email}
-                                    onChange={handleChange} 
-                                />
-                                {errors.email && <span className={styles.errorText}>{errors.email}</span>}
+                                <label className={styles.label}>Email Address <span style={{ color: '#ef4444' }}>*</span></label>
+                                <div className={`${styles.inputWrapper} ${errors.email || errors.form ? styles.shake : ''}`}>
+                                    <Mail size={18} className={styles.inputIcon} />
+                                    <input 
+                                        name="email" 
+                                        type="email" 
+                                        placeholder="e.g. user@recytech.com" 
+                                        className={`${styles.input} ${styles.inputWithIcon} ${errors.email || errors.form ? styles.inputError : ''}`} 
+                                        value={formData.email}
+                                        onChange={handleChange} 
+                                    />
+                                </div>
+                                {errors.email && <span className={styles.errorText}><AlertCircle size={13} style={{ flexShrink: 0 }} /> {errors.email}</span>}
                             </div>
                             <div className={styles.inputGroup}>
-                                <label className={styles.label}>Password</label>
-                                <div className={styles.passwordWrapper}>
+                                <label className={styles.label}>Password <span style={{ color: '#ef4444' }}>*</span></label>
+                                <div className={`${styles.inputWrapper} ${errors.password || errors.form ? styles.shake : ''}`}>
+                                    <Lock size={18} className={styles.inputIcon} />
                                     <input 
                                         name="password" 
                                         type={showPassword ? "text" : "password"} 
                                         placeholder="Create a password" 
-                                        className={`${styles.input} ${errors.password ? styles.inputError : ''}`} 
+                                        className={`${styles.input} ${styles.inputWithIcon} ${errors.password || errors.form ? styles.inputError : ''}`} 
                                         value={formData.password}
                                         onChange={handleChange} 
+                                        style={{ paddingRight: '45px' }}
                                     />
-                                    <button type="button" className={styles.eyeBtn} onClick={() => setShowPassword(!showPassword)}>
-                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    <button type="button" className={styles.eyeBtn} onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
-                                {errors.password && <span className={styles.errorText}>{errors.password}</span>}
+                                {errors.password && <span className={styles.errorText}><AlertCircle size={13} style={{ flexShrink: 0 }} /> {errors.password}</span>}
                             </div>
                             <div className={styles.inputGroup}>
-                                <label className={styles.label}>Confirm Password</label>
-                                <div className={styles.passwordWrapper}>
+                                <label className={styles.label}>Confirm Password <span style={{ color: '#ef4444' }}>*</span></label>
+                                <div className={`${styles.inputWrapper} ${errors.confirmPassword || errors.form ? styles.shake : ''}`}>
+                                    <Lock size={18} className={styles.inputIcon} />
                                     <input 
                                         name="confirmPassword" 
                                         type={showConfirmPassword ? "text" : "password"} 
                                         placeholder="Re-enter your password" 
-                                        className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ''}`} 
+                                        className={`${styles.input} ${styles.inputWithIcon} ${errors.confirmPassword || errors.form ? styles.inputError : ''}`} 
                                         value={formData.confirmPassword}
                                         onChange={handleChange} 
+                                        style={{ paddingRight: '45px' }}
                                     />
-                                    <button type="button" className={styles.eyeBtn} onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    <button type="button" className={styles.eyeBtn} onClick={() => setShowConfirmPassword(!showConfirmPassword)} tabIndex={-1}>
+                                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
-                                {errors.confirmPassword && <span className={styles.errorText}>{errors.confirmPassword}</span>}
+                                {errors.confirmPassword && <span className={styles.errorText}><AlertCircle size={13} style={{ flexShrink: 0 }} /> {errors.confirmPassword}</span>}
                             </div>
                             {formData.password && (
                                 <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '-8px' }}>
@@ -212,6 +233,13 @@ const Register = () => {
                                 </div>
                             )}
                         </div>
+
+                        {errors.form && (
+                            <div style={{ padding: '10px 14px', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', color: '#dc2626', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' }}>
+                                <AlertCircle size={16} />
+                                <span>{errors.form}</span>
+                            </div>
+                        )}
 
                         {/* Button */}
                         <div className={styles.buttonContainer}>

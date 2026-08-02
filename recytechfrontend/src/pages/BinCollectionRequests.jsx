@@ -1,9 +1,9 @@
-import React from 'react';
 import Sidebar from '../components/Sidebar';
 import RequestTable from '../features/requests/RequestTable';
 import { useRequests } from '../features/requests/useRequests';
 import RequestFilterBar from '../features/requests/RequestFilterBar';
 import Pagination from '../components/Pagination';
+import ErrorState from '../components/ErrorState';
 import styles from '../styles/BinCollectionRequests.module.css';
 
 const ITEMS_PER_PAGE = 10;
@@ -24,7 +24,7 @@ const BinCollectionRequests = () => {
 
   return (
     <div className={styles.container}>
-      <Sidebar activePage="Bin Collection Requests" />
+      <Sidebar activePage="Bin Collections" />
       <main className={styles.main}>
         <header className={styles.header}>
           <div className={styles.titleGroup}>
@@ -44,7 +44,9 @@ const BinCollectionRequests = () => {
         />
 
         {error && (
-          <div className="p-8 text-center text-red-600 bg-red-50 mb-4 rounded-lg">{error}</div>
+          <div style={{ marginBottom: '24px' }}>
+            <ErrorState message={error} />
+          </div>
         )}
 
         <RequestTable

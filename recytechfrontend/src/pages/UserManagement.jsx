@@ -7,6 +7,7 @@ import { useUsers } from '../features/users/useUsers';
 import UserFormModal from '../features/users/UserFormModal';
 import UserTable from '../features/users/UserTable';
 import UserFilterBar from '../features/users/UserFilterBar';
+import ErrorState from '../components/ErrorState';
 import styles from '../styles/UserManagement.module.css'; // Changed to Collectors styles
 
 const BLANK_USER_FORM = {
@@ -21,7 +22,7 @@ const BLANK_USER_FORM = {
 
 const UserManagement = () => {
     const { 
-        loading, 
+        loading, error,
         paginatedUsers,
         addUser, updateUser, deleteUser,
         searchTerm, setSearchTerm, 
@@ -83,6 +84,12 @@ const UserManagement = () => {
                     statusFilter={statusFilter} setStatusFilter={setStatusFilter}
                     handleClearFilters={handleClearFilters}
                 />
+
+                {error && (
+                    <div style={{ marginBottom: '24px' }}>
+                        <ErrorState message={error} />
+                    </div>
+                )}
 
                 <UserTable
                     users={paginatedUsers}

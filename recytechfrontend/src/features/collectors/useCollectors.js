@@ -8,13 +8,13 @@ export const useCollectors = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [vehicleTypeFilter, setVehicleTypeFilter] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
     const fetchCollectors = async () => {
-        setIsLoading(true);
+        setLoading(true);
         setError(null);
         try {
             const { data } = await api.get('/collectors');
@@ -23,7 +23,7 @@ export const useCollectors = () => {
             console.error("Error fetching collectors", error);
             setError(error.message || "Failed to fetch collectors");
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
@@ -53,7 +53,7 @@ export const useCollectors = () => {
         filteredCollectors, 
         fetchCollectors,
         paginatedCollectors,
-        isLoading, 
+        loading, 
         error,
         searchTerm, 
         setSearchTerm,

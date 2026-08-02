@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import LguTable from '../features/lgus/LguTable';
@@ -66,6 +66,10 @@ const LguManager = () => {
     }
   };
 
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+  const userRole = userInfo.role;
+  const canManage = userRole === 'Admin' || userRole === 'Super Admin';
+
   return (
     <div className={styles.container}>
       <Sidebar activePage="LGU Management" />
@@ -75,12 +79,14 @@ const LguManager = () => {
                 <h1 className={styles.pageTitle}>LGU Account Management</h1>
                 <p className={styles.subTitle}>Oversee and manage all Local Government Unit accounts.</p>
             </div>
-            <div className={styles.actionButtons}>
-              <button onClick={() => handleOpenModal()} className={styles.addBtn}>
-                  <Plus size={16} />
-                  Add New LGU
-              </button>
-            </div>
+            {canManage && (
+              <div className={styles.actionButtons}>
+                <button onClick={() => handleOpenModal()} className={styles.addBtn}>
+                    <Plus size={16} />
+                    Add New LGU
+                </button>
+              </div>
+            )}
         </header>
 
         <LguFilterBar
@@ -96,6 +102,7 @@ const LguManager = () => {
           onDelete={openDeleteModal}
           page={currentPage}
           limit={10} // This should match the value in usePagination
+          canManage={canManage}
         />
 
         {totalPages > 1 && (

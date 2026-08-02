@@ -93,6 +93,7 @@ const useLgus = () => {
   } = usePagination(filteredLgus, 10);
 
   return { 
+    lgus,
     isLoading, error, 
     paginatedLgus,
     addLgu, updateLgu, deleteLgu, 

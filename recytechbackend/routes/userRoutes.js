@@ -6,8 +6,13 @@ const {
     getUserById,
     createUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    updateUserProfile
 } = require('../controllers/userController');
+
+// @desc    Update logged-in user profile
+// @route   PUT /api/users/profile
+router.put('/profile', protect, updateUserProfile);
 
 // @desc    Get all users
 // @route   GET /api/users

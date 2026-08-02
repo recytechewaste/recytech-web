@@ -46,6 +46,11 @@ const recyclingCenterSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Collector',
         required: false
+    },
+    assignedLgu: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'LguAccount',
+        required: false
     }
 }, {
     timestamps: true

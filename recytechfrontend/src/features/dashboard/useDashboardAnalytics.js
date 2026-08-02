@@ -9,6 +9,7 @@ export const useDashboardAnalytics = () => {
         totalBins: 0,
         operationalBins: 0,
         binsNearCapacity: 0,
+        pendingRequests: 0,
         activeResidents: 0
     });
     const [categoryData, setCategoryData] = useState([]);
@@ -32,6 +33,7 @@ export const useDashboardAnalytics = () => {
                     totalBins: data.summary?.totalBins || 0,
                     operationalBins: data.summary?.operationalBins || 0,
                     binsNearCapacity: data.summary?.binsNearCapacity || 0,
+                    pendingRequests: data.summary?.pendingRequests || 0,
                     activeResidents: data.summary?.activeResidents || 0
                 });
                 setMonthlyData(data.monthlyTrends || []);

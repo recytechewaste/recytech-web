@@ -72,25 +72,33 @@
     box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08);
 }
 
+.kpiHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
 .kpiLabel {
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 11px;
+    font-weight: 600;
     color: #6b7280;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .kpiValue {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 700;
     color: #111827;
     line-height: 1;
 }
 
 .kpiSub {
-    font-size: 16px;
-    font-weight: 500;
-    color: #9ca3af;
+    font-size: 12px;
+    font-weight: 400;
+    color: #64748b;
+    margin: 0;
 }
 
 .kpiWarning {
@@ -100,6 +108,15 @@
 
 .kpiWarning .kpiValue {
     color: #d97706;
+}
+
+.kpiInfo {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.kpiInfo .kpiValue {
+    color: #2563eb;
 }
 
 .kpiDanger {
@@ -289,4 +306,73 @@
     .main {
         padding: 24px 16px;
     }
+}
+
+/* User identity pill in the dashboard header */
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.userPill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 40px;
+    padding: 6px 14px 6px 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    transition: box-shadow 0.15s ease;
+}
+
+.userPill:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.userAvatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.userMeta {
+    display: flex;
+    flex-direction: column;
+}
+
+.userName {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.3;
+}
+
+.userRole {
+    font-size: 11px;
+    font-weight: 500;
+    color: #6b7280;
+    line-height: 1.3;
+}
+
+/* Error state for failed data fetches */
+.errorState {
+    padding: 20px 24px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    color: #991b1b;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 24px;
 }

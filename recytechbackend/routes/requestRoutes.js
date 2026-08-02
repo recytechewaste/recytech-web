@@ -7,16 +7,16 @@ const {
     completeRequest,
     deleteRequest
 } = require('../controllers/requestController');
-const { protect, admin, lgu, collector } = require('../middleware/authMiddleware');
+const { protect, admin, staffOrAdmin, lgu, collector } = require('../middleware/authMiddleware');
 
 // @route   /api/requests
 
-// Admin routes
+// Admin & Staff routes
 router.route('/')
-    .get(protect, admin, getAllRequests);
+    .get(protect, staffOrAdmin, getAllRequests);
 
 router.route('/:id')
-    .put(protect, admin, updateRequestStatus)
+    .put(protect, staffOrAdmin, updateRequestStatus)
     .delete(protect, admin, deleteRequest);
 
 // LGU route
