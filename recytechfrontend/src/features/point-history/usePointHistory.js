@@ -1,0 +1,46 @@
+import { useState, useEffect } from 'react';
+import api from '../../api/client';
+import { usePagination } from '../../hooks/usePagination';
+
+export const usePointHistory = () => {
+    const [transactions, setTransactions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    
+    const { page, limit, pages, total, goToPage, updatePaginationInfo, hasNextPage, hasPrevPage } = usePagination(1, 10);
+
+    const fetchTransactions = async (currentPage) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await api.get(`/transactions?page=${currentPage}&limit=${limit}`);
+            setTransactions(res.data.transactions || res.data || []);
+            
+            // Update the hook's internal tracking with the API response
+            updatePaginationInfo(res.data.pagination);
+        } catch (error) {
+            console.error("Error fetching transactions:", error);
+            setError("Failed to fetch point history");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => { fetchTransactions(page); }, [page, limit]);
+
+    const filteredTransactions = transactions.filter(t => 
+        t.resident?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t._id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return { 
+        loading, error,
+        searchTerm, setSearchTerm, 
+        filteredTransactions,
+        // Pagination exports
+        page, limit, pages, total, 
+        goToPage, hasNextPage, hasPrevPage 
+    };
+};

@@ -1,0 +1,71 @@
+.container {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #f7f9fc;
+}
+
+.main {
+    flex: 1;
+    padding: 32px 40px;
+    overflow-y: auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.titleWrapper {}
+
+.pageTitle {
+    font-size: 26px;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 4px 0;
+}
+
+.subTitle {
+    color: #6b7280;
+    font-size: 14px;
+    margin: 0;
+}
+
+.addButton {
+    background-color: #10b981; /* A nice green from the theme */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.addButton:hover {
+    background-color: #0f9d6d;
+}
+
+.content {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+}
+
+.loading,
+.error {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    font-size: 16px;
+    color: #6b7280;
+}

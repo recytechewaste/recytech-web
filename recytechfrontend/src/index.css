@@ -2,10 +2,23 @@
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  
+
+  --primary-text-color: #0f766e;
+  --secondary-text-color: #4b5563; /* Using a neutral gray for secondary text for now */
+  --link-color: #10b981;
+  --link-hover-color: #059669;
+  --error-color: #991b1b;
+  --error-background-color: #fef2f2;
+  --success-color: #065f46;
+  --success-background-color: #def7ec;
+  --background-color: #f3f4f6;
+  --card-background-color: #ffffff;
+  --border-color: #e5e7eb;
+  --input-border-color: #d1d5db;
+
   color-scheme: light;
-  color: #111827;
-  background-color: #f3f4f6; 
+  color: var(--primary-text-color);
+  background-color: var(--background-color);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -22,11 +35,11 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: var(--link-color);
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: var(--link-hover-color);
 }
 
 body {
@@ -37,8 +50,10 @@ body {
   overflow: hidden; /* Prevents double scrollbars */
 }
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--primary-text-color);
+  margin: 0 0 4px 0;
 }
 
 button {
@@ -53,7 +68,7 @@ button {
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+  border-color: var(--link-color);
 }
 button:focus,
 button:focus-visible {

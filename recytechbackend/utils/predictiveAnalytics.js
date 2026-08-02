@@ -162,11 +162,100 @@ function detectOutliers(data) {
     return outliers;
 }
 
+/**
+ * Holt's Double Exponential Smoothing
+ * Captures both level (baseline) and trend (direction) with two smoothing parameters.
+ * Works reliably with as few as 3 data points — much better than linear regression for short series.
+ *
+ * @param {Array<number>} data - Time series values (e.g., monthly drop-off counts)
+ * @param {number} alpha - Level smoothing factor (0–1). Higher = more responsive to recent data. Default 0.3.
+ * @param {number} beta  - Trend smoothing factor (0–1). Higher = faster trend adaptation. Default 0.2.
+ * @returns {Object} - { smoothed, level, trend, predict(stepsAhead), confidenceInterval(stepsAhead, confidence) }
+ */
+function holtExponentialSmoothing(data, alpha = 0.3, beta = 0.2) {
+    if (!data || data.length < 2) {
+        return {
+            smoothed: data || [],
+            level: 0,
+            trend: 0,
+            predict: () => 0,
+            confidenceInterval: () => ({ lower: 0, upper: 0, point: 0 }),
+            residuals: []
+        };
+    }
+
+    // Initialize level and trend from first two data points
+    let level = data[0];
+    let trend = data[1] - data[0];
+
+    const smoothed = [data[0]];
+    const residuals = [];
+
+    for (let i = 1; i < data.length; i++) {
+        const prevLevel = level;
+        const prevTrend = trend;
+
+        // Update level: weighted blend of observed vs. predicted
+        level = alpha * data[i] + (1 - alpha) * (prevLevel + prevTrend);
+        // Update trend: weighted blend of new trend vs. old trend
+        trend = beta * (level - prevLevel) + (1 - beta) * prevTrend;
+
+        const fitted = prevLevel + prevTrend;
+        smoothed.push(level + trend);
+        residuals.push(data[i] - fitted);
+    }
+
+    // Calculate residual standard error for confidence intervals
+    const residualMean = residuals.length > 0
+        ? residuals.reduce((a, b) => a + b, 0) / residuals.length
+        : 0;
+    const residualVariance = residuals.length > 1
+        ? residuals.reduce((sum, r) => sum + Math.pow(r - residualMean, 2), 0) / (residuals.length - 1)
+        : 0;
+    const residualStdErr = Math.sqrt(residualVariance);
+
+    return {
+        smoothed,
+        level,
+        trend,
+        residuals,
+        residualStdErr,
+
+        /**
+         * Predict value at stepsAhead periods into the future.
+         * @param {number} stepsAhead - Number of periods ahead (1 = next period)
+         * @returns {number}
+         */
+        predict: (stepsAhead) => {
+            return Math.max(0, Math.round(level + trend * stepsAhead));
+        },
+
+        /**
+         * Calculate confidence interval for a future prediction.
+         * Uses residual standard error scaled by sqrt of forecast horizon.
+         * @param {number} stepsAhead - Periods ahead
+         * @param {number} zScore - Z-score for desired confidence (1.96 = 95%, 1.645 = 90%, 1.28 = 80%)
+         * @returns {{ lower: number, point: number, upper: number }}
+         */
+        confidenceInterval: (stepsAhead, zScore = 1.645) => {
+            const point = Math.max(0, Math.round(level + trend * stepsAhead));
+            // Uncertainty grows with forecast horizon
+            const margin = Math.round(zScore * residualStdErr * Math.sqrt(stepsAhead));
+            return {
+                lower: Math.max(0, point - margin),
+                point,
+                upper: point + margin
+            };
+        }
+    };
+}
+
 module.exports = {
     linearRegression,
     pearsonCorrelation,
     movingAverage,
     seasonalDecomposition,
     statisticalSummary,
-    detectOutliers
+    detectOutliers,
+    holtExponentialSmoothing
 };

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protect, admin, staffOrAdmin } = require('../middleware/authMiddleware');
 const {
     getCollectors,
     createCollector,
@@ -10,7 +10,7 @@ const {
 
 // @desc    Get all collectors
 // @route   GET /api/collectors
-router.get('/', protect, admin, getCollectors);
+router.get('/', protect, staffOrAdmin, getCollectors);
 
 // @desc    Register a new Collector
 // @route   POST /api/collectors

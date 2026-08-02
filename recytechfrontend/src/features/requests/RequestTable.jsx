@@ -1,109 +1,100 @@
-import { Check, Eye, X } from 'lucide-react';
-import styles from '../../styles/RequestManagement.module.css';
+import React from 'react';
+import { Truck, MapPin, User, Calendar, AlertTriangle } from 'lucide-react';
+import styles from '../../styles/BinCollectionRequests.module.css';
 import Skeleton from '../../components/Skeleton';
 
-const mutedText = { color: '#9ca3af', fontStyle: 'italic' };
+const RequestTable = ({ requests, loading, limit }) => {
+  const getStatusPill = (status) => {
+    const lowerStatus = status?.toLowerCase();
+    switch (lowerStatus) {
+      case 'pending':
+        return <span className={`${styles.statusBadge} ${styles.pending}`}>Pending</span>;
+      case 'in-progress':
+      case 'scheduled':
+      case 'in-transit':
+        return <span className={`${styles.statusBadge} ${styles.inProgress}`}>In Progress</span>;
+      case 'completed':
+        return <span className={`${styles.statusBadge} ${styles.completed}`}>Completed</span>;
+      case 'cancelled':
+        return <span className={`${styles.statusBadge} ${styles.cancelled}`}>Cancelled</span>;
+      default:
+        return <span className={styles.statusBadge}>{status || 'N/A'}</span>;
+    }
+  };
 
-const RequestTable = ({ requests, loading, onView, onApprove, onReject }) => (
+  const SkeletonRow = () => (
+    <tr>
+      <td className={styles.td}><Skeleton width="120px" height="24px" /></td>
+      <td className={styles.td}><Skeleton width="150px" height="24px" /></td>
+      <td className={styles.td}><Skeleton width="90%" height="24px" /></td>
+      <td className={styles.td}><Skeleton width="100px" height="24px" borderRadius="12px" /></td>
+      <td className={styles.td}><Skeleton width="180px" height="24px" /></td>
+      <td className={styles.td}><Skeleton width="100px" height="24px" /></td>
+    </tr>
+  );
+
+  return (
     <div className={styles.card}>
-        <table className={styles.table}>
-            <thead>
-                <tr>
-                    <th className={styles.th}>Request ID</th>
-                    <th className={styles.th}>E-Waste Type</th>
-                    <th className={styles.th}>Quantity</th>
-                    <th className={styles.th}>Area</th>
-                    <th className={styles.th}>Assigned Collector</th>
-                    <th className={styles.th}>Pickup Schedule</th>
-                    <th className={styles.th}>Submission Date</th>
-                    <th className={styles.th}>Status</th>
-                    <th className={styles.th}>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {loading ? (
-                    Array.from({ length: 5 }).map((_, i) => (
-                        <tr key={`skeleton-${i}`} className={styles.tr}>
-                            <td className={styles.td}><Skeleton width="80px" height="16px" /></td>
-                            <td className={styles.td}><Skeleton width="100px" height="16px" /></td>
-                            <td className={styles.td}><Skeleton width="60px" height="16px" /></td>
-                            <td className={styles.td}><Skeleton width="120px" height="16px" /></td>
-                            <td className={styles.td}><Skeleton width="120px" height="16px" /></td>
-                            <td className={styles.td}><Skeleton width="100px" height="16px" /></td>
-                            <td className={styles.td}><Skeleton width="80px" height="16px" /></td>
-                            <td className={styles.td}><Skeleton width="70px" height="24px" borderRadius="12px" /></td>
-                            <td className={styles.td}>
-                                <div className={styles.tableActions}>
-                                    <Skeleton width="60px" height="28px" borderRadius="6px" />
-                                    <Skeleton width="60px" height="28px" borderRadius="6px" />
-                                </div>
-                            </td>
-                        </tr>
-                    ))
-                ) : requests.length === 0 ? (
-                    <tr>
-                        <td colSpan="9" style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>No requests found.</td>
-                    </tr>
-                ) : (
-                    requests.map((request) => (
-                        <tr key={request._id} className={styles.tr}>
-                            <td className={styles.td}>REQ-{request._id.substring(0, 6).toUpperCase()}</td>
-                            <td className={styles.td}>{request.wasteType}</td>
-                            <td className={styles.td}>{request.quantity || 1} item(s)</td>
-                            <td className={styles.td}>{request.location?.address || 'Area 1'}</td>
-                            <td className={styles.td}>
-                                {request.assignedCollector
-                                    ? `${request.assignedCollector.firstName} ${request.assignedCollector.lastName}`
-                                    : <span style={mutedText}>Unassigned</span>}
-                            </td>
-                            <td className={styles.td}>
-                                {request.scheduledAt
-                                    ? new Date(request.scheduledAt).toLocaleString()
-                                    : <span style={mutedText}>Not scheduled</span>}
-                            </td>
-                            <td className={styles.td}>{new Date(request.createdAt).toLocaleDateString()}</td>
-                            <td className={styles.td}>{request.status}</td>
-                            <td className={`${styles.td} ${styles.actionCell}`}>
-                                <div className={styles.tableActions}>
-                                    <button
-                                        type="button"
-                                        title="View details"
-                                        onClick={() => onView(request)}
-                                        className={`${styles.actionBtn} ${styles.actionView}`}
-                                    >
-                                        <Eye size={14} />
-                                        <span>View</span>
-                                    </button>
-                                    {request.status === 'Pending' && (
-                                        <>
-                                            <button
-                                                type="button"
-                                                title="Approve request"
-                                                onClick={() => onApprove(request)}
-                                                className={`${styles.actionBtn} ${styles.actionApprove}`}
-                                            >
-                                                <Check size={14} />
-                                                <span>Approve</span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                title="Reject request"
-                                                onClick={() => onReject(request._id)}
-                                                className={`${styles.actionBtn} ${styles.actionReject}`}
-                                            >
-                                                <X size={14} />
-                                                <span>Reject</span>
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            </td>
-                        </tr>
-                    ))
-                )}
-            </tbody>
-        </table>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th className={styles.th}>Bin ID</th>
+            <th className={styles.th}>LGU</th>
+            <th className={styles.th}>Location</th>
+            <th className={styles.th}>Status</th>
+            <th className={styles.th}>Assigned Collector</th>
+            <th className={styles.th}>Created At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {loading ? (
+            [...Array(limit)].map((_, i) => <SkeletonRow key={i} />)
+          ) : requests.length > 0 ? (
+            requests.map((request) => (
+              <tr key={request._id}>
+                <td className={styles.td}>
+                  <span className={styles.plateBadge}>
+                    <Truck size={14}/>
+                    {request.bin?.name || request.bin?.binId || 'N/A'}
+                  </span>
+                </td>
+                <td className={styles.td}>{request.lgu?.name || request.bin?.assignedLgu?.name || 'N/A'}</td>
+                <td className={styles.td}>
+                    <div className={styles.iconText}>
+                        <MapPin size={14}/>
+                        <span>{request.bin?.address || 'N/A'}</span>
+                    </div>
+                </td>
+                <td className={styles.td}>{getStatusPill(request.status)}</td>
+                <td className={styles.td}>
+                  <div className={styles.iconText}>
+                    <User size={14}/>
+                    <span>
+                      {request.assignedCollector ? `${request.assignedCollector.firstName} ${request.assignedCollector.lastName}` : 'Unassigned'}
+                    </span>
+                  </div>
+                </td>
+                <td className={styles.td}>
+                    <div className={styles.iconText}>
+                        <Calendar size={14}/>
+                        <span>{new Date(request.createdAt).toLocaleDateString()}</span>
+                    </div>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="6" className={styles.emptyTd}>
+                <AlertTriangle size={48} className="mx-auto text-gray-400" />
+                <h3 className="mt-2 text-lg font-semibold text-gray-700">No Requests Found</h3>
+                <p className="text-gray-500">There are no collection requests matching your filters.</p>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
-);
+  );
+};
 
 export default RequestTable;

@@ -35,6 +35,14 @@ const admin = (req, res, next) => {
     }
 };
 
+const staffOrAdmin = (req, res, next) => {
+    if (req.user && (req.user.role === 'Staff' || req.user.role === 'Admin' || req.user.role === 'Super Admin')) {
+        next();
+    } else {
+        res.status(403).json({ message: 'Not authorized as staff or admin' });
+    }
+};
+
 const superAdmin = (req, res, next) => {
     if (req.user && req.user.role === 'Super Admin') {
         next();
@@ -43,4 +51,20 @@ const superAdmin = (req, res, next) => {
     }
 };
 
-module.exports = { protect, admin, superAdmin };
+const lgu = (req, res, next) => {
+    if (req.user && req.user.role === 'LGU') {
+        next();
+    } else {
+        res.status(401).send('Not authorized as an LGU');
+    }
+};
+
+const collector = (req, res, next) => {
+    if (req.user && req.user.role === 'Collector') {
+        next();
+    } else {
+        res.status(401).send('Not authorized as a Collector');
+    }
+};
+
+module.exports = { protect, admin, staffOrAdmin, superAdmin, lgu, collector };

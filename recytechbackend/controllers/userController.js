@@ -127,9 +127,46 @@ const deleteUser = asyncHandler(async (req, res) => {
         throw new Error('User not found');
     }
     
-    await user.deleteOne();
-    
-    res.json({ message: 'User removed' });
+    // Soft-delete the user by setting their status to Inactive
+    user.status = 'Inactive';
+    await user.save();
+    res.json({ message: 'User has been deactivated successfully.' });
+});
+
+// @desc    Update logged in user profile
+// @route   PUT /api/users/profile
+// @access  Private
+const updateUserProfile = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+        user.firstName = req.body.firstName || user.firstName;
+        user.lastName = req.body.lastName || user.lastName;
+
+        if (req.body.password) {
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+            if (!passwordRegex.test(req.body.password)) {
+                res.status(400);
+                throw new Error('Password must be at least 8 characters, including upper, lower, number, and special character');
+            }
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(req.body.password, salt);
+        }
+
+        const updatedUser = await user.save();
+
+        res.json({
+            _id: updatedUser._id,
+            firstName: updatedUser.firstName,
+            lastName: updatedUser.lastName,
+            email: updatedUser.email,
+            role: updatedUser.role,
+            status: updatedUser.status
+        });
+    } else {
+        res.status(404);
+        throw new Error('User profile not found');
+    }
 });
 
 module.exports = {
@@ -137,5 +174,6 @@ module.exports = {
     getUserById,
     createUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    updateUserProfile
 };

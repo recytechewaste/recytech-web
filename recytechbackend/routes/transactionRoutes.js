@@ -1,31 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const { protect, admin } = require('../middleware/authMiddleware');
-const {
-    getTransactions,
+const { protect, admin, staffOrAdmin } = require('../middleware/authMiddleware');
+const { 
+    getTransactions, 
+    getTransactionStats,
     getTransactionsByResident,
-    getTransactionByRequest,
-    getTransactionStats
+    getTransactionByRequest
 } = require('../controllers/transactionController');
 
-// @desc    Get all transactions (paginated)
+// @desc    Get all transactions
 // @route   GET /api/transactions
-// @access  Admin only
-router.get('/', protect, admin, getTransactions);
+router.get('/', protect, staffOrAdmin, getTransactions);
 
-// @desc    Get transaction summary (dashboard stats)
+// @desc    Get transaction summary statistics
 // @route   GET /api/transactions/stats/summary
-// @access  Admin only
-router.get('/stats/summary', protect, admin, getTransactionStats);
+router.get('/stats/summary', protect, staffOrAdmin, getTransactionStats);
 
-// @desc    Get transactions for specific resident
+// @desc    Get transactions by resident ID
 // @route   GET /api/transactions/resident/:residentId
-// @access  Admin only
-router.get('/resident/:residentId', protect, admin, getTransactionsByResident);
+router.get('/resident/:residentId', protect, staffOrAdmin, getTransactionsByResident);
 
-// @desc    Get transaction for specific request
+// @desc    Get transaction by request ID
 // @route   GET /api/transactions/request/:requestId
-// @access  Admin only
-router.get('/request/:requestId', protect, admin, getTransactionByRequest);
+router.get('/request/:requestId', protect, staffOrAdmin, getTransactionByRequest);
 
 module.exports = router;

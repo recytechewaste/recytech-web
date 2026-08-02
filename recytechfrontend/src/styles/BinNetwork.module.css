@@ -1,0 +1,300 @@
+.container {
+    display: flex;
+    min-height: 100vh;
+    background: #f7f9fc;
+}
+
+.main {
+    flex: 1;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent strange scrolling issues */
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-shrink: 0;
+}
+
+.pageTitle {
+    margin: 0 0 4px 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f766e;
+}
+.subtitle { margin: 6px 0 0; color: #6b7280; }
+
+.addBtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    box-shadow: 0 2px 8px rgba(5,150,105,0.12);
+}
+.addBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(5,150,105,0.18); }
+
+.loading { color: #6b7280; text-align: center; margin-top: 50px; }
+
+/* --- Mission Control Layout --- */
+.missionControl {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: 350px 1fr; /* Default: list and map */
+    grid-template-rows: 1fr;
+    gap: 24px;
+    transition: grid-template-columns 0.3s ease-in-out;
+    position: relative; /* For the toggle button positioning */
+}
+
+/* State: Left panel is collapsed */
+.missionControl.listCollapsed {
+    grid-template-columns: 0fr 1fr; /* Use 0fr to collapse the column entirely */
+    gap: 0; /* Remove gap when collapsed */
+}
+
+/* --- Left Panel: Bin List --- */
+.leftPanel {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.3s ease-in-out; /* Transition width and opacity */
+    min-width: 0; /* Allow content to shrink */
+}
+
+.missionControl.listCollapsed .leftPanel {
+    width: 0;
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+    margin: 0;
+}
+
+.listHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+}
+.listTitle { font-size: 16px; font-weight: 600; margin: 0; color: #111827; }
+.closeBtn { background: none; border: none; cursor: pointer; color: #9ca3af; padding: 4px; border-radius: 50%; }
+.closeBtn:hover { background: #f3f4f6; color: #1f2937; }
+
+.filterBar {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    background-color: #f9fafb;
+}
+
+.filterContainer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%; /* Ensure the container uses the full width */
+}
+
+.filterGroup {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1; /* Make filter groups share space equally */
+    min-width: 0; /* Allow flex items to shrink properly */
+}
+
+.filterIcon {
+    position: absolute;
+    left: 10px;
+    color: #9ca3af;
+    pointer-events: none;
+}
+
+.filterSelect {
+    width: 100%;
+    padding: 8px 32px 8px 34px; /* Increased right padding to prevent text overlapping arrow */
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background-color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;    
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+}
+
+.filterSelect:focus {
+    outline: none;
+    border-color: #0f766e;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.resetFilterBtn {
+    background: none; border: none; color: #0f766e; font-size: 13px; font-weight: 600; cursor: pointer; padding: 8px 12px; border-radius: 8px; white-space: nowrap; transition: background-color 0.2s; flex-shrink: 0; /* Prevent the button from shrinking */
+}
+.resetFilterBtn:hover { background-color: #ecfdf5; }
+
+.list {
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.listItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+.listItem:hover { background-color: #f9fafb; }
+.selectedItem { border-color: #3b82f6; background-color: #eff6ff; }
+.binName { font-size: 14px; font-weight: 600; color: #111827; }
+.listItemInfo { display: flex; align-items: center; flex: 1; min-width: 0; }
+.listActions { display: flex; gap: 8px; align-items: center; }
+
+.actionBtn, .actionBtnDanger {
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.actionBtn { color: #6b7280; }
+.actionBtn:hover { background-color: #f3f4f6; color: #1f2937; }
+
+.actionBtnDanger {
+    color: #9ca3af;
+}
+.actionBtnDanger:hover { background-color: #fef2f2; color: #ef4444; }
+
+.meta { font-size: 12px; color: #6b7280; }
+/* --- Center Panel: Map --- */
+.centerPanel {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    position: relative; /* For the toggle button */
+}
+.mapArea { 
+    height: 100%; 
+    width: 100%; 
+    background-color: #e5e7eb; /* Placeholder color */
+}
+
+.emptyState {
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    color: #6b7280; background: #f9fafb;
+}
+
+/* --- Right Panel: Details --- */
+.rightPanel {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* transition: opacity 0.3s ease-in-out; (removed opacity transition, visibility handled by grid) */
+}
+.panelHeader {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; border-bottom: 1px solid #e5e7eb;
+}
+.panelTitle { margin: 0; font-size: 18px; }
+.panelBody { padding: 20px; flex-grow: 1; overflow-y: auto; }
+.detailGroup { margin-bottom: 1.25rem; }
+.detailLabel { font-size: 12px; color: #6b7280; margin: 0 0 4px; }
+.detailValue { font-size: 14px; color: #1f2937; margin: 0; }
+.detailGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.progressWrapper { width: 100%; background: #e5e7eb; height: 8px; border-radius: 4px; margin: 8px 0; }
+.progressBar { height: 100%; background-color: #2563eb; transition: width 0.3s ease; }
+.badge { padding: 4px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.badgeEmpty { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.badgeFull { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.badgeMaintenance { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+.panelFooter {
+    padding: 16px; border-top: 1px solid #e5e7eb;
+    display: flex; gap: 12px;
+}
+.panelActionBtn {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer; background: #fff; color: #374151;
+}
+.panelActionBtn:hover { background: #f9fafb; }
+.panelActionDanger { color: #dc2626; }
+.panelActionDanger:hover { background: #fef2f2; border-color: #fecaca; }
+
+/* --- General Form styles, used in modal --- */
+.inputError { border-color: #ef4444 !important; }
+.fieldError { font-size: 12px; color: #ef4444; margin-top: 2px; }
+.mapPickerCard { border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; }
+.mapPickerError { border-color: #ef4444; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.12); }
+.mapPickerHeader {
+    display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+    padding: 8px 14px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; font-size: 13px;
+}
+.mapPickerHeader span { color: #6b7280; font-size: 12px; }
+.mapAddress { font-style: italic; }
+.mapPickerMap { 
+    height: 260px; 
+    width: 100%; 
+    background-color: #e5e7eb; /* Placeholder color */
+}
+
+/* --- Collapse Toggle Button --- */
+.listToggleBtn {
+    position: absolute;
+    left: 0; /* Position relative to .centerPanel's left edge */
+    top: 50%;
+    transform: translate(-50%, -50%); /* Center vertically and horizontally relative to its left edge */
+    z-index: 10;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-left: none;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    width: 32px; /* Make button slightly larger */
+    height: 48px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 4px 0 8px rgba(0,0,0,0.04);
+    transition: left 0.3s ease-in-out, transform 0.3s ease-in-out;
+}

@@ -8,15 +8,18 @@ import CollectorFormModal from '../features/collectors/CollectorFormModal';
 import Modal from '../components/Modal';
 import { useToast } from '../context/ToastContext';
 import Skeleton from '../components/Skeleton';
+import EmptyState from '../components/EmptyState';
+import ErrorState from '../components/ErrorState';
+import Pagination from '../components/Pagination';
 
 const Collectors = () => {
     const { 
-        filteredCollectors, paginatedCollectors, fetchCollectors, isLoading,
+        paginatedCollectors, fetchCollectors, loading, error,
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
         vehicleTypeFilter, setVehicleTypeFilter,
         handleClearFilters,
-        page, limit, pages, goToPage, hasNextPage, hasPrevPage
+        currentPage, totalPages, setPage
     } = useCollectors();
 
     const [formData, setFormData] = useState({ firstName: '', lastName: '', phone: '', vehiclePlate: '', vehicleType: '', email: '', password: '', status: 'Active' });
@@ -26,6 +29,10 @@ const Collectors = () => {
     const [editingId, setEditingId] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
     const { showToast } = useToast();
+
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    const userRole = userInfo.role;
+    const canManage = userRole === 'Admin' || userRole === 'Super Admin';
 
     const handleOpenAdd = () => {
         setFormData({ firstName: '', lastName: '', phone: '', vehiclePlate: '', vehicleType: '', email: '', password: '', status: 'Active' });
@@ -81,11 +88,13 @@ const Collectors = () => {
                 <div className={styles.header}>
                     <div className={styles.titleGroup}>
                         <h1 className={styles.pageTitle}>Collector Management</h1>
-                        <p className={styles.subTitle}>Manage driver profiles and vehicle assignments.</p>
+                        <p className={styles.subTitle}>Manage collector profiles and bin service assignments.</p>
                     </div>
-                    <button onClick={handleOpenAdd} className={styles.addBtn} style={{backgroundColor: '#2563EB'}}>
-                        <Plus size={18} /> Add Collector
-                    </button>
+                    {canManage && (
+                        <button onClick={handleOpenAdd} className={styles.addBtn} style={{backgroundColor: '#2563EB'}}>
+                            <Plus size={18} /> Add Bin Collector
+                        </button>
+                    )}
                 </div>
 
                 {/* FILTERS */}
@@ -129,6 +138,11 @@ const Collectors = () => {
                 </div>
 
                 {/* TABLE */}
+                {error && (
+                    <div style={{ marginBottom: '24px' }}>
+                        <ErrorState message={error} />
+                    </div>
+                )}
                 <div className={styles.card}>
                     <table className={styles.table}>
                         <thead>
@@ -138,11 +152,11 @@ const Collectors = () => {
                                 <th className={styles.th}>Contact Info</th>
                                 <th className={styles.th}>Vehicle Plate</th>
                                 <th className={styles.th}>Status</th>
-                                <th className={styles.th}>Actions</th>
+                                {canManage && <th className={styles.th}>Actions</th>}
                             </tr>
                         </thead>
                         <tbody>
-                            {isLoading ? (
+                            {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <tr key={`skeleton-${i}`} className={styles.tr}>
                                         <td className={styles.td}><Skeleton width="20px" /></td>
@@ -158,22 +172,31 @@ const Collectors = () => {
                                         <td className={styles.td}><Skeleton width="110px" height="16px" /></td>
                                         <td className={styles.td}><Skeleton width="90px" height="24px" borderRadius="6px" /></td>
                                         <td className={styles.td}><Skeleton width="60px" height="24px" borderRadius="12px" /></td>
-                                        <td className={styles.td}>
-                                            <div className={styles.actions}>
-                                                <Skeleton width="28px" height="28px" borderRadius="4px" />
-                                                <Skeleton width="28px" height="28px" borderRadius="4px" />
-                                            </div>
-                                        </td>
+                                        {canManage && (
+                                            <td className={styles.td}>
+                                                <div className={styles.actions}>
+                                                    <Skeleton width="28px" height="28px" borderRadius="4px" />
+                                                    <Skeleton width="28px" height="28px" borderRadius="4px" />
+                                                </div>
+                                            </td>
+                                        )}
                                     </tr>
                                 ))
                             ) : paginatedCollectors.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className={styles.emptyTd}>No collectors found.</td>
+                                    <td colSpan={canManage ? "6" : "5"} style={{ padding: 0 }}>
+                                        <EmptyState
+                                            icon="collectors"
+                                            title="No collectors found"
+                                            subtitle={searchTerm || statusFilter || vehicleTypeFilter ? 'Try adjusting your filters or search term.' : 'Add your first collector to get started.'}
+                                            action={canManage && !searchTerm && !statusFilter && !vehicleTypeFilter ? { label: '+ Add Collector', onClick: () => { setShowModal(true); } } : null}
+                                        />
+                                    </td>
                                 </tr>
                             ) : (
                                 paginatedCollectors.map((c, index) => (
                                     <tr key={c._id} className={styles.tr}>
-                                        <td className={styles.td}>{(page - 1) * limit + index + 1}</td>
+                                        <td className={styles.td}>{(currentPage - 1) * 10 + index + 1}</td>
                                         <td className={styles.td}>
                                             <div className={styles.driverCell}>
                                                 <div className={styles.avatar}>{c.firstName ? c.firstName.charAt(0).toUpperCase() : '?'}</div>
@@ -194,37 +217,23 @@ const Collectors = () => {
                                                 {c.status || 'Active'}
                                             </span>
                                         </td>
-                                        <td className={styles.td}>
-                                            <div className={styles.actions}>
-                                                <button onClick={() => handleEdit(c)} className={styles.iconBtn}><Edit2 size={16}/></button>
-                                                <button onClick={() => handleDeleteClick(c._id)} className={styles.iconBtnDanger}><Trash2 size={16}/></button>
-                                            </div>
-                                        </td>
+                                        {canManage && (
+                                            <td className={styles.td}>
+                                                <div className={styles.actions}>
+                                                    <button onClick={() => handleEdit(c)} className={styles.iconBtn}><Edit2 size={16}/></button>
+                                                    <button onClick={() => handleDeleteClick(c._id)} className={styles.iconBtnDanger}><Trash2 size={16}/></button>
+                                                </div>
+                                            </td>
+                                        )}
                                     </tr>
                                 ))
                             )}
                         </tbody>
                     </table>
                 </div>
-
-                {/* Pagination Controls */}
-                <div className={styles.filterBar} style={{ marginTop: '20px', justifyContent: 'center' }}>
-                    <button 
-                        disabled={!hasPrevPage} 
-                        onClick={() => goToPage(page - 1)}
-                        className={styles.iconBtn}
-                    >
-                        <ChevronLeft size={20} />
-                    </button>
-                    <span style={{ padding: '0 20px' }}>Page {page} of {pages}</span>
-                    <button 
-                        disabled={!hasNextPage} 
-                        onClick={() => goToPage(page + 1)}
-                        className={styles.iconBtn}
-                    >
-                        <ChevronRight size={20} />
-                    </button>
-                </div>
+                {totalPages > 1 && (
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
+                )}
 
                 <CollectorFormModal 
                     isOpen={showModal} 
@@ -236,7 +245,7 @@ const Collectors = () => {
 
                 {/* --- DELETE CONFIRMATION MODAL --- */}
                 <Modal isOpen={!!deletingId} onClose={() => setDeletingId(null)} title="Confirm Deletion" maxWidth="400px">
-                    <p style={{color:'#666', marginBottom:'24px'}}>Are you sure you want to remove this collector? This action cannot be undone.</p>
+                    <p style={{color:'#666', marginBottom:'24px'}}>Are you sure you want to remove this collector assignment? This action cannot be undone.</p>
                     <div className={styles.modalFooter}>
                         <button onClick={() => setDeletingId(null)} className={styles.cancelBtn}>Cancel</button>
                         <button onClick={confirmDelete} className={styles.deleteBtn} style={{backgroundColor: '#ef4444'}}>Delete</button>

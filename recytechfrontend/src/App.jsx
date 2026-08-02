@@ -7,15 +7,14 @@ import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Collectors from './pages/Collectors';
 import Reports from './pages/Reports';
-
+import Settings from './pages/Settings';
 import UserManagement from './pages/UserManagement'; 
-import RequestManagement from './pages/RequestManagement'; 
-import RequestsSummary from './pages/RequestsSummary';
 import ProtectedRoute from './pages/ProtectedRoute';
-import EducationManager from './pages/EducationManager';
-import ExchangeRateManager from './pages/ExchangeRateManager';
-import ResidentManagement from './pages/ResidentManagement';
-import PayoutHistory from './pages/PayoutHistory';
+import RewardPointManager from './pages/RewardPointManager';
+import LguManager from './pages/LguManager';
+import PointHistory from './pages/PointHistory';
+import BinNetwork from './pages/BinNetwork';
+import BinCollectionRequests from './pages/BinCollectionRequests';
 import Unauthorized from './pages/Unauthorized';
 import NotFound from './pages/NotFound';
 import { ToastProvider } from './context/ToastContext';
@@ -39,59 +38,50 @@ function App() {
             element={<ProtectedRoute><Dashboard /></ProtectedRoute>} 
           />
           <Route 
-            path="/requests-summary" 
-            element={<ProtectedRoute><RequestsSummary /></ProtectedRoute>} 
-          />
-          <Route 
             path="/collectors" 
             element={
-              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
                 <Collectors />
               </ProtectedRoute>
             } 
           />
-
           <Route 
-            path="/education" 
+            path="/reward-points" 
             element={
               <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
-                <EducationManager />
+                <RewardPointManager />
               </ProtectedRoute>
             } 
           />
-
           <Route 
-            path="/exchange-rates" 
+            path="/lgu-management" 
             element={
-              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
-                <ExchangeRateManager />
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+                <LguManager />
               </ProtectedRoute>
             } 
           />
-
-          <Route 
-            path="/residents" 
-            element={
-              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
-                <ResidentManagement />
-              </ProtectedRoute>
-            } 
-          />
-
           <Route 
             path="/transactions" 
             element={
-              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
-                <PayoutHistory />
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+                <PointHistory />
               </ProtectedRoute>
             } 
           />
-
           <Route 
-            path="/requests" 
+            path="/bin-network" 
             element={
-              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
-                <RequestManagement />
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+                <BinNetwork />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/bin-collection-requests" 
+            element={
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+                <BinCollectionRequests />
               </ProtectedRoute>
             } 
           />
@@ -100,6 +90,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
                 <Reports />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/settings" 
+            element={
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+                <Settings />
               </ProtectedRoute>
             } 
           />

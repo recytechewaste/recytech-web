@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Loader2 } from 'lucide-react'; 
+import { Eye, EyeOff, Loader2, Mail, Lock, AlertCircle } from 'lucide-react'; 
 import styles from '../styles/Login.module.css';
 import logo from '../assets/recytech_logo.png';
 import { useToast } from '../context/ToastContext';
@@ -12,6 +12,7 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
+    const [errors, setErrors] = useState({});
     const navigate = useNavigate();
     const { showToast } = useToast();
 
@@ -23,8 +24,18 @@ const Login = () => {
         }
     }, []);
 
+    const validate = () => {
+        const newErrors = {};
+        if (!email.trim()) newErrors.email = 'Email address is required';
+        if (!password) newErrors.password = 'Password is required';
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleLogin = async (e) => {
         e.preventDefault();
+        if (!validate()) return;
+
         setLoading(true);
         try {
             if (rememberMe) {
@@ -32,11 +43,13 @@ const Login = () => {
             } else {
                 localStorage.removeItem('rememberedEmail');
             }
-        const { data } = await api.post('/auth/login', { email, password });
+            const { data } = await api.post('/auth/login', { email, password });
             localStorage.setItem('userInfo', JSON.stringify(data));
-        navigate('/dashboard'); // QoL: Immediate auto-redirect
+            navigate('/dashboard'); // QoL: Immediate auto-redirect
         } catch (err) {
-            showToast(err.response?.data?.message || 'Invalid email or password', 'error');
+            const msg = err.response?.data?.message || 'Invalid email or password';
+            setErrors({ form: msg });
+            showToast(msg, 'error');
         } finally {
             setLoading(false);
         }
@@ -62,33 +75,44 @@ const Login = () => {
                     <h1 className={styles.header}>Welcome Back</h1>
                     <p className={styles.subHeader}>Sign in to access the RecyTech E-waste Management</p>
                     
-                    <form onSubmit={handleLogin} className={styles.form}>
-                        <div className={styles.gridRow}>
-                            <div className={styles.inputGroup}>
-                                <label className={styles.label}>Email</label>
+                    <form onSubmit={handleLogin} className={styles.form} noValidate>
+                        <div className={styles.inputGroup}>
+                            <label className={styles.label}>Email Address <span style={{ color: '#ef4444' }}>*</span></label>
+                            <div className={`${styles.inputWrapper} ${errors.email || errors.form ? styles.shake : ''}`}>
+                                <Mail size={18} className={styles.inputIcon} />
                                 <input 
                                     type="email" 
                                     placeholder="Enter your email address" 
-                                    className={styles.input}
+                                    className={`${styles.input} ${styles.inputWithIcon} ${errors.email || errors.form ? styles.inputError : ''}`}
                                     value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        if (errors.email || errors.form) setErrors(prev => ({ ...prev, email: '', form: '' }));
+                                    }}
                                 />
                             </div>
+                            {errors.email && <span className={styles.errorText}><AlertCircle size={13} style={{ flexShrink: 0 }} /> {errors.email}</span>}
+                        </div>
                         <div className={styles.inputGroup}>
-                                <label className={styles.label}>Password</label>
-                                <div className={styles.passwordWrapper}>
-                                    <input 
-                                        type={showPassword ? "text" : "password"} 
-                                        placeholder="Enter your password" 
-                                        className={styles.input}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                    />
-                                    <button type="button" className={styles.eyeBtn} onClick={() => setShowPassword(!showPassword)}>
-                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                    </button>
-                                </div>
+                            <label className={styles.label}>Password <span style={{ color: '#ef4444' }}>*</span></label>
+                            <div className={`${styles.inputWrapper} ${errors.password || errors.form ? styles.shake : ''}`}>
+                                <Lock size={18} className={styles.inputIcon} />
+                                <input 
+                                    type={showPassword ? "text" : "password"} 
+                                    placeholder="Enter your password" 
+                                    className={`${styles.input} ${styles.inputWithIcon} ${errors.password || errors.form ? styles.inputError : ''}`}
+                                    value={password}
+                                    onChange={(e) => {
+                                        setPassword(e.target.value);
+                                        if (errors.password || errors.form) setErrors(prev => ({ ...prev, password: '', form: '' }));
+                                    }}
+                                    style={{ paddingRight: '45px' }}
+                                />
+                                <button type="button" className={styles.eyeBtn} onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                             </div>
+                            {errors.password && <span className={styles.errorText}><AlertCircle size={13} style={{ flexShrink: 0 }} /> {errors.password}</span>}
                         </div>
 
                         <div className={styles.rememberMeContainer}>

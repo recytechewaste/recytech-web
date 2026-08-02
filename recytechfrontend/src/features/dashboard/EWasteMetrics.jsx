@@ -1,80 +1,90 @@
 import { useState } from 'react';
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from 'recharts';
-import { Info } from 'lucide-react';
+import { Info, Weight, AlertTriangle, Truck, Box } from 'lucide-react';
 import styles from '../../styles/Dashboard.module.css';
 
-const EWasteMetrics = ({ stats, monthlyData }) => {
+const EWasteMetrics = ({ stats = {}, monthlyData }) => {
     const [showVolumeTooltip, setShowVolumeTooltip] = useState(false);
-    
-    const tooltipStyle = {
-        position: 'absolute', top: '100%', right: 0, marginTop: '8px',
-        backgroundColor: '#1F2937', color: '#F9FAFB', padding: '12px',
-        borderRadius: '8px', fontSize: '12px', width: '260px', zIndex: 50,
-        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', pointerEvents: 'none',
-        lineHeight: '1.5', textAlign: 'left', fontWeight: 'normal', textTransform: 'none'
-    };
+
+    const totalKg = (stats.totalKilograms || 0).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    const nearCapacity = stats.binsNearCapacity || 0;
+    const pendingReqs = stats.pendingRequests || 0;
+    const operational = stats.operationalBins || 0;
+    const totalBins = stats.totalBins || 0;
 
     return (
     <div className={styles.sectionContainer}>
-        <h2 className={styles.sectionHeaderLeft}>E-Waste Metrics</h2>
-        <p className={styles.sectionSubHeaderLeft}>Processing and collection stats.</p>
+        <h2 className={styles.sectionTitle}>Bin Network Overview</h2>
+        <p className={styles.sectionSubtext}>Drop-off volume, urgent bin alerts, and operational status.</p>
 
-        <div className={styles.metricsLayout}>
-            <div className={styles.statsColumn}>
-                <div className={`${styles.metricCard} ${stats.pending >= 10 ? styles.dangerCard : stats.pending >= 5 ? styles.warningCard : ''}`}>
-                    <span>Pending Review</span>
-                    <h3>{stats.pending}</h3>
+        <div className={styles.kpiGrid}>
+            <div className={styles.kpiCard}>
+                <div className={styles.kpiHeader}>
+                    <span className={styles.kpiLabel}>Total E-Waste Recycled</span>
+                    <Weight size={20} style={{ color: '#10b981' }} />
                 </div>
-                <div className={styles.metricCard}>
-                    <span>Total E-Waste Items</span>
-                    <h3>{stats.totalItems.toLocaleString()}</h3>
-                </div>
-                <div className={styles.metricCard}>
-                    <span>Total Payout Released</span>
-                    <h3>PHP {stats.totalPayout.toLocaleString()}</h3>
-                </div>
-                <div className={`${styles.metricCard} ${stats.completionRate >= 70 ? styles.successCard : ''}`}>
-                    <span>Completion Rate</span>
-                    <h3>{stats.completionRate}%</h3>
-                </div>
+                <span className={styles.kpiValue}>{totalKg} <span style={{ fontSize: '15px', fontWeight: 500, color: '#64748b' }}>kg</span></span>
+                <p className={styles.kpiSub}>All-time weight collected</p>
             </div>
 
-            <div className={styles.chartCard}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <h3 className={styles.cardTitle} style={{ margin: 0 }}>Monthly Collection Volume</h3>
-                    <div 
-                        style={{ position: 'relative', cursor: 'help', color: '#9CA3AF', display: 'flex' }}
-                        onMouseEnter={() => setShowVolumeTooltip(true)}
-                        onMouseLeave={() => setShowVolumeTooltip(false)}
-                        onClick={() => setShowVolumeTooltip(!showVolumeTooltip)}
-                    >
-                        <Info size={18} />
-                        {showVolumeTooltip && (
-                            <div style={tooltipStyle}>
-                                Compares the total number of incoming requests against the total number of items successfully collected each month.
-                            </div>
-                        )}
-                    </div>
+            <div className={`${styles.kpiCard} ${nearCapacity > 0 ? styles.kpiWarning : ''}`}>
+                <div className={styles.kpiHeader}>
+                    <span className={styles.kpiLabel}>Bins Needing Pickup</span>
+                    <AlertTriangle size={20} style={{ color: nearCapacity > 0 ? '#f59e0b' : '#9ca3af' }} />
                 </div>
-                {monthlyData && monthlyData.some(d => d.items > 0 || d.requests > 0) ? (
-                    <div style={{ width: '100%', height: '300px', minWidth: 0, marginTop: '16px' }}>
-                        <ResponsiveContainer width="99%" height="100%">
-                            <BarChart data={monthlyData}>
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
-                                <YAxis axisLine={false} tickLine={false} fontSize={12} />
-                                <Tooltip cursor={{ fill: '#f3f4f6' }} />
-                                <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                                <Bar dataKey="requests" name="Total Requests" fill="#10B981" radius={[4, 4, 0, 0]} barSize={20} />
-                                <Bar dataKey="items" name="Completed Items" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={20} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </div>
-                ) : (
-                    <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', fontSize: '14px', marginTop: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px dashed #e5e7eb' }}>
-                        No collection volume data available.
-                    </div>
-                )}
+                <span className={styles.kpiValue}>{nearCapacity} <span style={{ fontSize: '15px', fontWeight: 500, color: '#64748b' }}>{nearCapacity === 1 ? 'Bin' : 'Bins'}</span></span>
+                <p className={styles.kpiSub}>{nearCapacity > 0 ? '⚠️ At or near 80% capacity' : 'All bins below threshold'}</p>
             </div>
+
+            <div className={`${styles.kpiCard} ${pendingReqs > 0 ? styles.kpiInfo : ''}`}>
+                <div className={styles.kpiHeader}>
+                    <span className={styles.kpiLabel}>Pending Requests</span>
+                    <Truck size={20} style={{ color: pendingReqs > 0 ? '#3b82f6' : '#9ca3af' }} />
+                </div>
+                <span className={styles.kpiValue}>{pendingReqs} <span style={{ fontSize: '15px', fontWeight: 500, color: '#64748b' }}>{pendingReqs === 1 ? 'Request' : 'Requests'}</span></span>
+                <p className={styles.kpiSub}>{pendingReqs > 0 ? '📦 Awaiting collector dispatch' : 'No pending pickup requests'}</p>
+            </div>
+
+            <div className={styles.kpiCard}>
+                <div className={styles.kpiHeader}>
+                    <span className={styles.kpiLabel}>Operational Bins</span>
+                    <Box size={20} style={{ color: '#8b5cf6' }} />
+                </div>
+                <span className={styles.kpiValue}>{operational} <span className={styles.kpiSub}>/ {totalBins} Online</span></span>
+                <p className={styles.kpiSub}>Bins active in network</p>
+            </div>
+        </div>
+
+        <div className={styles.chartCard}>
+            <div className={styles.chartCardHeader}>
+                <h3 className={styles.chartTitle}>Monthly Drop-off Volume</h3>
+                <div
+                    style={{ position: 'relative', cursor: 'help', color: '#9CA3AF', display: 'flex' }}
+                    onMouseEnter={() => setShowVolumeTooltip(true)}
+                    onMouseLeave={() => setShowVolumeTooltip(false)}
+                >
+                    <Info size={18} />
+                    {showVolumeTooltip && (
+                        <div className={styles.tooltip}>Shows the number of bin drop-offs and total kilograms collected per month.</div>
+                    )}
+                </div>
+            </div>
+            {monthlyData && monthlyData.some(d => d.dropoffs > 0 || d.kilograms > 0) ? (
+                <div style={{ width: '100%', height: '300px' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={monthlyData}>
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
+                            <YAxis axisLine={false} tickLine={false} fontSize={12} />
+                            <Tooltip cursor={{ fill: '#f3f4f6' }} />
+                            <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                            <Bar dataKey="dropoffs" name="Drop-offs" fill="#10B981" radius={[4, 4, 0, 0]} barSize={20} />
+                            <Bar dataKey="kilograms" name="Kilograms" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={20} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            ) : (
+                <div className={styles.emptyChart}>No drop-off data available.</div>
+            )}
         </div>
     </div>
     );

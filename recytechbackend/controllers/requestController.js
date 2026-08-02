@@ -1,259 +1,131 @@
-const mongoose = require('mongoose');
 const Request = require('../models/Request');
-const Resident = require('../models/Resident');
-const Transaction = require('../models/Transaction');
-const ExchangeRate = require('../models/ExchangeRate');
-const { calculatePayoutAmount } = require('../utils/calculatePayout');
-const { asyncHandler } = require('../utils/asyncHandler');
+const Bin = require('../models/Bin');
+const asyncHandler = require('express-async-handler');
+const { completeCollectionAndDistributePoints } = require('../services/pointDistributionService');
 
-const splitResidentName = (name = '') => {
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-    return {
-        firstName: parts[0] || 'Temporary',
-        lastName: parts.slice(1).join(' ') || 'Resident'
-    };
-};
 
-const buildTemporaryEmail = ({ residentEmail, phone, residentName }) => {
-    if (residentEmail) return residentEmail.trim().toLowerCase();
-
-    const phoneDigits = String(phone || '').replace(/\D/g, '');
-    if (phoneDigits) return `temp-${phoneDigits}@recytech.local`;
-
-    const nameSlug = String(residentName || 'resident')
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '') || 'resident';
-
-    return `temp-${nameSlug}-${Date.now()}@recytech.local`;
-};
-
-const findOrCreateTemporaryResident = async ({ residentName, residentEmail, phone, firstName, lastName, mobileUserId }) => {
-    const email = buildTemporaryEmail({ residentEmail, phone, residentName });
-    const parsedName = splitResidentName(residentName);
-
-    let resident = await Resident.findOne({ email });
-
-    if (!resident) {
-        resident = await Resident.create({
-            email,
-            firstName: firstName || parsedName.firstName,
-            lastName: lastName || parsedName.lastName,
-            phone,
-            mobileUserId,
-            source: 'Mobile Simulation',
-            isTemporary: true
-        });
-    } else {
-        if (firstName && !resident.firstName) resident.firstName = firstName;
-        if (lastName && !resident.lastName) resident.lastName = lastName;
-        if (phone && !resident.phone) resident.phone = phone;
-        if (mobileUserId && !resident.mobileUserId) resident.mobileUserId = mobileUserId;
-    }
-
-    resident.requestCount += 1;
-    await resident.save();
-
-    return resident;
-};
-
-const getRequests = asyncHandler(async (req, res) => {
-    const requests = await Request.find()
-        .populate('resident', 'email firstName lastName phone totalEarned requestCount isTemporary source')
-        .populate('assignedCollector', 'firstName lastName phone vehicleType vehiclePlate')
+// @desc    Get all collection requests
+// @route   GET /api/requests
+// @access  Private/Admin
+const getAllRequests = asyncHandler(async (req, res) => {
+    const requests = await Request.find({})
+        .populate({ 
+            path: 'bin', 
+            select: 'name binId address status assignedLgu',
+            populate: { path: 'assignedLgu', select: 'name contactPerson email jurisdiction' }
+        })
+        .populate({ path: 'lgu', select: 'name email contactPerson' })
+        .populate({ path: 'assignedCollector', select: 'firstName lastName phone vehiclePlate' })
         .sort({ createdAt: -1 });
     res.json(requests);
 });
 
-const createRequest = asyncHandler(async (req, res) => {
-    let { residentName, wasteType, location, quantity, residentEmail, wasteImage, phone, firstName, lastName, mobileUserId } = req.body;
-    
-    if (!wasteType || typeof wasteType !== 'string') {
-        res.status(400);
-        throw new Error('wasteType is required');
+// @desc    Create a new collection request (for LGUs)
+// @route   POST /api/requests
+// @access  Private/LGU
+const createLguRequest = asyncHandler(async (req, res) => {
+    const { binId } = req.body;
+    const lguId = req.user._id; // Assuming LGU user is logged in
+
+    const bin = await Bin.findById(binId);
+    if (!bin) {
+        res.status(404);
+        throw new Error('Bin not found');
     }
 
-    // Security & Formatting: Validate wasteImage to prevent XSS and handle raw mobile Base64
-    if (wasteImage) {
-        const isValidUrl = /^https?:\/\//.test(wasteImage);
-        const isDataUri = /^data:image\/(jpeg|png|jpg|gif|webp);base64,/.test(wasteImage);
-        
-        // Detect if the mobile app sent a raw base64 string without the data:image prefix
-        const isRawBase64 = /^[A-Za-z0-9+/]+={0,2}$/.test(wasteImage.replace(/\s/g, '')) && wasteImage.length > 100;
-        
-        if (!isValidUrl && !isDataUri && !isRawBase64) {
-            res.status(400);
-            throw new Error('Invalid image format. Must be a valid URL, Base64 data URI, or raw Base64 string.');
-        }
-
-        // Auto-fix raw base64 strings so the React frontend can render them in <img> tags
-        if (isRawBase64 && !isDataUri) {
-            wasteImage = `data:image/jpeg;base64,${wasteImage}`;
-        }
+    // Verify the bin is assigned to the LGU making the request
+    if (bin.assignedLgu.toString() !== lguId.toString()) {
+        res.status(403);
+        throw new Error('Forbidden: You can only request collection for bins assigned to your LGU.');
     }
 
-    const exchangeRate = await ExchangeRate.findOne({
-        wasteType: wasteType.trim(),
-        isActive: true
+    // Check if there's already a pending/active request for this bin
+    const existingRequest = await Request.findOne({
+        bin: binId,
+        status: { $in: ['Pending', 'Scheduled', 'In-Transit'] }
     });
 
-    if (!exchangeRate) {
+    if (existingRequest) {
         res.status(400);
-        throw new Error(`Invalid waste category "${wasteType}". Please choose an active category from Exchange Rate Manager.`);
+        throw new Error('An active collection request for this bin already exists.');
     }
-
-    const resident = await findOrCreateTemporaryResident({
-        residentName,
-        residentEmail,
-        phone,
-        firstName,
-        lastName,
-        mobileUserId
-    });
-    const displayName = residentName || `${resident.firstName || ''} ${resident.lastName || ''}`.trim();
 
     const request = await Request.create({
-        residentName: displayName,
-        resident: resident._id,
-        wasteType: exchangeRate.wasteType,
-        location,
-        quantity: quantity || 1,
-        residentEmail: resident.email,
-        wasteImage
+        bin: binId,
+        lgu: lguId,
     });
 
     res.status(201).json(request);
 });
 
-const updateRequest = asyncHandler(async (req, res) => {
+// @desc    Update a request's status, schedule, and collector (for Admins)
+// @route   PUT /api/requests/:id
+// @access  Private/Admin
+const updateRequestStatus = asyncHandler(async (req, res) => {
     const request = await Request.findById(req.params.id);
 
     if (!request) {
         res.status(404);
         throw new Error('Request not found');
     }
+    const { status, assignedCollector, scheduledDate } = req.body;
 
-    const newStatus = req.body.status || request.status;
-    const newAssignedCollector = req.body.assignedCollector || request.assignedCollector;
-    const newScheduledAt = req.body.scheduledAt ? new Date(req.body.scheduledAt) : request.scheduledAt;
+    if (status) request.status = status;
+    if (assignedCollector) request.assignedCollector = assignedCollector;
+    if (scheduledDate) request.scheduledDate = scheduledDate;
 
-    if (req.body.scheduledAt && isNaN(newScheduledAt.getTime())) {
+    if (request.status === 'Scheduled' && (!request.assignedCollector || !request.scheduledDate)) {
         res.status(400);
-        throw new Error('Invalid scheduled date/time provided.');
+        throw new Error('To schedule a request, you must provide both a collector and a scheduled date.');
     }
 
-    if (newStatus === 'Approved' && newAssignedCollector && !newScheduledAt) {
-        res.status(400);
-        throw new Error('A scheduled date and time is required when approving a request and assigning a collector.');
-    }
-
-    if (newAssignedCollector && newScheduledAt) {
-        const conflictRequest = await Request.findOne({
-            _id: { $ne: request._id },
-            assignedCollector: newAssignedCollector,
-            scheduledAt: newScheduledAt,
-            status: { $in: ['Pending', 'Approved', 'In-Transit'] }
-        });
-
-        if (conflictRequest) {
-            res.status(400);
-            throw new Error('Schedule conflict detected: the selected collector already has another pickup at the same date and time.');
-        }
-    }
-
-    // Handle payout when request is marked as Completed
-    if (newStatus === 'Completed' && request.status !== 'Completed' && !request.paymentProcessed) {
-        const session = await mongoose.startSession();
-        session.startTransaction();
-        try {
-            const quantity = request.quantity || 1;
-            const payoutResult = await calculatePayoutAmount(request.wasteType, quantity);
-            
-            if (payoutResult.success) {
-                let resident = request.resident
-                    ? await Resident.findById(request.resident).session(session)
-                    : await Resident.findOne({ email: request.residentEmail }).session(session);
-
-                if (!resident) {
-                    const residentEmail = request.residentEmail || `temp-request-${request._id}@recytech.local`;
-                    const parsedName = splitResidentName(request.residentName);
-
-                    // .create() requires an array when used with a session
-                    const [newResident] = await Resident.create([{
-                        email: residentEmail,
-                        firstName: parsedName.firstName,
-                        lastName: parsedName.lastName,
-                        source: 'Mobile Simulation',
-                        isTemporary: true
-                    }], { session });
-                    resident = newResident;
-                }
-                
-                resident.walletBalance += payoutResult.amount;
-                resident.totalEarned += payoutResult.amount;
-                await resident.save({ session });
-                
-                const [transaction] = await Transaction.create([{
-                    resident: resident._id,
-                    type: 'Payment',
-                    amount: payoutResult.amount,
-                    requestId: request._id,
-                    description: `Payment for ${quantity} ${request.wasteType} recycling item(s)`
-                }], { session });
-                
-                request.monetaryValue = payoutResult.amount;
-                request.paymentProcessed = true;
-                request.status = newStatus;
-                request.resident = resident._id;
-                request.residentEmail = resident.email;
-                request.assignedCollector = newAssignedCollector;
-                request.scheduledAt = newScheduledAt;
-                
-                const updatedRequest = await request.save({ session });
-                
-                await session.commitTransaction();
-                session.endSession();
-                
-                return res.json({ ...updatedRequest.toObject(), payout: { amount: payoutResult.amount, resident: resident.email, transactionId: transaction._id, message: payoutResult.message } });
-            } else {
-                console.warn(`Payout calculation failed for request ${request._id}: ${payoutResult.message}`);
-                request.status = newStatus;
-                request.assignedCollector = newAssignedCollector;
-                request.scheduledAt = newScheduledAt;
-                request.monetaryValue = 0;
-                request.paymentProcessed = false; 
-                const updatedRequest = await request.save();
-                
-                await session.abortTransaction();
-                session.endSession();
-                return res.status(206).json({ ...updatedRequest.toObject(), warning: `Request completed but payout failed: ${payoutResult.message}` });
-            }
-        } catch (payoutError) {
-            console.error('Error processing payout:', payoutError);
-            await session.abortTransaction();
-            session.endSession();
-            
-            request.status = newStatus;
-            request.assignedCollector = newAssignedCollector;
-            request.scheduledAt = newScheduledAt;
-            request.monetaryValue = 0;
-            const updatedRequest = await request.save();
-            return res.status(206).json({ ...updatedRequest.toObject(), warning: `Request completed but payout processing failed: ${payoutError.message}` });
-        }
-    }
-    
-    request.status = newStatus;
-    request.assignedCollector = newAssignedCollector;
-    request.scheduledAt = newScheduledAt;
-    
     const updatedRequest = await request.save();
     res.json(updatedRequest);
 });
 
+// @desc    Complete a collection (for Collectors) and distribute points
+// @route   PATCH /api/requests/:id/complete
+// @access  Private/Collector
+const completeRequest = asyncHandler(async (req, res) => {
+    const { collectedWaste } = req.body;
+    const { id: requestId } = req.params;
+
+    if (!Array.isArray(collectedWaste) || collectedWaste.length === 0) {
+        res.status(400);
+        throw new Error('Collected waste data must be a non-empty array.');
+    }
+    
+    // Validate that each item in collectedWaste has the required fields
+    for (const item of collectedWaste) {
+        if (!item.category || !item.quantity || !item.unit) {
+            res.status(400);
+            throw new Error('Each item in collected waste must have category, quantity, and unit.');
+        }
+    }
+
+    try {
+        const updatedRequest = await completeCollectionAndDistributePoints(requestId, collectedWaste);
+        res.json({
+            message: 'Collection completed and points distributed successfully.',
+            request: updatedRequest
+        });
+    } catch (error) {
+        res.status(500).json({ message: `Failed to complete collection: ${error.message}` });
+    }
+});
+
+// @desc    Delete a request
+// @route   DELETE /api/requests/:id
+// @access  Private/Admin
 const deleteRequest = asyncHandler(async (req, res) => {
-    const request = await Request.findByIdAndDelete(req.params.id);
+    const request = await Request.findById(req.params.id);
+
     if (request) {
+        if (request.status !== 'Pending' && request.status !== 'Cancelled') {
+            res.status(400);
+            throw new Error('Only Pending or Cancelled requests can be deleted.');
+        }
+        await request.remove();
         res.json({ message: 'Request removed' });
     } else {
         res.status(404);
@@ -261,48 +133,11 @@ const deleteRequest = asyncHandler(async (req, res) => {
     }
 });
 
-const getRequestPayout = asyncHandler(async (req, res) => {
-    const request = await Request.findById(req.params.id)
-        .populate('resident', 'email firstName lastName phone totalEarned requestCount isTemporary source')
-        .populate('assignedCollector', 'firstName lastName');
-    
-    if (!request) {
-        res.status(404);
-        throw new Error('Request not found');
-    }
-    
-    const quantity = request.quantity || 1;
-    const payoutResult = await calculatePayoutAmount(request.wasteType, quantity);
-    
-    res.json({
-        requestId: request._id,
-        status: request.status,
-        wasteType: request.wasteType,
-        quantity,
-        estimatedPayout: payoutResult.amount,
-        actualPayout: request.monetaryValue,
-        paymentProcessed: request.paymentProcessed,
-        residentEmail: request.residentEmail,
-        message: payoutResult.message
-    });
-});
-
-const getPendingPayouts = asyncHandler(async (req, res) => {
-    const pendingPayouts = await Request.find({
-        status: 'Completed',
-        paymentProcessed: false
-    })
-    .populate('assignedCollector', 'firstName lastName')
-    .sort({ updatedAt: -1 });
-    
-    res.json(pendingPayouts);
-});
 
 module.exports = {
-    getRequests,
-    createRequest,
-    updateRequest,
+    getAllRequests,
+    createLguRequest,
+    updateRequestStatus,
+    completeRequest,
     deleteRequest,
-    getRequestPayout,
-    getPendingPayouts
 };

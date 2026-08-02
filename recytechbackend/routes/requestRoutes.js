@@ -1,41 +1,31 @@
 const express = require('express');
 const router = express.Router();
-const { protect, admin } = require('../middleware/authMiddleware');
 const {
-    getRequests,
-    createRequest,
-    updateRequest,
-    deleteRequest,
-    getRequestPayout,
-    getPendingPayouts
+    getAllRequests,
+    createLguRequest,
+    updateRequestStatus,
+    completeRequest,
+    deleteRequest
 } = require('../controllers/requestController');
+const { protect, admin, staffOrAdmin, lgu, collector } = require('../middleware/authMiddleware');
 
-// @desc    Get all requests (For the Dashboard Table)
-// @route   GET /api/requests
-router.get('/', protect, getRequests);
+// @route   /api/requests
 
-// @desc    Create a dummy request (For testing purposes)
-// @route   POST /api/requests
-router.post('/', protect, createRequest);
+// Admin & Staff routes
+router.route('/')
+    .get(protect, staffOrAdmin, getAllRequests);
 
-// @desc    Update request status (Approve/Reject/Complete with automatic payout)
-// @route   PUT /api/requests/:id
-// @access  Protected (Staff, Admin, Super Admin)
-router.put('/:id', protect, updateRequest);
+router.route('/:id')
+    .put(protect, staffOrAdmin, updateRequestStatus)
+    .delete(protect, admin, deleteRequest);
 
-// @desc    Delete a request
-// @route   DELETE /api/requests/:id
-// @access  Protected (Admin, Super Admin)
-router.delete('/:id', protect, admin, deleteRequest);
+// LGU route
+router.route('/')
+    .post(protect, lgu, createLguRequest);
 
-// @desc    Get all pending payouts (completed but not yet paid)
-// @route   GET /api/requests/pending-payouts
-// @access  Protected (Admin)
-router.get('/pending-payouts', protect, admin, getPendingPayouts);
+// Collector route
+router.route('/:id/complete')
+    .patch(protect, collector, completeRequest);
 
-// @desc    Get payout info for a single request
-// @route   GET /api/requests/:id/payout
-// @access  Protected (Admin)
-router.get('/:id/payout', protect, admin, getRequestPayout);
 
 module.exports = router;

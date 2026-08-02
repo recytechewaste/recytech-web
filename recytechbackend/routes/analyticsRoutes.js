@@ -6,15 +6,15 @@ const {
     getCategoryDistributionData, 
     getMonthlyTrendsData, 
     getPredictiveAnalyticsData, 
-    getPayoutSummaryData, 
-    getDashboardData 
+    getDashboardData,
+    getReportData
 } = require('../controllers/analyticsController');
 
 router.get('/summary', protect, getSummaryData);
 router.get('/category-distribution', protect, getCategoryDistributionData);
 router.get('/monthly-trends', protect, getMonthlyTrendsData);
 router.get('/predictive-analytics', protect, getPredictiveAnalyticsData);
-router.get('/payout-summary', protect, getPayoutSummaryData);
 router.get('/dashboard', protect, getDashboardData);
+router.get('/reports', protect, getReportData);
 
 module.exports = router;

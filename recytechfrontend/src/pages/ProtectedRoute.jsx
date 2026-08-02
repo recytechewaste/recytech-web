@@ -1,8 +1,17 @@
 import { Navigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
-    // Retrieve user info from localStorage
-    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    let userInfo = null;
+    try {
+        const userInfoString = localStorage.getItem('userInfo');
+        if (userInfoString) {
+            userInfo = JSON.parse(userInfoString);
+        }
+    } catch (error) {
+        console.error("Failed to parse user info from localStorage", error);
+        // If parsing fails, treat as logged out
+        userInfo = null;
+    }
 
     // 1. Check if user is logged in
     if (!userInfo || !userInfo._id) {
