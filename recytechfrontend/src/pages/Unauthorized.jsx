@@ -7,17 +7,36 @@ const Unauthorized = () => {
     const navigate = useNavigate();
     const [countdown, setCountdown] = useState(5);
 
+    // Determine safe landing page based on user's actual role
+    let userRole = null;
+    try {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        userRole = userInfo.role;
+    } catch {
+        userRole = null;
+    }
+
+    const targetPath = userRole === 'Staff' ? '/bin-network' : (userRole ? '/dashboard' : '/login');
+    const destinationName = userRole === 'Staff' ? 'Bin Location Network' : (userRole ? 'Dashboard' : 'Login');
+
     useEffect(() => {
         const timer = setInterval(() => {
-            setCountdown((prev) => prev - 1);
+            setCountdown((prev) => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    navigate(targetPath, { replace: true });
+                    return 0;
+                }
+                return prev - 1;
+            });
         }, 1000);
 
-        if (countdown === 0) {
-            navigate('/dashboard');
-        }
-
         return () => clearInterval(timer);
-    }, [countdown, navigate]);
+    }, [navigate, targetPath]);
+
+    const handleRedirect = () => {
+        navigate(targetPath, { replace: true });
+    };
 
     return (
         <div className={styles.container}>
@@ -29,10 +48,10 @@ const Unauthorized = () => {
                     This incident may be logged for security purposes.
                 </p>
                 <div className={styles.timer}>
-                    Redirecting you to the dashboard in <span>{countdown}</span> seconds...
+                    Redirecting you to {destinationName} in <span>{countdown}</span> seconds...
                 </div>
-                <button onClick={() => navigate('/dashboard')} className={styles.backBtn}>
-                    <ArrowLeft size={18} /> Go Back Now
+                <button onClick={handleRedirect} className={styles.backBtn}>
+                    <ArrowLeft size={18} /> Return to {destinationName}
                 </button>
             </div>
         </div>

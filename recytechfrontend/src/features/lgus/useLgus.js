@@ -4,7 +4,7 @@ import { useToast } from '../../context/ToastContext';
 import { useDebounce } from '../../hooks/useDebounce';
 import { usePagination } from '../../hooks/usePagination';
 
-const useLgus = () => {
+const useLgus = (enabled = true) => {
   const [lgus, setLgus] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,8 +29,12 @@ const useLgus = () => {
   }, [showToast]);
 
   useEffect(() => {
-    fetchLgus();
-  }, [fetchLgus]);
+    if (enabled) {
+      fetchLgus();
+    } else {
+      setIsLoading(false);
+    }
+  }, [fetchLgus, enabled]);
   
   const addLgu = async (lguData) => {
     try {

@@ -12,20 +12,24 @@ const sendPinEmail = async (email, firstName, pin) => {
             return false;
         }
 
+        const mailer = new MailerSend({
+            apiKey: process.env.MAILERSEND_API_KEY,
+        });
+
         const sentFrom = new Sender(process.env.MAILERSEND_FROM_EMAIL || 'noreply@trial-k6nxvgwjd98z5q7e.mlsender.net', 'RecyTech');
-        const recipients = [new Recipient(email, firstName)];
+        const recipients = [new Recipient(email, firstName || 'User')];
 
         const emailParams = new EmailParams()
             .setFrom(sentFrom)
             .setTo(recipients)
             .setReplyTo(sentFrom)
             .setSubject('RecyTech - Password Reset PIN')
-            .setHtml(getPinEmailTemplate(firstName, pin));
+            .setHtml(getPinEmailTemplate(firstName || 'User', pin));
 
-        await mailersend.email.send(emailParams);
+        const response = await mailer.email.send(emailParams);
         return true;
     } catch (error) {
-        console.error('MailerSend PIN Email Error:', error.body || error.message);
+        console.error('MailerSend PIN Email Error Details:', JSON.stringify(error?.body || error?.response?.data || error?.message || error, null, 2));
         return false;
     }
 };

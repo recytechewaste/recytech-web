@@ -35,12 +35,16 @@ function App() {
           {/* Protected Routes */}
           <Route 
             path="/dashboard" 
-            element={<ProtectedRoute><Dashboard /></ProtectedRoute>} 
+            element={
+              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
+                <Dashboard />
+              </ProtectedRoute>
+            } 
           />
           <Route 
             path="/collectors" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
                 <Collectors />
               </ProtectedRoute>
             } 
@@ -48,7 +52,7 @@ function App() {
           <Route 
             path="/reward-points" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
                 <RewardPointManager />
               </ProtectedRoute>
             } 
@@ -56,7 +60,7 @@ function App() {
           <Route 
             path="/lgu-management" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
                 <LguManager />
               </ProtectedRoute>
             } 
@@ -64,7 +68,7 @@ function App() {
           <Route 
             path="/transactions" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
                 <PointHistory />
               </ProtectedRoute>
             } 
@@ -72,7 +76,7 @@ function App() {
           <Route 
             path="/bin-network" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
                 <BinNetwork />
               </ProtectedRoute>
             } 
@@ -80,7 +84,7 @@ function App() {
           <Route 
             path="/bin-collection-requests" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
                 <BinCollectionRequests />
               </ProtectedRoute>
             } 
@@ -102,10 +106,10 @@ function App() {
             } 
           />
           
-          {/* Super Admin Only */}
+          {/* Admin & Super Admin */}
           <Route 
             path="/users" 
-            element={<ProtectedRoute allowedRoles={['Super Admin']}><UserManagement /></ProtectedRoute>} 
+            element={<ProtectedRoute allowedRoles={['Admin', 'Super Admin']}><UserManagement /></ProtectedRoute>} 
           />
 
           {/* Catch-all 404 Route */}

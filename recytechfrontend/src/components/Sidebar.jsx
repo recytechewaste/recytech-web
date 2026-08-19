@@ -54,13 +54,13 @@ const Sidebar = ({ activePage }) => {
     };
 
     const menuItems = [
-        { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
-        { name: 'User Management', icon: <Users size={20} />, path: '/users', roles: ['Super Admin'] },
-        { name: 'Collector Management', icon: <Truck size={20} />, path: '/collectors', roles: ['Staff', 'Admin', 'Super Admin'] },
-        { name: 'Bin Location Network', icon: <Warehouse size={20} />, path: '/bin-network', roles: ['Staff', 'Admin', 'Super Admin'] },
-        { name: 'Bin Collections', icon: <ScanLine size={20} />, path: '/bin-collection-requests', roles: ['Staff', 'Admin', 'Super Admin'] },
-        { name: 'LGU Management', icon: <Users2 size={20} />, path: '/lgu-management', roles: ['Staff', 'Admin', 'Super Admin'] },
-        { name: 'Reward Points', icon: <Coins size={20} />, path: '/reward-points', roles: ['Staff', 'Admin', 'Super Admin'] },
+        { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard', roles: ['Admin', 'Super Admin'] },
+        { name: 'User Management', icon: <Users size={20} />, path: '/users', roles: ['Admin', 'Super Admin'] },
+        { name: 'Collector Management', icon: <Truck size={20} />, path: '/collectors', roles: ['Admin', 'Super Admin'] },
+        { name: 'Bin Location Network', icon: <Warehouse size={20} />, path: '/bin-network', roles: ['Staff', 'Super Admin'] },
+        { name: 'Bin Collections', icon: <ScanLine size={20} />, path: '/bin-collection-requests', roles: ['Staff', 'Super Admin'] },
+        { name: 'LGU Management', icon: <Users2 size={20} />, path: '/lgu-management', roles: ['Admin', 'Super Admin'] },
+        { name: 'Reward Points', icon: <Coins size={20} />, path: '/reward-points', roles: ['Staff', 'Super Admin'] },
         { name: 'Reports and Analytics', icon: <BarChart3 size={20} />, path: '/reports', roles: ['Staff', 'Admin', 'Super Admin'] },
         { name: 'Settings', icon: <SettingsIcon size={20} />, path: '/settings', roles: ['Staff', 'Admin', 'Super Admin'] },
     ];

@@ -7,17 +7,17 @@ const {
     completeRequest,
     deleteRequest
 } = require('../controllers/requestController');
-const { protect, admin, staffOrAdmin, lgu, collector } = require('../middleware/authMiddleware');
+const { protect, staffOnlyOrSuperAdmin, lgu, collector } = require('../middleware/authMiddleware');
 
 // @route   /api/requests
 
 // Admin & Staff routes
 router.route('/')
-    .get(protect, staffOrAdmin, getAllRequests);
+    .get(protect, staffOnlyOrSuperAdmin, getAllRequests);
 
 router.route('/:id')
-    .put(protect, staffOrAdmin, updateRequestStatus)
-    .delete(protect, admin, deleteRequest);
+    .put(protect, staffOnlyOrSuperAdmin, updateRequestStatus)
+    .delete(protect, staffOnlyOrSuperAdmin, deleteRequest);
 
 // LGU route
 router.route('/')
