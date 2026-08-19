@@ -10,7 +10,7 @@ const {
 
 // @desc    Get all collectors
 // @route   GET /api/collectors
-router.get('/', protect, staffOrAdmin, getCollectors);
+router.get('/', protect, admin, getCollectors);
 
 // @desc    Register a new Collector
 // @route   POST /api/collectors

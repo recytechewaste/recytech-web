@@ -284,7 +284,7 @@ const Settings = () => {
                                     </div>
 
                                     <div className={styles.formGroup}>
-                                        <label className={styles.label}>Email Address (Read-only)</label>
+                                        <label className={styles.label}>Email Address</label>
                                         <div className={styles.inputWrapper}>
                                             <Mail size={16} className={styles.inputIcon} />
                                             <input

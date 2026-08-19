@@ -7,15 +7,15 @@ const {
   updateBin,
   deleteBin,
 } = require('../controllers/binController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protect, staffOnlyOrSuperAdmin } = require('../middleware/authMiddleware');
 
 router.route('/')
-  .post(protect, admin, createBin)
-  .get(protect, getAllBins);
+  .post(protect, staffOnlyOrSuperAdmin, createBin)
+  .get(protect, staffOnlyOrSuperAdmin, getAllBins);
 
 router.route('/:id')
-  .get(protect, getBinById)
-  .put(protect, admin, updateBin)
-  .delete(protect, admin, deleteBin);
+  .get(protect, staffOnlyOrSuperAdmin, getBinById)
+  .put(protect, staffOnlyOrSuperAdmin, updateBin)
+  .delete(protect, staffOnlyOrSuperAdmin, deleteBin);
 
 module.exports = router;

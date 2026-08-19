@@ -29,7 +29,7 @@ const createEmptyBin = () => ({
 const BinNetwork = () => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
     const userRole = userInfo.role;
-    const canManage = userRole === 'Admin' || userRole === 'Super Admin';
+    const canManage = userRole === 'Staff' || userRole === 'Admin' || userRole === 'Super Admin';
 
     const { bins, loading, addBin, updateBin, deleteBin } = useBins();
     const { lgus } = useLgus();

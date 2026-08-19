@@ -45,7 +45,11 @@ const Login = () => {
             }
             const { data } = await api.post('/auth/login', { email, password });
             localStorage.setItem('userInfo', JSON.stringify(data));
-            navigate('/dashboard'); // QoL: Immediate auto-redirect
+            if (data.role === 'Staff') {
+                navigate('/bin-network');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (err) {
             const msg = err.response?.data?.message || 'Invalid email or password';
             setErrors({ form: msg });
