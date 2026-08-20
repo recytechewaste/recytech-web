@@ -13,6 +13,7 @@ const generateToken = (res, id) => {
         sameSite: process.env.NODE_ENV !== 'development' ? 'none' : 'strict', // Allows cross-site cookies in production
         maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days in milliseconds
     });
+    return token; // Return token so it can be included in the response body
 };
 const generatePin = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -28,8 +29,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
         user.lastLogin = new Date();
         await user.save();
-        generateToken(res, user._id);
-        res.json({ _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role });
+        const token = generateToken(res, user._id);
+        res.json({ _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role, token });
     } else {
         res.status(401);
         throw new Error('Invalid email or password');
