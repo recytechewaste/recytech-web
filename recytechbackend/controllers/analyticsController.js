@@ -246,7 +246,7 @@ const getPredictiveAnalyticsData = asyncHandler(async (req, res) => {
     res.json({ predictiveAnalytics: predictiveData });
 });
 
-const LguAccount = require('../models/LguAccount');
+const { LguAccount } = require('../models/PartnerOrganization');
 
 const getReportData = asyncHandler(async (req, res) => {
     const { timeframe = 'month', wasteType, lguId } = req.query;
