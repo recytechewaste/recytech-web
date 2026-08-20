@@ -60,10 +60,10 @@ const superAdmin = (req, res, next) => {
 };
 
 const lgu = (req, res, next) => {
-    if (req.user && req.user.role === 'LGU') {
+    if (req.user && (req.user.role === 'LGU' || req.user.role === 'Partner Organization' || req.user.role === 'PartnerOrganization')) {
         next();
     } else {
-        res.status(401).send('Not authorized as an LGU');
+        res.status(403).json({ message: 'Not authorized as a Partner Organization' });
     }
 };
 
@@ -75,4 +75,13 @@ const collector = (req, res, next) => {
     }
 };
 
-module.exports = { protect, admin, staffOnlyOrSuperAdmin, staffOrAdmin, superAdmin, lgu, collector };
+module.exports = { 
+    protect, 
+    admin, 
+    staffOnlyOrSuperAdmin, 
+    staffOrAdmin, 
+    superAdmin, 
+    lgu, 
+    partnerOrg: lgu, 
+    collector 
+};

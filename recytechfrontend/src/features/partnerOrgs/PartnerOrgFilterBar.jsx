@@ -1,8 +1,8 @@
 import React from 'react';
 import { Search, Filter } from 'lucide-react';
-import styles from '../../styles/Collectors.module.css'; // Using collector styles for consistency
+import styles from '../../styles/Collectors.module.css';
 
-const LguFilterBar = ({ 
+const PartnerOrgFilterBar = ({ 
     searchTerm, setSearchTerm, 
     statusFilter, setStatusFilter, 
     handleClearFilters 
@@ -13,7 +13,7 @@ const LguFilterBar = ({
                 <Search size={18} className={styles.searchIcon} />
                 <input 
                     type="text" 
-                    placeholder="Search by LGU name or email..." 
+                    placeholder="Search by organization name or email..." 
                     className={styles.searchInput} 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -36,4 +36,4 @@ const LguFilterBar = ({
     );
 };
 
-export default LguFilterBar;
+export default PartnerOrgFilterBar;

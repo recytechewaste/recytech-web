@@ -33,10 +33,10 @@ const createLguRequest = asyncHandler(async (req, res) => {
         throw new Error('Bin not found');
     }
 
-    // Verify the bin is assigned to the LGU making the request
+    // Verify the bin is assigned to the partner organization making the request
     if (bin.assignedLgu.toString() !== lguId.toString()) {
         res.status(403);
-        throw new Error('Forbidden: You can only request collection for bins assigned to your LGU.');
+        throw new Error('Forbidden: You can only request collection for bins assigned to your partner organization.');
     }
 
     // Check if there's already a pending/active request for this bin

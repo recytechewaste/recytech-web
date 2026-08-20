@@ -85,7 +85,7 @@ const Reports = () => {
                     <div className={styles.filterGroup}>
                         <Landmark size={16} className={styles.icon} />
                         <select className={styles.select} value={filters.lguId} onChange={(e) => setFilters({ ...filters, lguId: e.target.value })}>
-                            <option value="All">All LGU Jurisdictions</option>
+                            <option value="All">All Partner Organizations</option>
                             {lguAccounts.map((lgu) => (
                                 <option key={lgu._id} value={lgu._id}>{lgu.name}</option>
                             ))}

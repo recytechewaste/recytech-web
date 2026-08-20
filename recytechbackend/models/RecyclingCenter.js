@@ -49,7 +49,7 @@ const recyclingCenterSchema = new mongoose.Schema({
     },
     assignedLgu: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'LguAccount',
+        ref: 'PartnerOrganization',
         required: false
     }
 }, {
