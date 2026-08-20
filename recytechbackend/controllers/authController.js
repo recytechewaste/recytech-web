@@ -87,10 +87,11 @@ const forgotPassword = asyncHandler(async (req, res) => {
     user.resetPinExpiry = new Date(Date.now() + AUTH_CONSTANTS.PIN_EXPIRY_MS);
     await user.save();
 
-    const emailSent = await sendPinEmail(email, user.firstName, pin);
-    if (!emailSent) {
+    const result = await sendPinEmail(email, user.firstName, pin);
+    if (!result || result === false || (typeof result === 'object' && !result.success)) {
+        const errorMessage = (typeof result === 'object' && result.error) ? result.error : 'Failed to send email. Please try again.';
         res.status(500);
-        throw new Error('Failed to send email. Please try again.');
+        throw new Error(errorMessage);
     }
     res.status(200).json(genericResponse);
 });
