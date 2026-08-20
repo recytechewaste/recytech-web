@@ -7,11 +7,17 @@ const { getPinEmailTemplate } = require('../utils/emailTemplates');
  */
 const createNodemailerTransporter = () => {
     return nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        family: 4, // Force IPv4 to prevent ENETUNREACH on Render
         auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS, // 16-character Google App Password
+            user: process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : '',
+            pass: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : '',
         },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
     });
 };
 
