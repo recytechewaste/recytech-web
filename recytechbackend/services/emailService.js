@@ -41,8 +41,9 @@ const sendPinEmail = async (email, firstName, pin) => {
     if (provider === 'nodemailer') {
         try {
             if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-                console.error('Nodemailer Error: EMAIL_USER or EMAIL_PASS missing in .env');
-                return false;
+                const err = 'Nodemailer Error: EMAIL_USER or EMAIL_PASS missing in environment variables';
+                console.error(err);
+                return { success: false, error: err };
             }
 
             const transporter = createNodemailerTransporter();
@@ -54,18 +55,19 @@ const sendPinEmail = async (email, firstName, pin) => {
             });
 
             console.log(`[Nodemailer] PIN email sent successfully to ${email} (MessageId: ${info.messageId})`);
-            return true;
+            return { success: true, messageId: info.messageId };
         } catch (error) {
             console.error('[Nodemailer Error] Failed to send PIN email:', error.message);
-            return false;
+            return { success: false, error: error.message };
         }
     }
 
     // --- Provider B: MailerSend ---
     try {
         if (!process.env.MAILERSEND_API_KEY) {
-            console.error('MailerSend Error: MAILERSEND_API_KEY is missing in .env');
-            return false;
+            const err = 'MailerSend Error: MAILERSEND_API_KEY is missing in environment variables';
+            console.error(err);
+            return { success: false, error: err };
         }
 
         const mailer = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY });
@@ -81,10 +83,11 @@ const sendPinEmail = async (email, firstName, pin) => {
 
         await mailer.email.send(emailParams);
         console.log(`[MailerSend] PIN email sent successfully to ${email}`);
-        return true;
+        return { success: true };
     } catch (error) {
-        console.error('[MailerSend Error] Failed to send PIN email:', JSON.stringify(error?.body || error?.response?.data || error?.message || error, null, 2));
-        return false;
+        const detail = JSON.stringify(error?.body || error?.response?.data || error?.message || error);
+        console.error('[MailerSend Error] Failed to send PIN email:', detail);
+        return { success: false, error: detail };
     }
 };
 
