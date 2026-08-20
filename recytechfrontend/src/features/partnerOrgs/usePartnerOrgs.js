@@ -14,21 +14,35 @@ const usePartnerOrgs = (enabled = true) => {
   const [statusFilter, setStatusFilter] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
+  const requestWithFallback = async (method, path, data = null) => {
+    const primaryPath = `/partner-organizations${path}`;
+    const fallbackPath = `/lgus${path}`;
+
+    try {
+      if (method === 'get') return await apiClient.get(primaryPath);
+      if (method === 'post') return await apiClient.post(primaryPath, data);
+      if (method === 'put') return await apiClient.put(primaryPath, data);
+      if (method === 'delete') return await apiClient.delete(primaryPath);
+    } catch (err) {
+      if (err.response && (err.response.status === 404 || err.response.status === 405)) {
+        if (method === 'get') return await apiClient.get(fallbackPath);
+        if (method === 'post') return await apiClient.post(fallbackPath, data);
+        if (method === 'put') return await apiClient.put(fallbackPath, data);
+        if (method === 'delete') return await apiClient.delete(fallbackPath);
+      }
+      throw err;
+    }
+  };
+
   const fetchPartnerOrgs = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await apiClient.get('/partner-organizations');
+      const response = await requestWithFallback('get', '');
       setPartnerOrgs(response.data || []);
       setError(null);
     } catch (err) {
-      try {
-        const fallbackRes = await apiClient.get('/lgus');
-        setPartnerOrgs(fallbackRes.data || []);
-        setError(null);
-      } catch (fallbackErr) {
-        setError(fallbackErr);
-        showToast('Error fetching partner organization data', 'error');
-      }
+      setError(err);
+      showToast('Error fetching partner organization data', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -44,7 +58,7 @@ const usePartnerOrgs = (enabled = true) => {
   
   const addPartnerOrg = async (orgData) => {
     try {
-        await apiClient.post('/partner-organizations', orgData);
+        await requestWithFallback('post', '', orgData);
         showToast('Partner organization created successfully', 'success');
         fetchPartnerOrgs();
         return true;
@@ -57,7 +71,7 @@ const usePartnerOrgs = (enabled = true) => {
 
   const updatePartnerOrg = async (id, orgData) => {
     try {
-        await apiClient.put(`/partner-organizations/${id}`, orgData);
+        await requestWithFallback('put', `/${id}`, orgData);
         showToast('Partner organization updated successfully', 'success');
         fetchPartnerOrgs();
         return true;
@@ -70,7 +84,7 @@ const usePartnerOrgs = (enabled = true) => {
 
   const deletePartnerOrg = async (id) => {
     try {
-        await apiClient.delete(`/partner-organizations/${id}`);
+        await requestWithFallback('delete', `/${id}`);
         showToast('Partner organization deactivated successfully', 'success');
         fetchPartnerOrgs();
         return true;
