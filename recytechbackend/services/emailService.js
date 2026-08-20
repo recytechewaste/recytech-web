@@ -1,6 +1,12 @@
+const dns = require('dns');
 const nodemailer = require('nodemailer');
 const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
 const { getPinEmailTemplate } = require('../utils/emailTemplates');
+
+// Force Node.js to prioritize IPv4 addresses across the entire application (required for Render)
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
 
 /**
  * Creates and returns a Nodemailer transporter configured for Gmail or standard SMTP
@@ -10,7 +16,9 @@ const createNodemailerTransporter = () => {
         host: 'smtp.gmail.com',
         port: 465,
         secure: true,
-        family: 4, // Force IPv4 to prevent ENETUNREACH on Render
+        lookup: (hostname, options, callback) => {
+            dns.lookup(hostname, { family: 4 }, callback);
+        },
         auth: {
             user: process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : '',
             pass: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : '',
