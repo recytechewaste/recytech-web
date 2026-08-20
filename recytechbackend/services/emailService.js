@@ -1,12 +1,53 @@
+const axios = require('axios');
 const dns = require('dns');
 const nodemailer = require('nodemailer');
 const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
 const { getPinEmailTemplate } = require('../utils/emailTemplates');
 
-// Force Node.js to prioritize IPv4 addresses across the entire application (required for Render)
+// Force Node.js to prioritize IPv4 addresses across the application
 if (dns.setDefaultResultOrder) {
     dns.setDefaultResultOrder('ipv4first');
 }
+
+/**
+ * Sends transactional email via Brevo's HTTPS REST API (Port 443)
+ * Guaranteed to work on cloud servers (Render free tier) without SMTP firewall blocks.
+ */
+const sendViaBrevo = async (toEmail, toName, subject, htmlContent) => {
+    try {
+        if (!process.env.BREVO_API_KEY) {
+            const err = 'BREVO_API_KEY is missing in environment variables';
+            console.error(err);
+            return { success: false, error: err };
+        }
+
+        const senderEmail = process.env.BREVO_SENDER_EMAIL || 'recytechewast@gmail.com';
+        const senderName = process.env.BREVO_SENDER_NAME || 'RecyTech';
+
+        const payload = {
+            sender: { name: senderName, email: senderEmail },
+            to: [{ email: toEmail, name: toName || 'User' }],
+            subject,
+            htmlContent
+        };
+
+        const response = await axios.post('https://api.brevo.com/v3/smtp/email', payload, {
+            headers: {
+                'api-key': process.env.BREVO_API_KEY.trim(),
+                'content-type': 'application/json',
+                'accept': 'application/json'
+            },
+            timeout: 10000
+        });
+
+        console.log(`[Brevo API] Email successfully sent to ${toEmail} (MessageId: ${response.data?.messageId})`);
+        return { success: true, messageId: response.data?.messageId };
+    } catch (error) {
+        const errorDetail = error.response?.data?.message || error.message;
+        console.error('[Brevo Error] Failed to send email:', errorDetail);
+        return { success: false, error: errorDetail };
+    }
+};
 
 /**
  * Creates and returns a Nodemailer transporter configured for Gmail or standard SMTP
@@ -22,11 +63,14 @@ const createNodemailerTransporter = () => {
 };
 
 /**
- * Determines which email provider to use: 'nodemailer' (default when configured) or 'mailersend'
+ * Determines which email provider to use: 'brevo' (default), 'nodemailer', or 'mailersend'
  */
 const getActiveProvider = () => {
     if (process.env.EMAIL_SERVICE_PROVIDER) {
         return process.env.EMAIL_SERVICE_PROVIDER.toLowerCase();
+    }
+    if (process.env.BREVO_API_KEY) {
+        return 'brevo';
     }
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
         return 'nodemailer';
@@ -43,7 +87,12 @@ const sendPinEmail = async (email, firstName, pin) => {
     const subject = 'RecyTech - Password Reset PIN';
     const html = getPinEmailTemplate(recipientName, pin);
 
-    // --- Provider A: Nodemailer (Gmail) ---
+    // --- Provider A: Brevo (Recommended for Render) ---
+    if (provider === 'brevo') {
+        return await sendViaBrevo(email, recipientName, subject, html);
+    }
+
+    // --- Provider B: Nodemailer (Gmail) ---
     if (provider === 'nodemailer') {
         try {
             if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
@@ -68,7 +117,7 @@ const sendPinEmail = async (email, firstName, pin) => {
         }
     }
 
-    // --- Provider B: MailerSend ---
+    // --- Provider C: MailerSend ---
     try {
         if (!process.env.MAILERSEND_API_KEY) {
             const err = 'MailerSend Error: MAILERSEND_API_KEY is missing in environment variables';
@@ -121,10 +170,13 @@ const sendWelcomeEmail = async (email, firstName, role = 'User') => {
         </div>
     `;
 
-    // --- Provider A: Nodemailer (Gmail) ---
+    if (provider === 'brevo') {
+        return await sendViaBrevo(email, recipientName, subject, html);
+    }
+
     if (provider === 'nodemailer') {
         try {
-            if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return false;
+            if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return { success: false };
             const transporter = createNodemailerTransporter();
             await transporter.sendMail({
                 from: `"RecyTech" <${process.env.EMAIL_USER}>`,
@@ -132,17 +184,15 @@ const sendWelcomeEmail = async (email, firstName, role = 'User') => {
                 subject,
                 html,
             });
-            console.log(`[Nodemailer] Welcome email sent to ${email}`);
-            return true;
+            return { success: true };
         } catch (error) {
             console.error('[Nodemailer Error] Welcome email error:', error.message);
-            return false;
+            return { success: false, error: error.message };
         }
     }
 
-    // --- Provider B: MailerSend ---
     try {
-        if (!process.env.MAILERSEND_API_KEY) return false;
+        if (!process.env.MAILERSEND_API_KEY) return { success: false };
         const mailer = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY });
         const sentFrom = new Sender(process.env.MAILERSEND_FROM_EMAIL || 'noreply@trial-k6nxvgwjd98z5q7e.mlsender.net', 'RecyTech');
         const recipients = [new Recipient(email, recipientName)];
@@ -155,10 +205,9 @@ const sendWelcomeEmail = async (email, firstName, role = 'User') => {
             .setHtml(html);
 
         await mailer.email.send(emailParams);
-        return true;
+        return { success: true };
     } catch (error) {
-        console.error('[MailerSend Error] Welcome email error:', error.body || error.message);
-        return false;
+        return { success: false, error: error.message };
     }
 };
 
@@ -182,10 +231,13 @@ const sendAccountApprovedEmail = async (email, firstName) => {
         </div>
     `;
 
-    // --- Provider A: Nodemailer (Gmail) ---
+    if (provider === 'brevo') {
+        return await sendViaBrevo(email, recipientName, subject, html);
+    }
+
     if (provider === 'nodemailer') {
         try {
-            if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return false;
+            if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return { success: false };
             const transporter = createNodemailerTransporter();
             await transporter.sendMail({
                 from: `"RecyTech" <${process.env.EMAIL_USER}>`,
@@ -193,17 +245,15 @@ const sendAccountApprovedEmail = async (email, firstName) => {
                 subject,
                 html,
             });
-            console.log(`[Nodemailer] Approval email sent to ${email}`);
-            return true;
+            return { success: true };
         } catch (error) {
             console.error('[Nodemailer Error] Approval email error:', error.message);
-            return false;
+            return { success: false, error: error.message };
         }
     }
 
-    // --- Provider B: MailerSend ---
     try {
-        if (!process.env.MAILERSEND_API_KEY) return false;
+        if (!process.env.MAILERSEND_API_KEY) return { success: false };
         const mailer = new MailerSend({ apiKey: process.env.MAILERSEND_API_KEY });
         const sentFrom = new Sender(process.env.MAILERSEND_FROM_EMAIL || 'noreply@trial-k6nxvgwjd98z5q7e.mlsender.net', 'RecyTech');
         const recipients = [new Recipient(email, recipientName)];
@@ -216,10 +266,9 @@ const sendAccountApprovedEmail = async (email, firstName) => {
             .setHtml(html);
 
         await mailer.email.send(emailParams);
-        return true;
+        return { success: true };
     } catch (error) {
-        console.error('[MailerSend Error] Approval email error:', error.body || error.message);
-        return false;
+        return { success: false, error: error.message };
     }
 };
 
