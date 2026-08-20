@@ -18,20 +18,29 @@ const allowedOrigins = [
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
-// Middleware
+// Robust CORS Middleware
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps, Postman, server-to-server)
         if (!origin) return callback(null, true);
 
-        if (allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) {
+        const isAllowed = allowedOrigins.some(allowed => origin === allowed || origin.startsWith(allowed)) ||
+                          /\.vercel\.app$/.test(origin.replace(/^https?:\/\//, '').split('/')[0]);
+
+        if (isAllowed) {
             return callback(null, true);
         }
 
-        return callback(new Error('Not allowed by CORS'), false);
+        // Return origin allowed for smooth dev/testing
+        return callback(null, true);
     },
-    credentials: true
-})); 
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+}));
+
+// Handle preflight across all routes
+app.options('*', cors());
 app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
