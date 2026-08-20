@@ -419,7 +419,7 @@ const Settings = () => {
                                     <div className={styles.preferenceCard}>
                                         <div>
                                             <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Live In-App Request Alerts</h4>
-                                            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Displays an immediate pop-up banner when an LGU submits a new bin request.</p>
+                                            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Displays an immediate pop-up banner when a partner organization submits a new bin request.</p>
                                         </div>
                                         <label className={styles.toggleSwitch}>
                                             <input

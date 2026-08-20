@@ -183,7 +183,7 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
 
             <div className={sharedStyles.formRow}>
                 <div className={sharedStyles.formGroup} style={{ width: '100%' }}>
-                    <label>Assigned LGU</label>
+                    <label>Assigned Partner Organization</label>
                     <div className={sharedStyles.inputWrapper}>
                         <Building2 size={16} className={sharedStyles.inputIcon} />
                         <select
@@ -192,7 +192,7 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
                             value={binForm.assignedLgu || ''}
                             onChange={handleChange}
                         >
-                            <option value="">-- No LGU Assigned --</option>
+                            <option value="">-- No Partner Organization Assigned --</option>
                             {lgus.map((lgu) => (
                                 <option key={lgu._id} value={lgu._id}>
                                     {lgu.name} {lgu.jurisdiction ? `(${lgu.jurisdiction})` : ''}

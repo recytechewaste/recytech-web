@@ -4,7 +4,7 @@ import styles from '../../styles/Collectors.module.css';
 import Skeleton from '../../components/Skeleton';
 import AssignedBinsModal from './AssignedBinsModal';
 
-const LguTableRow = ({ lgu, index, page, limit, onEdit, onDelete, onViewBins, canManage }) => {
+const PartnerOrgTableRow = ({ lgu, index, page, limit, onEdit, onDelete, onViewBins, canManage }) => {
     const bins = lgu.assignedBins || [];
     const binCount = bins.length;
 
@@ -17,8 +17,8 @@ const LguTableRow = ({ lgu, index, page, limit, onEdit, onDelete, onViewBins, ca
                         {lgu.name ? lgu.name.charAt(0).toUpperCase() : '?'}
                     </div>
                     <div>
-                        <div className={styles.driverName}>{lgu.name || "Unknown LGU"}</div>
-                        <div className={styles.driverId}>ID: {lgu._id ? `LGU-${lgu._id.substring(lgu._id.length - 4)}` : 'N/A'}</div>
+                        <div className={styles.driverName}>{lgu.name || "Unknown Organization"}</div>
+                        <div className={styles.driverId}>ID: {lgu._id ? `ORG-${lgu._id.substring(lgu._id.length - 4)}` : 'N/A'}</div>
                     </div>
                 </div>
             </td>
@@ -57,8 +57,8 @@ const LguTableRow = ({ lgu, index, page, limit, onEdit, onDelete, onViewBins, ca
             {canManage && (
                 <td className={styles.td}>
                     <div className={styles.actions}>
-                        <button title="Edit LGU" className={styles.iconBtn} onClick={() => onEdit(lgu)}><Edit2 size={16}/></button>
-                        <button title="Delete LGU" className={styles.iconBtnDanger} onClick={() => onDelete(lgu._id)}><Trash2 size={16}/></button>
+                        <button title="Edit Partner Organization" className={styles.iconBtn} onClick={() => onEdit(lgu)}><Edit2 size={16}/></button>
+                        <button title="Deactivate Partner Organization" className={styles.iconBtnDanger} onClick={() => onDelete(lgu._id)}><Trash2 size={16}/></button>
                     </div>
                 </td>
             )}
@@ -93,7 +93,7 @@ const SkeletonRow = ({ canManage }) => (
     </tr>
 );
 
-const LguTable = ({ lgus, loading, page, limit, onEdit, onDelete, canManage = true }) => {
+const PartnerOrgTable = ({ lgus, loading, page, limit, onEdit, onDelete, canManage = true }) => {
     const [selectedLguForBins, setSelectedLguForBins] = useState(null);
 
     return (
@@ -103,7 +103,7 @@ const LguTable = ({ lgus, loading, page, limit, onEdit, onDelete, canManage = tr
                     <thead>
                         <tr>
                             <th className={styles.th} style={{width:'50px'}}>#</th>
-                            <th className={styles.th}>LGU Name</th>
+                            <th className={styles.th}>Partner Organization Name</th>
                             <th className={styles.th}>Contact Person</th>
                             <th className={styles.th}>Email</th>
                             <th className={styles.th}>Assigned Bins</th>
@@ -116,11 +116,11 @@ const LguTable = ({ lgus, loading, page, limit, onEdit, onDelete, canManage = tr
                             Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={`skeleton-${i}`} canManage={canManage} />)
                         ) : lgus.length === 0 ? (
                             <tr>
-                                <td colSpan={canManage ? "7" : "6"} className={styles.emptyTd}>No LGU accounts found.</td>
+                                <td colSpan={canManage ? "7" : "6"} className={styles.emptyTd}>No partner organizations found.</td>
                             </tr>
                         ) : (
                             lgus.map((lgu, index) => (
-                                <LguTableRow 
+                                <PartnerOrgTableRow 
                                     key={lgu._id || index}
                                     lgu={lgu}
                                     index={index}
@@ -147,4 +147,4 @@ const LguTable = ({ lgus, loading, page, limit, onEdit, onDelete, canManage = tr
     );
 };
 
-export default LguTable;
+export default PartnerOrgTable;

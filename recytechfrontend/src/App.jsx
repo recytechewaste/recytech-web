@@ -11,7 +11,7 @@ import Settings from './pages/Settings';
 import UserManagement from './pages/UserManagement'; 
 import ProtectedRoute from './pages/ProtectedRoute';
 import RewardPointManager from './pages/RewardPointManager';
-import LguManager from './pages/LguManager';
+import PartnerOrgManager from './pages/PartnerOrgManager';
 import PointHistory from './pages/PointHistory';
 import BinNetwork from './pages/BinNetwork';
 import BinCollectionRequests from './pages/BinCollectionRequests';
@@ -24,7 +24,7 @@ function App() {
     <ToastProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -58,13 +58,14 @@ function App() {
             } 
           />
           <Route 
-            path="/lgu-management" 
+            path="/partner-organizations" 
             element={
               <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
-                <LguManager />
+                <PartnerOrgManager />
               </ProtectedRoute>
             } 
           />
+          <Route path="/lgu-management" element={<Navigate to="/partner-organizations" replace />} />
           <Route 
             path="/transactions" 
             element={

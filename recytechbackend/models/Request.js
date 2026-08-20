@@ -8,8 +8,8 @@ const requestSchema = new mongoose.Schema({
     },
     lgu: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'LguAccount',
-        required: [true, 'The LGU account ID is required.']
+        ref: 'PartnerOrganization',
+        required: [true, 'The partner organization ID is required.']
     },
     status: {
         type: String,

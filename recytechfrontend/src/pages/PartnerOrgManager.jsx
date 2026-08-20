@@ -1,46 +1,46 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
-import LguTable from '../features/lgus/LguTable';
-import LguFormModal from '../features/lgus/LguFormModal';
-import useLgus from '../features/lgus/useLgus';
+import PartnerOrgTable from '../features/partnerOrgs/PartnerOrgTable';
+import PartnerOrgFormModal from '../features/partnerOrgs/PartnerOrgFormModal';
+import usePartnerOrgs from '../features/partnerOrgs/usePartnerOrgs';
 import ConfirmDeleteModal from '../features/residents/ConfirmDeleteModal';
 import Pagination from '../components/Pagination';
-import LguFilterBar from '../features/lgus/LguFilterBar';
-import styles from '../styles/Collectors.module.css'; // Changed to Collectors styles
+import PartnerOrgFilterBar from '../features/partnerOrgs/PartnerOrgFilterBar';
+import styles from '../styles/Collectors.module.css';
 
-const LguManager = () => {
+const PartnerOrgManager = () => {
   const { 
     isLoading, 
-    paginatedLgus,
-    addLgu, updateLgu, deleteLgu,
+    paginatedPartnerOrgs,
+    addPartnerOrg, updatePartnerOrg, deletePartnerOrg,
     searchTerm, setSearchTerm, 
     statusFilter, setStatusFilter,
     handleClearFilters,
     currentPage, totalPages, setPage
-  } = useLgus();
+  } = usePartnerOrgs();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingLgu, setEditingLgu] = useState(null);
+  const [editingOrg, setEditingOrg] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deletingLguId, setDeletingLguId] = useState(null);
+  const [deletingOrgId, setDeletingOrgId] = useState(null);
 
-  const handleOpenModal = (lgu = null) => {
-    setEditingLgu(lgu);
+  const handleOpenModal = (org = null) => {
+    setEditingOrg(org);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    setEditingLgu(null);
+    setEditingOrg(null);
     setIsModalOpen(false);
   };
 
-  const handleSaveLgu = async (lguData) => {
+  const handleSaveOrg = async (orgData) => {
     let success;
-    if (editingLgu) {
-      success = await updateLgu(editingLgu._id, lguData);
+    if (editingOrg) {
+      success = await updatePartnerOrg(editingOrg._id, orgData);
     } else {
-      success = await addLgu(lguData);
+      success = await addPartnerOrg(orgData);
     }
     if (success) {
       handleCloseModal();
@@ -48,18 +48,18 @@ const LguManager = () => {
   };
   
   const openDeleteModal = (id) => {
-    setDeletingLguId(id);
+    setDeletingOrgId(id);
     setIsDeleteModalOpen(true);
   };
 
   const closeDeleteModal = () => {
-    setDeletingLguId(null);
+    setDeletingOrgId(null);
     setIsDeleteModalOpen(false);
   };
   
   const confirmDelete = async () => {
-    if (deletingLguId) {
-      const success = await deleteLgu(deletingLguId);
+    if (deletingOrgId) {
+      const success = await deletePartnerOrg(deletingOrgId);
       if (success) {
         closeDeleteModal();
       }
@@ -72,36 +72,36 @@ const LguManager = () => {
 
   return (
     <div className={styles.container}>
-      <Sidebar activePage="LGU Management" />
+      <Sidebar activePage="Partner Organization Management" />
       <main className={styles.main}>
         <header className={styles.header}>
             <div className={styles.titleGroup}>
-                <h1 className={styles.pageTitle}>LGU Account Management</h1>
-                <p className={styles.subTitle}>Oversee and manage all Local Government Unit accounts.</p>
+                <h1 className={styles.pageTitle}>Partner Organization Management</h1>
+                <p className={styles.subTitle}>Oversee and manage all verified partner organizations and institutions.</p>
             </div>
             {canManage && (
               <div className={styles.actionButtons}>
                 <button onClick={() => handleOpenModal()} className={styles.addBtn}>
                     <Plus size={16} />
-                    Add New LGU
+                    Add Partner Organization
                 </button>
               </div>
             )}
         </header>
 
-        <LguFilterBar
+        <PartnerOrgFilterBar
             searchTerm={searchTerm} setSearchTerm={setSearchTerm}
             statusFilter={statusFilter} setStatusFilter={setStatusFilter}
             handleClearFilters={handleClearFilters}
         />
 
-        <LguTable
-          lgus={paginatedLgus}
+        <PartnerOrgTable
+          lgus={paginatedPartnerOrgs}
           loading={isLoading}
           onEdit={handleOpenModal}
           onDelete={openDeleteModal}
           page={currentPage}
-          limit={10} // This should match the value in usePagination
+          limit={10}
           canManage={canManage}
         />
 
@@ -114,9 +114,9 @@ const LguManager = () => {
         )}
 
         {isModalOpen && (
-          <LguFormModal
-            lgu={editingLgu}
-            onSave={handleSaveLgu}
+          <PartnerOrgFormModal
+            lgu={editingOrg}
+            onSave={handleSaveOrg}
             onClose={handleCloseModal}
           />
         )} 
@@ -125,7 +125,7 @@ const LguManager = () => {
           <ConfirmDeleteModal
             onConfirm={confirmDelete}
             onCancel={closeDeleteModal}
-            message="Are you sure you want to delete this LGU account? This action cannot be undone."
+            message="Are you sure you want to deactivate this partner organization? This action will unassign any linked bins."
           />
         )}
       </main>
@@ -133,4 +133,4 @@ const LguManager = () => {
   );
 };
 
-export default LguManager;
+export default PartnerOrgManager;

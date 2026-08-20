@@ -22,7 +22,7 @@ const binSchema = new mongoose.Schema({
   fillLevel: { type: Number, min: 0, max: 100 },
   assignedLgu: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'LguAccount',
+    ref: 'PartnerOrganization',
   },
 }, { timestamps: true });
 

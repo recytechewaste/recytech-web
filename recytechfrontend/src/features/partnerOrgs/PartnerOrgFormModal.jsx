@@ -4,7 +4,7 @@ import styles from '../../styles/UserManagement.module.css';
 import sharedStyles from '../../styles/Layout.module.css';
 import { Save, Building2, User, Mail, Phone, MapPin, Activity, Lock } from 'lucide-react';
 
-const LguFormModal = ({ lgu, onSave, onClose }) => {
+const PartnerOrgFormModal = ({ lgu, onSave, onClose }) => {
   const [formData, setFormData] = useState({
     name: '',
     contactPerson: '',
@@ -32,7 +32,6 @@ const LguFormModal = ({ lgu, onSave, onClose }) => {
         status: lgu.status || 'Active',
       });
     } else {
-        // Reset form for new entry
         setFormData({
             name: '',
             contactPerson: '',
@@ -57,7 +56,7 @@ const LguFormModal = ({ lgu, onSave, onClose }) => {
   
   const validate = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'LGU Name is required';
+    if (!formData.name.trim()) newErrors.name = 'Partner Organization Name is required';
     if (!formData.contactPerson.trim()) newErrors.contactPerson = 'Contact Person is required';
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -86,21 +85,21 @@ const LguFormModal = ({ lgu, onSave, onClose }) => {
     if (validate()) {
         const dataToSave = { ...formData };
         if (isEditing && !dataToSave.password) {
-          delete dataToSave.password; // Don't send empty password string on update
+          delete dataToSave.password;
         }
-        delete dataToSave.confirmPassword; // Don't send this to backend
+        delete dataToSave.confirmPassword;
         onSave(dataToSave);
     }
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title={isEditing ? 'Edit LGU Account' : 'Add New LGU Account'} maxWidth="700px">
+    <Modal isOpen={true} onClose={onClose} title={isEditing ? 'Edit Partner Organization' : 'Add New Partner Organization'} maxWidth="700px">
       <form onSubmit={handleSubmit} className={sharedStyles.form} noValidate>
         <div className={sharedStyles.formGroup}>
-            <label>LGU Name <span style={{color: '#ef4444'}}>*</span></label>
+            <label>Partner Organization Name <span style={{color: '#ef4444'}}>*</span></label>
             <div className={sharedStyles.inputWrapper}>
                 <Building2 size={16} className={sharedStyles.inputIcon} />
-                <input name="name" value={formData.name} onChange={handleChange} placeholder="e.g., City of Makati" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.name ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} />
+                <input name="name" value={formData.name} onChange={handleChange} placeholder="e.g., City of Makati or Green Earth Org" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.name ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} />
             </div>
             {errors.name && <span className={styles.error}>{errors.name}</span>}
         </div>
@@ -119,7 +118,7 @@ const LguFormModal = ({ lgu, onSave, onClose }) => {
                 <label>Email Address <span style={{color: '#ef4444'}}>*</span></label>
                 <div className={sharedStyles.inputWrapper}>
                     <Mail size={16} className={sharedStyles.inputIcon} />
-                    <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="e.g., lgu@makati.gov.ph" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.email ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} disabled={isEditing} />
+                    <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="e.g., partner@organization.org" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.email ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} disabled={isEditing} />
                 </div>
                 {errors.email && <span className={styles.error}>{errors.email}</span>}
             </div>
@@ -135,10 +134,10 @@ const LguFormModal = ({ lgu, onSave, onClose }) => {
             </div>
 
             <div className={sharedStyles.formGroup}>
-                <label>Jurisdiction</label>
+                <label>Jurisdiction / Region</label>
                 <div className={sharedStyles.inputWrapper}>
                     <MapPin size={16} className={sharedStyles.inputIcon} />
-                    <input name="jurisdiction" value={formData.jurisdiction} onChange={handleChange} placeholder="e.g., District 1" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`} />
+                    <input name="jurisdiction" value={formData.jurisdiction} onChange={handleChange} placeholder="e.g., District 1 or Metro Area" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`} />
                 </div>
             </div>
         </div>
@@ -178,7 +177,7 @@ const LguFormModal = ({ lgu, onSave, onClose }) => {
           <button type="button" onClick={onClose} className={sharedStyles.cancelBtn}>Cancel</button>
           <button type="submit" className={sharedStyles.submitBtn}>
             <Save size={16} style={{marginRight:'6px'}}/>
-            {isEditing ? 'Save Changes' : 'Create LGU Account'}
+            {isEditing ? 'Save Changes' : 'Create Partner Organization'}
           </button>
         </div>
       </form>
@@ -186,4 +185,4 @@ const LguFormModal = ({ lgu, onSave, onClose }) => {
   );
 };
 
-export default LguFormModal;
+export default PartnerOrgFormModal;

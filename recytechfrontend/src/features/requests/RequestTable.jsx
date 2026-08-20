@@ -39,7 +39,7 @@ const RequestTable = ({ requests, loading, limit }) => {
         <thead>
           <tr>
             <th className={styles.th}>Bin ID</th>
-            <th className={styles.th}>LGU</th>
+            <th className={styles.th}>Partner Organization</th>
             <th className={styles.th}>Location</th>
             <th className={styles.th}>Status</th>
             <th className={styles.th}>Assigned Collector</th>

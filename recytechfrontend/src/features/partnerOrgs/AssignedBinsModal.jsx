@@ -19,7 +19,7 @@ const AssignedBinsModal = ({ isOpen, onClose, lguName, bins = [] }) => {
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={`Assigned Smart Bins — ${lguName || 'LGU'}`}
+            title={`Assigned Smart Bins — ${lguName || 'Partner Organization'}`}
             maxWidth="600px"
         >
             <div style={{ padding: '4px 0 12px 0' }}>
@@ -32,7 +32,7 @@ const AssignedBinsModal = ({ isOpen, onClose, lguName, bins = [] }) => {
                         <Box size={36} style={{ color: '#94a3b8', margin: '0 auto 8px auto' }} />
                         <h4 style={{ color: '#334155', fontWeight: 600, fontSize: '15px', margin: 0 }}>No Bins Assigned</h4>
                         <p style={{ color: '#64748b', fontSize: '13px', margin: '4px 0 0 0' }}>
-                            Go to the <strong>Smart Bin Network</strong> page to assign a bin to this LGU.
+                            Go to the <strong>Bin Location Network</strong> page to assign a bin to this partner organization.
                         </p>
                     </div>
                 ) : (

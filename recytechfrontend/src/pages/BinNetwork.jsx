@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useBins } from '../features/bins/useBins';
-import useLgus from '../features/lgus/useLgus';
+import usePartnerOrgs from '../features/partnerOrgs/usePartnerOrgs';
 import Sidebar from '../components/Sidebar';
 import MapWidget from '../components/MapWidget';
 import Modal from '../components/Modal';
@@ -32,7 +32,7 @@ const BinNetwork = () => {
     const canManage = userRole === 'Staff' || userRole === 'Admin' || userRole === 'Super Admin';
 
     const { bins, loading, addBin, updateBin, deleteBin } = useBins();
-    const { lgus } = useLgus();
+    const { partnerOrgs: lgus } = usePartnerOrgs();
     const [selectedBinId, setSelectedBinId] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingBin, setEditingBin] = useState(null);
