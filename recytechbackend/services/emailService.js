@@ -13,19 +13,11 @@ if (dns.setDefaultResultOrder) {
  */
 const createNodemailerTransporter = () => {
     return nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        lookup: (hostname, options, callback) => {
-            dns.lookup(hostname, { family: 4 }, callback);
-        },
+        service: 'gmail',
         auth: {
-            user: process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : '',
-            pass: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s+/g, '') : '',
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS, // 16-character Google App Password
         },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 15000,
     });
 };
 
