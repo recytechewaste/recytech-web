@@ -18,10 +18,12 @@ const partnerOrgSchema = new mongoose.Schema({
   }],
 }, { timestamps: true });
 
-// Register model with both names mapping to the same underlying collection 'lguaccounts'
-const PartnerOrganization = mongoose.models.PartnerOrganization || mongoose.model('PartnerOrganization', partnerOrgSchema, 'lguaccounts');
-const LguAccount = mongoose.models.LguAccount || mongoose.model('LguAccount', partnerOrgSchema, 'lguaccounts');
+// Single model registration — 'PartnerOrganization' is the canonical name.
+// RecyclingCenter.assignedLgu uses ref: 'PartnerOrganization' so this must match exactly.
+const PartnerOrganization = mongoose.models.PartnerOrganization
+  || mongoose.model('PartnerOrganization', partnerOrgSchema, 'lguaccounts');
 
+// LguAccount is an alias — points to the exact same model instance (no second registration)
 module.exports = PartnerOrganization;
 module.exports.PartnerOrganization = PartnerOrganization;
-module.exports.LguAccount = LguAccount;
+module.exports.LguAccount = PartnerOrganization; // alias, not a separate model
