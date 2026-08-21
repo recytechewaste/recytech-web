@@ -386,3 +386,68 @@
     border-color: #059669;
     box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
 }
+
+/* ── Responsive ── */
+
+@media (max-width: 1280px) {
+    .main {
+        padding: 24px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .main {
+        padding: 20px;
+    }
+    .header {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .filterBar {
+        flex-wrap: wrap;
+    }
+    .th, .td {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main {
+        padding: 16px;
+    }
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .pageTitle {
+        font-size: 20px;
+    }
+    .filterBar {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .searchGroup {
+        width: 100%;
+    }
+    .filterGroup {
+        width: 100%;
+    }
+    .card {
+        overflow-x: auto;
+    }
+    .table {
+        min-width: 650px;
+    }
+    .th, .td {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+    .actionButtons {
+        width: 100%;
+    }
+    .addBtn {
+        width: 100%;
+        justify-content: center;
+    }
+}
