@@ -333,23 +333,63 @@
     transform: translateY(0);
 }
 
-/* Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
+/* ── Responsive ── */
+
+/* Zoomed in / narrow desktop: auto-collapse the sidebar */
+@media (max-width: 1280px) {
+    .sidebar {
+        width: 220px;
     }
-    to {
-        opacity: 1;
+    .menuItem,
+    .menuItemActive {
+        padding: 10px 12px;
+        font-size: 13px;
     }
 }
 
-@keyframes slideUp {
-    from {
-        transform: translateY(20px);
-        opacity: 0;
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 96px;
     }
-    to {
-        transform: translateY(0);
-        opacity: 1;
+    .logoText,
+    .menuLabel,
+    .logoutText {
+        opacity: 0;
+        width: 0;
+        display: none;
+    }
+    .logoContainer {
+        padding: 20px 8px;
+        justify-content: center;
+        flex-direction: column;
+    }
+    .menu {
+        padding: 0 8px;
+    }
+    .menuItem,
+    .menuItemActive {
+        justify-content: center;
+        padding: 12px;
+        gap: 0;
+        border-left: none;
+    }
+    .logoutContainer {
+        padding: 16px 8px;
+    }
+    .logoutBtn {
+        padding: 10px;
+    }
+    .collapseBtn {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 72px;
+    }
+    .menuItem,
+    .menuItemActive {
+        padding: 10px;
     }
 }
