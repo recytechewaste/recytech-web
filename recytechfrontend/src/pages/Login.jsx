@@ -62,7 +62,7 @@ const Login = () => {
     return (
         <div className={styles.pageContainer}>
             {/* TOP HEADER BAR */}
-            <div className={styles.topBar}>
+            <header className={styles.topBar}>
                 <div className={styles.logoContainer}>
                     <div className={styles.logoIcon} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
                         <img src={logo} alt="RecyTech Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
@@ -71,20 +71,21 @@ const Login = () => {
                         RecyTech<span style={{ fontWeight: '400', opacity: '0.9' }}>: E-waste Management System</span>
                     </span>
                 </div>
-            </div>
+            </header>
 
             {/* LOGIN CARD */}
-            <div className={styles.contentContainer}>
+            <main className={styles.contentContainer}>
                 <div className={styles.card}>
                     <h1 className={styles.header}>Welcome Back</h1>
                     <p className={styles.subHeader}>Sign in to access the RecyTech E-waste Management</p>
                     
                     <form onSubmit={handleLogin} className={styles.form} noValidate>
                         <div className={styles.inputGroup}>
-                            <label className={styles.label}>Email Address <span style={{ color: '#ef4444' }}>*</span></label>
+                            <label className={styles.label} htmlFor="emailInput">Email Address <span style={{ color: '#ef4444' }}>*</span></label>
                             <div className={`${styles.inputWrapper} ${errors.email || errors.form ? styles.shake : ''}`}>
                                 <Mail size={18} className={styles.inputIcon} />
                                 <input 
+                                    id="emailInput"
                                     type="email" 
                                     placeholder="Enter your email address" 
                                     className={`${styles.input} ${styles.inputWithIcon} ${errors.email || errors.form ? styles.inputError : ''}`}
@@ -98,10 +99,11 @@ const Login = () => {
                             {errors.email && <span className={styles.errorText}><AlertCircle size={13} style={{ flexShrink: 0 }} /> {errors.email}</span>}
                         </div>
                         <div className={styles.inputGroup}>
-                            <label className={styles.label}>Password <span style={{ color: '#ef4444' }}>*</span></label>
+                            <label className={styles.label} htmlFor="passwordInput">Password <span style={{ color: '#ef4444' }}>*</span></label>
                             <div className={`${styles.inputWrapper} ${errors.password || errors.form ? styles.shake : ''}`}>
                                 <Lock size={18} className={styles.inputIcon} />
                                 <input 
+                                    id="passwordInput"
                                     type={showPassword ? "text" : "password"} 
                                     placeholder="Enter your password" 
                                     className={`${styles.input} ${styles.inputWithIcon} ${errors.password || errors.form ? styles.inputError : ''}`}
@@ -112,7 +114,12 @@ const Login = () => {
                                     }}
                                     style={{ paddingRight: '45px' }}
                                 />
-                                <button type="button" className={styles.eyeBtn} onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>
+                                <button 
+                                    type="button" 
+                                    className={styles.eyeBtn} 
+                                    onClick={() => setShowPassword(!showPassword)} 
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
@@ -163,7 +170,7 @@ const Login = () => {
                         </span>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 };
