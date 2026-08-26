@@ -78,8 +78,23 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Parse cookies attached to the client request
 app.use(cookieParser());
 
-// Prevent NoSQL Injection by sanitizing incoming data globally
-app.use(mongoSanitize());
+// Prevent NoSQL Injection by sanitizing incoming request payloads (Express 5 compatible)
+app.use((req, res, next) => {
+    const cleanNoSQL = (target) => {
+        if (target && typeof target === 'object') {
+            for (const key in target) {
+                if (key.startsWith('$') || key.includes('.')) {
+                    delete target[key];
+                } else if (typeof target[key] === 'object') {
+                    cleanNoSQL(target[key]);
+                }
+            }
+        }
+    };
+    if (req.body) cleanNoSQL(req.body);
+    if (req.params) cleanNoSQL(req.params);
+    next();
+});
 
 
 // Basic Route (Test to see if it works)
