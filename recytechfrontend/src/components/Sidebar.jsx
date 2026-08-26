@@ -18,7 +18,7 @@ import {
     ChevronRight,
     Settings as SettingsIcon
 } from 'lucide-react';
-import logo from '../assets/recytech_logo.png';
+import logo from '../assets/recytech_logo.webp';
 
 const Sidebar = ({ activePage }) => {
     const navigate = useNavigate();
@@ -120,7 +120,7 @@ const Sidebar = ({ activePage }) => {
                     <div className={styles.modalContent}>
                         <div className={styles.modalHeader}>
                             <h2 className={styles.modalTitle}>Confirm Logout</h2>
-                            <button onClick={() => setShowLogoutModal(false)} className={styles.closeBtn}><X size={20}/></button>
+                            <button onClick={() => setShowLogoutModal(false)} className={styles.closeBtn} aria-label="Close modal"><X size={20}/></button>
                         </div>
                         <p style={{color: '#666', marginBottom: '24px'}}>Are you sure you want to log out?</p>
                         <div className={styles.modalFooter}>

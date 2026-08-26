@@ -17,6 +17,7 @@ const PartnerOrgFilterBar = ({
                     className={styles.searchInput} 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    aria-label="Search partner organizations by name or email"
                 />
             </div>
             <div className={styles.filterGroup}>
@@ -25,6 +26,7 @@ const PartnerOrgFilterBar = ({
                     className={styles.selectInput}
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
+                    aria-label="Filter partner organizations by status"
                 >
                     <option value="">All Statuses</option>
                     <option value="Active">Active</option>

@@ -169,10 +169,10 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
                                 placeholder="Login password"
                                 style={{paddingRight: '65px'}}
                             />
-                            <button type="button" className={styles.copyBtn} onClick={copyToClipboard} title="Copy to clipboard">
+                            <button type="button" className={styles.copyBtn} onClick={copyToClipboard} title="Copy to clipboard" aria-label="Copy generated password">
                                 {copied ? <Check size={16} color="#059669" /> : <Copy size={16} />}
                             </button>
-                            <button type="button" className={styles.eyeBtn} onClick={() => setShowPassword(!showPassword)}>
+                            <button type="button" className={styles.eyeBtn} onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Hide password" : "Show password"}>
                                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                         </div>
@@ -191,7 +191,7 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
                                 placeholder="Re-enter password"
                                 style={{paddingRight: '40px'}}
                             />
-                            <button type="button" className={styles.eyeBtn} onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                            <button type="button" className={styles.eyeBtn} onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}>
                                 {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                             </button>
                         </div>
@@ -211,7 +211,7 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
                         <label>Vehicle Type <span style={{color:'#ef4444'}}>*</span></label>
                         <div className={sharedStyles.inputWrapper}>
                             <Truck size={16} className={sharedStyles.inputIcon} />
-                            <select name="vehicleType" value={formData.vehicleType} onChange={handleChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.vehicleType ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`}>
+                            <select name="vehicleType" value={formData.vehicleType} onChange={handleChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.vehicleType ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} aria-label="Select vehicle type">
                                 <option value="">Select Type</option><option value="Motorcycle">Motorcycle</option><option value="Van">Van</option><option value="Truck">Truck</option>
                             </select>
                         </div>
@@ -221,7 +221,7 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
                         <label>Status</label>
                         <div className={sharedStyles.inputWrapper}>
                             <Activity size={16} className={sharedStyles.inputIcon} />
-                            <select name="status" value={formData.status} onChange={handleChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}>
+                            <select name="status" value={formData.status} onChange={handleChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`} aria-label="Select collector status">
                                 <option value="Active">Active</option><option value="Inactive">Inactive</option>
                             </select>
                         </div>

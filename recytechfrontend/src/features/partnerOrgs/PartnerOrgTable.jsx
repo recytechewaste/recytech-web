@@ -57,8 +57,8 @@ const PartnerOrgTableRow = ({ lgu, index, page, limit, onEdit, onDelete, onViewB
             {canManage && (
                 <td className={styles.td}>
                     <div className={styles.actions}>
-                        <button title="Edit Partner Organization" className={styles.iconBtn} onClick={() => onEdit(lgu)}><Edit2 size={16}/></button>
-                        <button title="Deactivate Partner Organization" className={styles.iconBtnDanger} onClick={() => onDelete(lgu._id)}><Trash2 size={16}/></button>
+                        <button title="Edit Partner Organization" className={styles.iconBtn} onClick={() => onEdit(lgu)} aria-label={`Edit partner organization ${lgu.name}`}><Edit2 size={16}/></button>
+                        <button title="Deactivate Partner Organization" className={styles.iconBtnDanger} onClick={() => onDelete(lgu._id)} aria-label={`Deactivate partner organization ${lgu.name}`}><Trash2 size={16}/></button>
                     </div>
                 </td>
             )}
