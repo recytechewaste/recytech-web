@@ -107,6 +107,7 @@ const Collectors = () => {
                             className={styles.searchInput} 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            aria-label="Search collectors by name or plate number"
                         />
                     </div>
                     <div className={styles.filterGroup}>
@@ -115,6 +116,7 @@ const Collectors = () => {
                             className={styles.selectInput}
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
+                            aria-label="Filter collectors by status"
                         >
                             <option value="">All Status</option>
                             <option value="Active">Active</option>
@@ -127,6 +129,7 @@ const Collectors = () => {
                             className={styles.selectInput}
                             value={vehicleTypeFilter}
                             onChange={(e) => setVehicleTypeFilter(e.target.value)}
+                            aria-label="Filter collectors by vehicle type"
                         >
                             <option value="">All Vehicles</option>
                             <option value="Motorcycle">Motorcycle</option>
@@ -220,8 +223,8 @@ const Collectors = () => {
                                         {canManage && (
                                             <td className={styles.td}>
                                                 <div className={styles.actions}>
-                                                    <button onClick={() => handleEdit(c)} className={styles.iconBtn}><Edit2 size={16}/></button>
-                                                    <button onClick={() => handleDeleteClick(c._id)} className={styles.iconBtnDanger}><Trash2 size={16}/></button>
+                                                    <button onClick={() => handleEdit(c)} className={styles.iconBtn} aria-label={`Edit collector ${c.firstName} ${c.lastName}`}><Edit2 size={16}/></button>
+                                                    <button onClick={() => handleDeleteClick(c._id)} className={styles.iconBtnDanger} aria-label={`Delete collector ${c.firstName} ${c.lastName}`}><Trash2 size={16}/></button>
                                                 </div>
                                             </td>
                                         )}
