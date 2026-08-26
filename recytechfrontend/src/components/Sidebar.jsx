@@ -18,7 +18,7 @@ import {
     ChevronRight,
     Settings as SettingsIcon
 } from 'lucide-react';
-import logo from '../assets/recytech_logo.png';
+import logo from '../assets/recytech_logo.webp';
 
 const Sidebar = ({ activePage }) => {
     const navigate = useNavigate();
