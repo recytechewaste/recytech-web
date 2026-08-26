@@ -2,6 +2,8 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
 const connectDB = require('./recytechbackend/config/db');
 // Load config
 dotenv.config();
@@ -11,6 +13,37 @@ connectDB();
 
 const app = express();
 
+// 1. Security HTTP Headers (Resolves CSP, Clickjacking, HSTS, MIME sniffing alerts)
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+            imgSrc: ["'self'", "data:", "https:", "blob:"],
+            connectSrc: ["'self'", "http://localhost:5173", "http://localhost:3000", "https://recytech-web.vercel.app", "*.vercel.app"]
+        }
+    },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+    },
+    frameguard: {
+        action: 'deny'
+    }
+}));
+
+// 2. Prevent Sensitive API Data Caching (Resolves Cache-control alerts)
+app.use((req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+});
+
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
@@ -18,7 +51,7 @@ const allowedOrigins = [
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
-// Robust CORS Middleware
+// 3. Robust & Secure CORS Middleware (Resolves Cross-Domain Misconfiguration)
 app.use(cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps, Postman, server-to-server)
@@ -31,8 +64,8 @@ app.use(cors({
             return callback(null, true);
         }
 
-        // Return origin allowed for smooth dev/testing
-        return callback(null, true);
+        // Strictly reject unauthorized cross-origin requests
+        return callback(new Error('Not allowed by CORS policy'), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -46,6 +79,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
 // Prevent NoSQL Injection by sanitizing incoming data globally
+app.use(mongoSanitize());
 
 
 // Basic Route (Test to see if it works)
