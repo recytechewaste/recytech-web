@@ -1,29 +1,54 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import VerifyPin from './pages/VerifyPin';
-import ResetPassword from './pages/ResetPassword';
-import Dashboard from './pages/Dashboard';
-import Collectors from './pages/Collectors';
-import Reports from './pages/Reports';
-import Settings from './pages/Settings';
-import UserManagement from './pages/UserManagement'; 
 import ProtectedRoute from './pages/ProtectedRoute';
-import RewardPointManager from './pages/RewardPointManager';
-import PartnerOrgManager from './pages/PartnerOrgManager';
-import PointHistory from './pages/PointHistory';
-import BinNetwork from './pages/BinNetwork';
-import BinCollectionRequests from './pages/BinCollectionRequests';
-import Unauthorized from './pages/Unauthorized';
-import NotFound from './pages/NotFound';
 import { ToastProvider } from './context/ToastContext';
+
+// Lazy-loaded pages — each gets its own JS chunk, loaded on demand
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const VerifyPin = lazy(() => import('./pages/VerifyPin'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Collectors = lazy(() => import('./pages/Collectors'));
+const Reports = lazy(() => import('./pages/Reports'));
+const Settings = lazy(() => import('./pages/Settings'));
+const UserManagement = lazy(() => import('./pages/UserManagement'));
+const RewardPointManager = lazy(() => import('./pages/RewardPointManager'));
+const PartnerOrgManager = lazy(() => import('./pages/PartnerOrgManager'));
+const PointHistory = lazy(() => import('./pages/PointHistory'));
+const BinNetwork = lazy(() => import('./pages/BinNetwork'));
+const BinCollectionRequests = lazy(() => import('./pages/BinCollectionRequests'));
+const Unauthorized = lazy(() => import('./pages/Unauthorized'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+
+// Minimal full-screen spinner shown while a page chunk is being fetched
+const PageLoader = () => (
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100vh',
+    background: '#f0faf5',
+  }}>
+    <div style={{
+      width: '40px',
+      height: '40px',
+      border: '4px solid #d1fae5',
+      borderTop: '4px solid #16a34a',
+      borderRadius: '50%',
+      animation: 'spin 0.8s linear infinite',
+    }} />
+    <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+  </div>
+);
 
 function App() {
   return (
     <ToastProvider>
       <Router>
-        <Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -115,7 +140,8 @@ function App() {
 
           {/* Catch-all 404 Route */}
           <Route path="*" element={<NotFound />} />
-        </Routes>
+          </Routes>
+        </Suspense>
       </Router>
     </ToastProvider>
   );
