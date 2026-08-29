@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { Eye, EyeOff, CheckCircle, AlertCircle, X, Loader2, Check, Circle, User, Mail, Lock } from 'lucide-react';
 import styles from '../styles/Register.module.css';
-import logo from '../assets/recytech_logo.png';
+import logo from '../assets/recytech_logo.webp';
 import { useToast } from '../context/ToastContext';
 
 const Register = () => {
@@ -115,7 +115,7 @@ const Register = () => {
     return (
         <div className={styles.pageContainer}>
             {/* TOP HEADER BAR */}
-            <div className={styles.topBar}>
+            <header className={styles.topBar}>
                 <div className={styles.logoContainer}>
                     <div className={styles.logoIcon} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
                         <img src={logo} alt="RecyTech Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
@@ -124,9 +124,9 @@ const Register = () => {
                         RecyTech<span style={{ fontWeight: '400', opacity: '0.9' }}>: E-waste Management System</span>
                     </span>
                 </div>
-            </div>
+            </header>
 
-            <div className={styles.contentContainer}>
+            <main className={styles.contentContainer}>
                 <div className={styles.card}>
                     <h1 className={styles.header}>Create Account</h1>
                     <p className={styles.subHeader}>Join RecyTech to manage your operations efficiently</p>
@@ -134,10 +134,11 @@ const Register = () => {
                     <form onSubmit={handleRegister} className={styles.form} noValidate>
                         <div className={styles.gridRow}>
                             <div className={styles.inputGroup}>
-                                <label className={styles.label}>First Name <span style={{ color: '#ef4444' }}>*</span></label>
+                                <label className={styles.label} htmlFor="regFirstName">First Name <span style={{ color: '#ef4444' }}>*</span></label>
                                 <div className={`${styles.inputWrapper} ${errors.firstName || errors.form ? styles.shake : ''}`}>
                                     <User size={18} className={styles.inputIcon} />
                                     <input 
+                                        id="regFirstName"
                                         name="firstName" 
                                         placeholder="e.g. Juan" 
                                         className={`${styles.input} ${styles.inputWithIcon} ${errors.firstName || errors.form ? styles.inputError : ''}`} 
@@ -148,10 +149,11 @@ const Register = () => {
                                 {errors.firstName && <span className={styles.errorText}><AlertCircle size={13} style={{ flexShrink: 0 }} /> {errors.firstName}</span>}
                             </div>
                             <div className={styles.inputGroup}>
-                                <label className={styles.label}>Last Name <span style={{ color: '#ef4444' }}>*</span></label>
+                                <label className={styles.label} htmlFor="regLastName">Last Name <span style={{ color: '#ef4444' }}>*</span></label>
                                 <div className={`${styles.inputWrapper} ${errors.lastName || errors.form ? styles.shake : ''}`}>
                                     <User size={18} className={styles.inputIcon} />
                                     <input 
+                                        id="regLastName"
                                         name="lastName" 
                                         placeholder="e.g. Dela Cruz" 
                                         className={`${styles.input} ${styles.inputWithIcon} ${errors.lastName || errors.form ? styles.inputError : ''}`} 
@@ -162,10 +164,11 @@ const Register = () => {
                                 {errors.lastName && <span className={styles.errorText}><AlertCircle size={13} style={{ flexShrink: 0 }} /> {errors.lastName}</span>}
                             </div>
                             <div className={styles.inputGroup} style={{ gridColumn: '1 / -1' }}>
-                                <label className={styles.label}>Email Address <span style={{ color: '#ef4444' }}>*</span></label>
+                                <label className={styles.label} htmlFor="regEmail">Email Address <span style={{ color: '#ef4444' }}>*</span></label>
                                 <div className={`${styles.inputWrapper} ${errors.email || errors.form ? styles.shake : ''}`}>
                                     <Mail size={18} className={styles.inputIcon} />
                                     <input 
+                                        id="regEmail"
                                         name="email" 
                                         type="email" 
                                         placeholder="e.g. user@recytech.com" 
@@ -177,10 +180,11 @@ const Register = () => {
                                 {errors.email && <span className={styles.errorText}><AlertCircle size={13} style={{ flexShrink: 0 }} /> {errors.email}</span>}
                             </div>
                             <div className={styles.inputGroup}>
-                                <label className={styles.label}>Password <span style={{ color: '#ef4444' }}>*</span></label>
+                                <label className={styles.label} htmlFor="regPassword">Password <span style={{ color: '#ef4444' }}>*</span></label>
                                 <div className={`${styles.inputWrapper} ${errors.password || errors.form ? styles.shake : ''}`}>
                                     <Lock size={18} className={styles.inputIcon} />
                                     <input 
+                                        id="regPassword"
                                         name="password" 
                                         type={showPassword ? "text" : "password"} 
                                         placeholder="Create a password" 
@@ -189,17 +193,23 @@ const Register = () => {
                                         onChange={handleChange} 
                                         style={{ paddingRight: '45px' }}
                                     />
-                                    <button type="button" className={styles.eyeBtn} onClick={() => setShowPassword(!showPassword)} tabIndex={-1}>
+                                    <button 
+                                        type="button" 
+                                        className={styles.eyeBtn} 
+                                        onClick={() => setShowPassword(!showPassword)} 
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
+                                    >
                                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
                                 {errors.password && <span className={styles.errorText}><AlertCircle size={13} style={{ flexShrink: 0 }} /> {errors.password}</span>}
                             </div>
                             <div className={styles.inputGroup}>
-                                <label className={styles.label}>Confirm Password <span style={{ color: '#ef4444' }}>*</span></label>
+                                <label className={styles.label} htmlFor="regConfirmPassword">Confirm Password <span style={{ color: '#ef4444' }}>*</span></label>
                                 <div className={`${styles.inputWrapper} ${errors.confirmPassword || errors.form ? styles.shake : ''}`}>
                                     <Lock size={18} className={styles.inputIcon} />
                                     <input 
+                                        id="regConfirmPassword"
                                         name="confirmPassword" 
                                         type={showConfirmPassword ? "text" : "password"} 
                                         placeholder="Re-enter your password" 
@@ -208,7 +218,12 @@ const Register = () => {
                                         onChange={handleChange} 
                                         style={{ paddingRight: '45px' }}
                                     />
-                                    <button type="button" className={styles.eyeBtn} onClick={() => setShowConfirmPassword(!showConfirmPassword)} tabIndex={-1}>
+                                    <button 
+                                        type="button" 
+                                        className={styles.eyeBtn} 
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
+                                        aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                                    >
                                         {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                     </button>
                                 </div>
@@ -267,7 +282,7 @@ const Register = () => {
                         </span>
                     </div>
                 </div>
-            </div>
+            </main>
 
             {/* SUCCESS MODAL */}
             {showSuccessModal && (
