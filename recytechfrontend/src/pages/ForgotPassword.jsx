@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import api from '../api/client';
 import styles from '../styles/ForgotPassword.module.css';
-import logo from '../assets/recytech_logo.png';
+import logo from '../assets/recytech_logo.webp';
 import { useToast } from '../context/ToastContext';
 
 const ForgotPassword = () => {
@@ -34,7 +34,7 @@ const ForgotPassword = () => {
 
     return (
         <div className={styles.pageContainer}>
-            <div className={styles.topBar}>
+            <header className={styles.topBar}>
                 <div className={styles.logoContainer}>
                     <div className={styles.logoIcon} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
                         <img src={logo} alt="RecyTech Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
@@ -43,17 +43,18 @@ const ForgotPassword = () => {
                         RecyTech<span style={{ fontWeight: '400', opacity: '0.9' }}>: E-waste Management System</span>
                     </span>
                 </div>
-            </div>
+            </header>
 
-            <div className={styles.contentContainer}>
+            <main className={styles.contentContainer}>
                 <div className={styles.card}>
                     <h1 className={styles.header}>Reset Password</h1>
                     <p className={styles.subtext}>Enter your registered email address to receive password reset instructions.</p>
                     
                     <form onSubmit={handleResetRequest}>
                         <div className={styles.inputGroup}>
-                            <label className={styles.label}>Email Address</label>
+                            <label htmlFor="forgotEmail" className={styles.label}>Email Address</label>
                             <input 
+                                id="forgotEmail"
                                 type="email" 
                                 placeholder="admin@example.com" 
                                 className={styles.input} 
@@ -91,7 +92,7 @@ const ForgotPassword = () => {
                         <span>Support</span>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 };
