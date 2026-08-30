@@ -86,22 +86,27 @@ const MapWidget = ({ bins = [], selectedBinId, onSelectBin, userGeolocation }) =
                 <MapFocusController center={center} zoom={zoom} />
                 {locations.map((bin) => {
                     const isSelected = Boolean(selectedBinId && bin._id === selectedBinId);
+                    const accessibleLabel = isSelected
+                        ? `Selected bin: ${bin.name}, ${bin.address}, Status: ${bin.status}`
+                        : `Bin: ${bin.name}, ${bin.address}, Status: ${bin.status}`;
 
-                    // Leaflet uses the icon's 'alt' to set aria-label on the marker element
+                    // For divIcon, inject a visually-hidden span so the role="button" div
+                    // has an accessible name that screen readers can announce.
+                    // For L.icon (img-based), the 'alt' prop on <Marker> sets img.alt via Leaflet.
                     const markerIcon = isSelected
                         ? L.divIcon({
-                            html: '<div style="width: 14px; height: 14px; border-radius: 999px; background: #2563eb; border: 2px solid white; box-shadow: 0 0 0 4px rgba(37,99,235,0.2);"></div>',
+                            html: `<div style="width:14px;height:14px;border-radius:999px;background:#2563eb;border:2px solid white;box-shadow:0 0 0 4px rgba(37,99,235,0.2);">
+                                     <span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;">${accessibleLabel}</span>
+                                   </div>`,
                             className: '',
                             iconSize: [14, 14],
                             iconAnchor: [7, 7],
-                            alt: `Selected bin: ${bin.name} — ${bin.address}, Status: ${bin.status}`
                         })
                         : L.icon({
                             iconUrl: icon,
                             shadowUrl: iconShadow,
                             iconSize: [25, 41],
                             iconAnchor: [12, 41],
-                            alt: `Bin: ${bin.name} — ${bin.address}, Status: ${bin.status}`
                         });
 
                     return (
@@ -109,6 +114,8 @@ const MapWidget = ({ bins = [], selectedBinId, onSelectBin, userGeolocation }) =
                             key={bin._id}
                             position={toLeafletCoords(bin.location.coordinates)}
                             icon={markerIcon}
+                            alt={accessibleLabel}
+                            title={bin.name}
                             eventHandlers={{ click: () => onSelectBin?.(bin._id) }}
                         >
                             <Popup>
