@@ -38,6 +38,7 @@ const BinListItem = ({ bin, isSelected, onSelect, onEdit, onDelete, canManage = 
                             className={styles.actionBtn}
                             onClick={handleEdit}
                             title="Edit bin"
+                            aria-label={`Edit bin ${bin.name}`}
                         >
                             <Pencil size={16} />
                         </button>
@@ -46,6 +47,7 @@ const BinListItem = ({ bin, isSelected, onSelect, onEdit, onDelete, canManage = 
                             className={styles.actionBtnDanger}
                             onClick={handleDelete}
                             title="Delete bin"
+                            aria-label={`Delete bin ${bin.name}`}
                         >
                             <Trash2 size={16} />
                         </button>

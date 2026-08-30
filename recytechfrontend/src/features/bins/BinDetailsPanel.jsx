@@ -55,10 +55,10 @@ const BinDetailsPanel = ({ bin, onEdit, onDelete }) => {
                 </div>
             </div>
             <div className={styles.panelFooter}>
-                <button className={styles.panelActionBtn} onClick={() => onEdit(bin)}>
+                <button type="button" aria-label={`Edit details for ${bin.name}`} className={styles.panelActionBtn} onClick={() => onEdit(bin)}>
                     <Pencil size={16} /> Edit Details
                 </button>
-                <button className={`${styles.panelActionBtn} ${styles.panelActionDanger}`} onClick={() => onDelete(bin)}>
+                <button type="button" aria-label={`Delete bin ${bin.name}`} className={`${styles.panelActionBtn} ${styles.panelActionDanger}`} onClick={() => onDelete(bin)}>
                     <Trash2 size={16} /> Delete Bin
                 </button>
             </div>
