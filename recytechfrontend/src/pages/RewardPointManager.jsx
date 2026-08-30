@@ -101,7 +101,7 @@ const RewardPointManager = () => {
     return (
         <div className={styles.container}>
             <Sidebar activePage="Reward Points" />
-            <div className={styles.main}>
+        <main className={styles.main}>
 
                 {/* ── Page Header ── */}
                 <div className={styles.header}>
@@ -165,10 +165,12 @@ const RewardPointManager = () => {
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             className={styles.searchInput}
+                            aria-label="Search reward rules"
                         />
                     </div>
                     <div className={styles.filterGroup}>
                         <Filter size={14} className={styles.filterIcon} />
+                        <label htmlFor="reward-status-filter" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Filter by status</label>
                         <select
                             id="reward-status-filter"
                             value={statusFilter}
@@ -244,6 +246,7 @@ const RewardPointManager = () => {
                                             <div className={styles.actions}>
                                                 <button
                                                     title="Edit rule"
+                                                    aria-label={`Edit rule for ${point.wasteType}`}
                                                     onClick={() => openEditModal(point)}
                                                     className={styles.iconBtn}
                                                     id={`edit-rule-${point._id}`}
@@ -252,6 +255,7 @@ const RewardPointManager = () => {
                                                 </button>
                                                 <button
                                                     title={point.isActive ? 'Deactivate' : 'Activate'}
+                                                    aria-label={`${point.isActive ? 'Deactivate' : 'Activate'} rule for ${point.wasteType}`}
                                                     onClick={() => toggleStatus(point)}
                                                     className={styles.iconBtn}
                                                     id={`toggle-rule-${point._id}`}
@@ -261,6 +265,7 @@ const RewardPointManager = () => {
                                                 {canDelete && (
                                                     <button
                                                         title="Delete rule"
+                                                        aria-label={`Delete rule for ${point.wasteType}`}
                                                         onClick={() => setPointToDelete(point)}
                                                         className={styles.iconBtnDanger}
                                                         id={`delete-rule-${point._id}`}
@@ -331,7 +336,7 @@ const RewardPointManager = () => {
                         <button onClick={handleConfirmDelete} className={styles.deleteBtn}>Delete Rule</button>
                     </div>
                 </Modal>
-            </div>
+        </main>
         </div>
     );
 };
