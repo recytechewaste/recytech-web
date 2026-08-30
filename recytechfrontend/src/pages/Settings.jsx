@@ -243,7 +243,7 @@ const Settings = () => {
                                         {initials}
                                     </div>
                                     <div>
-                                        <h4 className={styles.profileMetaName}>{`${savedUser.firstName} ${savedUser.lastName}`.trim() || 'User Profile'}</h4>
+                                        <p className={styles.profileMetaName}>{`${savedUser.firstName} ${savedUser.lastName}`.trim() || 'User Profile'}</p>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                             <span className={styles.profileMetaBadge}>
                                                 <ShieldCheck size={12} /> {savedUser.role}
