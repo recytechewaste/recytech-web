@@ -82,7 +82,7 @@ const Collectors = () => {
         <div className={styles.container}>
             <Sidebar activePage="Collector Management" />
 
-            <div className={styles.main}>
+            <main className={styles.main}>
                 
                 {/* HEADER */}
                 <div className={styles.header}>
@@ -112,7 +112,9 @@ const Collectors = () => {
                     </div>
                     <div className={styles.filterGroup}>
                         <Filter size={18} className={styles.filterIcon} />
+                        <label htmlFor="collectorStatusFilter" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Filter by status</label>
                         <select 
+                            id="collectorStatusFilter"
                             className={styles.selectInput}
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
@@ -125,7 +127,9 @@ const Collectors = () => {
                     </div>
                     <div className={styles.filterGroup}>
                         <Truck size={18} className={styles.filterIcon} />
+                        <label htmlFor="collectorVehicleFilter" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Filter by vehicle type</label>
                         <select 
+                            id="collectorVehicleFilter"
                             className={styles.selectInput}
                             value={vehicleTypeFilter}
                             onChange={(e) => setVehicleTypeFilter(e.target.value)}
@@ -137,7 +141,7 @@ const Collectors = () => {
                             <option value="Truck">Truck</option>
                         </select>
                     </div>
-                    <button className={styles.clearBtn} onClick={handleClearFilters}>Clear All</button>
+                    <button className={styles.clearBtn} onClick={handleClearFilters} aria-label="Clear all collector filters">Clear All</button>
                 </div>
 
                 {/* TABLE */}
@@ -255,7 +259,7 @@ const Collectors = () => {
                     </div>
                 </Modal>
 
-            </div>
+            </main>
         </div>
     );
 };
