@@ -67,7 +67,8 @@ const Reports = () => {
                 <div className={styles.filterCard}>
                     <div className={styles.filterGroup}>
                         <Calendar size={16} className={styles.icon} />
-                        <select className={styles.select} value={filters.timeframe} onChange={(e) => setFilters({ ...filters, timeframe: e.target.value })}>
+                        <label htmlFor="report-timeframe" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Filter by time period</label>
+                        <select id="report-timeframe" className={styles.select} value={filters.timeframe} onChange={(e) => setFilters({ ...filters, timeframe: e.target.value })}>
                             <option value="week">Last 7 Days</option>
                             <option value="month">This Month</option>
                             <option value="year">This Year</option>
@@ -75,7 +76,8 @@ const Reports = () => {
                     </div>
                     <div className={styles.filterGroup}>
                         <Filter size={16} className={styles.icon} />
-                        <select className={styles.select} value={filters.wasteType} onChange={(e) => setFilters({ ...filters, wasteType: e.target.value })}>
+                        <label htmlFor="report-waste-type" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Filter by waste type</label>
+                        <select id="report-waste-type" className={styles.select} value={filters.wasteType} onChange={(e) => setFilters({ ...filters, wasteType: e.target.value })}>
                             <option value="All">All Waste Types</option>
                             {wasteTypes.map((type) => (
                                 <option key={type} value={type}>{type}</option>
@@ -84,14 +86,15 @@ const Reports = () => {
                     </div>
                     <div className={styles.filterGroup}>
                         <Landmark size={16} className={styles.icon} />
-                        <select className={styles.select} value={filters.lguId} onChange={(e) => setFilters({ ...filters, lguId: e.target.value })}>
+                        <label htmlFor="report-lgu" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Filter by partner organization</label>
+                        <select id="report-lgu" className={styles.select} value={filters.lguId} onChange={(e) => setFilters({ ...filters, lguId: e.target.value })}>
                             <option value="All">All Partner Organizations</option>
                             {lguAccounts.map((lgu) => (
                                 <option key={lgu._id} value={lgu._id}>{lgu.name}</option>
                             ))}
                         </select>
                     </div>
-                    <button onClick={handleClearFilters} className={styles.clearBtn}>Clear Filters</button>
+                    <button onClick={handleClearFilters} className={styles.clearBtn} aria-label="Clear all report filters">Clear Filters</button>
                 </div>
                 
                 <div ref={reportRef}>
