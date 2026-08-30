@@ -106,10 +106,11 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
         <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Collector' : 'Add New Bin Collector'} maxWidth="600px">
                 <form onSubmit={handleSubmit} className={sharedStyles.form} noValidate>
                     <div className={sharedStyles.formGroup}>
-                        <label>First Name <span style={{color:'#ef4444'}}>*</span></label>
+                        <label htmlFor="collectorFirstName">First Name <span style={{color:'#ef4444'}}>*</span></label>
                         <div className={sharedStyles.inputWrapper}>
                             <User size={16} className={sharedStyles.inputIcon} />
                             <input 
+                                id="collectorFirstName"
                                 name="firstName" 
                                 value={formData.firstName} 
                                 onChange={handleChange} 
@@ -120,10 +121,11 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
                         {errors.firstName && <span className={styles.error}>{errors.firstName}</span>}
                     </div>
                     <div className={sharedStyles.formGroup}>
-                        <label>Last Name <span style={{color:'#ef4444'}}>*</span></label>
+                        <label htmlFor="collectorLastName">Last Name <span style={{color:'#ef4444'}}>*</span></label>
                         <div className={sharedStyles.inputWrapper}>
                             <User size={16} className={sharedStyles.inputIcon} />
                             <input 
+                                id="collectorLastName"
                                 name="lastName" 
                                 value={formData.lastName} 
                                 onChange={handleChange} 
@@ -134,10 +136,11 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
                         {errors.lastName && <span className={styles.error}>{errors.lastName}</span>}
                     </div>
                     <div className={sharedStyles.formGroup}>
-                        <label>Email Address {!isEditing && <span style={{color:'#ef4444'}}>*</span>}</label>
+                        <label htmlFor="collectorEmail">Email Address {!isEditing && <span style={{color:'#ef4444'}}>*</span>}</label>
                         <div className={sharedStyles.inputWrapper}>
                             <Mail size={16} className={sharedStyles.inputIcon} />
                             <input 
+                                id="collectorEmail"
                                 name="email" 
                                 type="email"
                                 value={formData.email || ''} 
@@ -153,7 +156,7 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
                     <>
                     <div className={sharedStyles.formGroup}>
                         <div className={styles.passwordHeader}>
-                            <label>Password <span style={{color:'#ef4444'}}>*</span></label>
+                            <label htmlFor="collectorPassword">Password <span style={{color:'#ef4444'}}>*</span></label>
                             <button type="button" className={styles.generateBtn} onClick={handleGeneratePassword}>
                                 Generate Password
                             </button>
@@ -161,6 +164,7 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
                         <div className={sharedStyles.inputWrapper}>
                             <Lock size={16} className={sharedStyles.inputIcon} />
                             <input 
+                                id="collectorPassword"
                                 name="password" 
                                 type={showPassword ? "text" : "password"}
                                 value={formData.password || ''} 
@@ -179,10 +183,11 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
                         {errors.password && <span className={styles.error}>{errors.password}</span>}
                     </div>
                     <div className={sharedStyles.formGroup}>
-                        <label>Confirm Password <span style={{color:'#ef4444'}}>*</span></label>
+                        <label htmlFor="collectorConfirmPassword">Confirm Password <span style={{color:'#ef4444'}}>*</span></label>
                         <div className={sharedStyles.inputWrapper}>
                             <Lock size={16} className={sharedStyles.inputIcon} />
                             <input 
+                                id="collectorConfirmPassword"
                                 name="confirmPassword" 
                                 type={showConfirmPassword ? "text" : "password"}
                                 value={formData.confirmPassword || ''} 
@@ -200,37 +205,37 @@ const CollectorFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit 
                     </>
                     )}
                     <div className={sharedStyles.formGroup}>
-                        <label>Phone Number <span style={{color:'#ef4444'}}>*</span></label>
+                        <label htmlFor="collectorPhone">Phone Number <span style={{color:'#ef4444'}}>*</span></label>
                         <div className={sharedStyles.inputWrapper}>
                             <Phone size={16} className={sharedStyles.inputIcon} />
-                            <input name="phone" maxLength="11" value={formData.phone} onChange={handleChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.phone ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} placeholder="e.g. 09123456789" />
+                            <input id="collectorPhone" name="phone" maxLength="11" value={formData.phone} onChange={handleChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.phone ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} placeholder="e.g. 09123456789" />
                         </div>
                         {errors.phone && <span className={styles.error}>{errors.phone}</span>}
                     </div>
                     <div className={sharedStyles.formGroup}>
-                        <label>Vehicle Type <span style={{color:'#ef4444'}}>*</span></label>
+                        <label htmlFor="collectorVehicleType">Vehicle Type <span style={{color:'#ef4444'}}>*</span></label>
                         <div className={sharedStyles.inputWrapper}>
                             <Truck size={16} className={sharedStyles.inputIcon} />
-                            <select name="vehicleType" value={formData.vehicleType} onChange={handleChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.vehicleType ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} aria-label="Select vehicle type">
+                            <select id="collectorVehicleType" name="vehicleType" value={formData.vehicleType} onChange={handleChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.vehicleType ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} aria-label="Select vehicle type">
                                 <option value="">Select Type</option><option value="Motorcycle">Motorcycle</option><option value="Van">Van</option><option value="Truck">Truck</option>
                             </select>
                         </div>
                         {errors.vehicleType && <span className={styles.error}>{errors.vehicleType}</span>}
                     </div>
                     <div className={sharedStyles.formGroup}>
-                        <label>Status</label>
+                        <label htmlFor="collectorModalStatus">Status</label>
                         <div className={sharedStyles.inputWrapper}>
                             <Activity size={16} className={sharedStyles.inputIcon} />
-                            <select name="status" value={formData.status} onChange={handleChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`} aria-label="Select collector status">
+                            <select id="collectorModalStatus" name="status" value={formData.status} onChange={handleChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`} aria-label="Select collector status">
                                 <option value="Active">Active</option><option value="Inactive">Inactive</option>
                             </select>
                         </div>
                     </div>
                     <div className={sharedStyles.formGroup}>
-                        <label>Vehicle Plate Number <span style={{color:'#ef4444'}}>*</span></label>
+                        <label htmlFor="collectorPlate">Vehicle Plate Number <span style={{color:'#ef4444'}}>*</span></label>
                         <div className={sharedStyles.inputWrapper}>
                             <Hash size={16} className={sharedStyles.inputIcon} />
-                            <input name="vehiclePlate" value={formData.vehiclePlate} onChange={handleChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.vehiclePlate ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} placeholder="e.g. ABC 1234" />
+                            <input id="collectorPlate" name="vehiclePlate" value={formData.vehiclePlate} onChange={handleChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.vehiclePlate ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} placeholder="e.g. ABC 1234" />
                         </div>
                         {errors.vehiclePlate && <span className={styles.error}>{errors.vehiclePlate}</span>}
                     </div>
