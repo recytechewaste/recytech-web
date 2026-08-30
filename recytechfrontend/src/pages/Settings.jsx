@@ -232,7 +232,7 @@ const Settings = () => {
                                         <User size={20} />
                                     </div>
                                     <div>
-                                        <h3 className={styles.cardTitle}>Personal Profile</h3>
+                                        <h2 className={styles.cardTitle}>Personal Profile</h2>
                                         <p className={styles.cardSubtext}>Update your identity and display information.</p>
                                     </div>
                                 </div>
@@ -256,10 +256,11 @@ const Settings = () => {
                                 <form onSubmit={handleProfileSubmit}>
                                     <div className={styles.formRow}>
                                         <div className={styles.formGroup}>
-                                            <label className={styles.label}>First Name</label>
+                                            <label htmlFor="settingsFirstName" className={styles.label}>First Name</label>
                                             <div className={styles.inputWrapper}>
                                                 <User size={16} className={styles.inputIcon} />
                                                 <input
+                                                    id="settingsFirstName"
                                                     type="text"
                                                     value={formData.firstName}
                                                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
@@ -269,10 +270,11 @@ const Settings = () => {
                                             </div>
                                         </div>
                                         <div className={styles.formGroup}>
-                                            <label className={styles.label}>Last Name</label>
+                                            <label htmlFor="settingsLastName" className={styles.label}>Last Name</label>
                                             <div className={styles.inputWrapper}>
                                                 <User size={16} className={styles.inputIcon} />
                                                 <input
+                                                    id="settingsLastName"
                                                     type="text"
                                                     value={formData.lastName}
                                                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
@@ -284,10 +286,11 @@ const Settings = () => {
                                     </div>
 
                                     <div className={styles.formGroup}>
-                                        <label className={styles.label}>Email Address</label>
+                                        <label htmlFor="settingsEmail" className={styles.label}>Email Address</label>
                                         <div className={styles.inputWrapper}>
                                             <Mail size={16} className={styles.inputIcon} />
                                             <input
+                                                id="settingsEmail"
                                                 type="email"
                                                 value={formData.email}
                                                 disabled
@@ -313,17 +316,18 @@ const Settings = () => {
                                         <KeyRound size={20} />
                                     </div>
                                     <div>
-                                        <h3 className={styles.cardTitle}>Security & Password</h3>
+                                        <h2 className={styles.cardTitle}>Security & Password</h2>
                                         <p className={styles.cardSubtext}>Update your password to keep your account secure.</p>
                                     </div>
                                 </div>
 
                                 <form onSubmit={handlePasswordSubmit}>
                                     <div className={styles.formGroup}>
-                                        <label className={styles.label}>New Password</label>
+                                        <label htmlFor="settingsNewPassword" className={styles.label}>New Password</label>
                                         <div className={styles.inputWrapper}>
                                             <Lock size={16} className={styles.inputIcon} />
                                             <input
+                                                id="settingsNewPassword"
                                                 type={showNewPassword ? 'text' : 'password'}
                                                 value={passwordData.newPassword}
                                                 onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
@@ -334,6 +338,7 @@ const Settings = () => {
                                                 type="button"
                                                 className={styles.passwordToggle}
                                                 onClick={() => setShowNewPassword(!showNewPassword)}
+                                                aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
                                             >
                                                 {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                             </button>
@@ -341,10 +346,11 @@ const Settings = () => {
                                     </div>
 
                                     <div className={styles.formGroup}>
-                                        <label className={styles.label}>Confirm New Password</label>
+                                        <label htmlFor="settingsConfirmPassword" className={styles.label}>Confirm New Password</label>
                                         <div className={styles.inputWrapper}>
                                             <Lock size={16} className={styles.inputIcon} />
                                             <input
+                                                id="settingsConfirmPassword"
                                                 type={showConfirmPassword ? 'text' : 'password'}
                                                 value={passwordData.confirmPassword}
                                                 onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
@@ -355,6 +361,7 @@ const Settings = () => {
                                                 type="button"
                                                 className={styles.passwordToggle}
                                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                                             >
                                                 {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                             </button>
