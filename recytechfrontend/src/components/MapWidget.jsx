@@ -51,13 +51,6 @@ const MapWidget = ({ bins = [], selectedBinId, onSelectBin, userGeolocation }) =
     const center = toLeafletCoords(rawCenter);
     const zoom = selectedBin ? 15 : 12;
 
-    // Custom icon for the selected marker
-    const selectedIcon = L.divIcon({
-        html: '<div style="width: 14px; height: 14px; border-radius: 999px; background: #2563eb; border: 2px solid white; box-shadow: 0 0 0 4px rgba(37,99,235,0.2);"></div>',
-        className: '',
-        iconSize: [14, 14],
-        iconAnchor: [7, 7]
-    });
 
     return (
         <div style={{ height: '100%', width: '100%', zIndex: 0, position: 'relative' }}>
@@ -94,11 +87,28 @@ const MapWidget = ({ bins = [], selectedBinId, onSelectBin, userGeolocation }) =
                 {locations.map((bin) => {
                     const isSelected = Boolean(selectedBinId && bin._id === selectedBinId);
 
+                    // Leaflet uses the icon's 'alt' to set aria-label on the marker element
+                    const markerIcon = isSelected
+                        ? L.divIcon({
+                            html: '<div style="width: 14px; height: 14px; border-radius: 999px; background: #2563eb; border: 2px solid white; box-shadow: 0 0 0 4px rgba(37,99,235,0.2);"></div>',
+                            className: '',
+                            iconSize: [14, 14],
+                            iconAnchor: [7, 7],
+                            alt: `Selected bin: ${bin.name} — ${bin.address}, Status: ${bin.status}`
+                        })
+                        : L.icon({
+                            iconUrl: icon,
+                            shadowUrl: iconShadow,
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41],
+                            alt: `Bin: ${bin.name} — ${bin.address}, Status: ${bin.status}`
+                        });
+
                     return (
                         <Marker
                             key={bin._id}
                             position={toLeafletCoords(bin.location.coordinates)}
-                            icon={isSelected ? selectedIcon : DefaultIcon}
+                            icon={markerIcon}
                             eventHandlers={{ click: () => onSelectBin?.(bin._id) }}
                         >
                             <Popup>
