@@ -86,7 +86,7 @@ const RequestTable = ({ requests, loading, limit }) => {
             <tr>
               <td colSpan="6" className={styles.emptyTd}>
                 <AlertTriangle size={48} className="mx-auto text-gray-400" />
-                <h3 className="mt-2 text-lg font-semibold text-gray-700">No Requests Found</h3>
+                <p className="mt-2 text-lg font-semibold text-gray-700"><strong>No Requests Found</strong></p>
                 <p className="text-gray-500">There are no collection requests matching your filters.</p>
               </td>
             </tr>
