@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Loader2, ArrowLeft, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import api from '../api/client';
 import styles from '../styles/ForgotPassword.module.css'; // Reuse styles
-import logo from '../assets/recytech_logo.png';
+import logo from '../assets/recytech_logo.webp';
 import { useToast } from '../context/ToastContext';
 
 const VerifyPin = () => {
@@ -61,7 +61,7 @@ const VerifyPin = () => {
 
     return (
         <div className={styles.pageContainer}>
-            <div className={styles.topBar}>
+            <header className={styles.topBar}>
                 <div className={styles.logoContainer}>
                     <div className={styles.logoIcon} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
                         <img src={logo} alt="RecyTech Logo" style={{ width: '48px', height: '48px', objectFit: 'contain' }} />
@@ -70,9 +70,9 @@ const VerifyPin = () => {
                         RecyTech <span style={{ fontWeight: '400', opacity: '0.9' }}>Admin Portal</span>
                     </span>
                 </div>
-            </div>
+            </header>
 
-            <div className={styles.contentContainer}>
+            <main className={styles.contentContainer}>
                 <div className={styles.card}>
                     <h1 className={styles.header}>Verify PIN & Reset Password</h1>
                     <p className={styles.subtext}>Enter the PIN sent to your email and set a new password.</p>
@@ -174,7 +174,7 @@ const VerifyPin = () => {
                         <span>Support</span>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 };
