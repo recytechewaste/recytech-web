@@ -102,34 +102,34 @@ setShowConfirmPassword(true);
         <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit User' : 'Add New User'}>
             <form onSubmit={handleSubmit} className={sharedStyles.form} noValidate>
                 <div className={sharedStyles.formGroup}>
-                    <label>First Name</label>
+                    <label htmlFor="userFirstName">First Name</label>
                     <div className={sharedStyles.inputWrapper}>
                         <User size={16} className={sharedStyles.inputIcon} />
-                        <input name="firstName" placeholder="e.g., Juan" value={formData.firstName} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.firstName ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} />
+                        <input id="userFirstName" name="firstName" placeholder="e.g., Juan" value={formData.firstName} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.firstName ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} />
                     </div>
                     {errors.firstName && <span className={styles.error}>{errors.firstName}</span>}
                 </div>
                 <div className={sharedStyles.formGroup}>
-                    <label>Last Name</label>
+                    <label htmlFor="userLastName">Last Name</label>
                     <div className={sharedStyles.inputWrapper}>
                         <User size={16} className={sharedStyles.inputIcon} />
-                        <input name="lastName" placeholder="e.g., Dela Cruz" value={formData.lastName} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.lastName ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} />
+                        <input id="userLastName" name="lastName" placeholder="e.g., Dela Cruz" value={formData.lastName} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.lastName ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} />
                     </div>
                     {errors.lastName && <span className={styles.error}>{errors.lastName}</span>}
                 </div>
                 <div className={sharedStyles.formGroup}>
-                    <label>Email Address</label>
+                    <label htmlFor="userEmail">Email Address</label>
                     <div className={sharedStyles.inputWrapper}>
                         <Mail size={16} className={sharedStyles.inputIcon} />
-                        <input name="email" type="email" placeholder="e.g., user@recytech.com" value={formData.email} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.email ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} disabled={isEditing} />
+                        <input id="userEmail" name="email" type="email" placeholder="e.g., user@recytech.com" value={formData.email} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.email ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} disabled={isEditing} />
                     </div>
                     {errors.email && <span className={styles.error}>{errors.email}</span>}
                 </div>
                 <div className={sharedStyles.formGroup}>
-                    <label>Role</label>
+                    <label htmlFor="userRole">Role</label>
                     <div className={sharedStyles.inputWrapper}>
                         <UserCog size={16} className={sharedStyles.inputIcon} />
-                        <select name="role" value={formData.role} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}>
+                        <select id="userRole" name="role" value={formData.role} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}>
                             <option value="Staff">Staff</option>
                             <option value="Admin">Admin</option>
                             <option value="Super Admin">Super Admin</option>
@@ -137,10 +137,10 @@ setShowConfirmPassword(true);
                     </div>
                 </div>
                 <div className={sharedStyles.formGroup}>
-                    <label>Status</label>
+                    <label htmlFor="userStatus">Status</label>
                     <div className={sharedStyles.inputWrapper}>
                         <Activity size={16} className={sharedStyles.inputIcon} />
-                        <select name="status" value={formData.status} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}>
+                        <select id="userStatus" name="status" value={formData.status} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}>
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                         </select>
@@ -150,13 +150,13 @@ setShowConfirmPassword(true);
                 <>
                 <div className={sharedStyles.formGroup}>
                     <div className={styles.passwordHeader}>
-                        <label>Password <span style={{color: '#ef4444'}}>*</span></label>
+                        <label htmlFor="userPassword">Password <span style={{color: '#ef4444'}}>*</span></label>
                         <button type="button" onClick={handleGeneratePassword} className={styles.generateBtn}>Generate Password</button>
                     </div>
                     <div className={sharedStyles.inputWrapper}>
                         <Lock size={16} className={sharedStyles.inputIcon} />
-                        <input name="password" type={showPassword ? "text" : "password"} placeholder="Login password" value={formData.password || ''} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.password ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} style={{ width: '100%', paddingRight: '65px' }} />
-                        <button type="button" onClick={copyToClipboard} className={styles.copyBtn} title="Copy to clipboard">
+                        <input id="userPassword" name="password" type={showPassword ? "text" : "password"} placeholder="Login password" value={formData.password || ''} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.password ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} style={{ width: '100%', paddingRight: '65px' }} />
+                        <button type="button" onClick={copyToClipboard} className={styles.copyBtn} title="Copy to clipboard" aria-label="Copy generated password">
                             {copied ? <Check size={16} color="#059669" /> : <Copy size={16} />}
                         </button>
                         <button type="button" onClick={() => setShowPassword(!showPassword)} className={styles.eyeBtn}>

@@ -36,8 +36,22 @@ const UserTableRow = ({ user, index, page, limit, onEdit, onDelete }) => (
         </td>
         <td className={styles.td}>
             <div className={styles.actionIcons}>
-                <button title="Edit user" className={styles.iconBtn} onClick={() => onEdit(user)}><Edit2 size={16}/></button>
-                <button title="Delete user" className={styles.iconBtnDanger} onClick={() => onDelete(user._id)}><Trash2 size={16}/></button>
+                <button
+                    title="Edit user"
+                    aria-label={`Edit user ${user.firstName} ${user.lastName}`}
+                    className={styles.iconBtn}
+                    onClick={() => onEdit(user)}
+                >
+                    <Edit2 size={16}/>
+                </button>
+                <button
+                    title="Delete user"
+                    aria-label={`Delete user ${user.firstName} ${user.lastName}`}
+                    className={styles.iconBtnDanger}
+                    onClick={() => onDelete(user._id)}
+                >
+                    <Trash2 size={16}/>
+                </button>
             </div>
         </td>
     </tr>
