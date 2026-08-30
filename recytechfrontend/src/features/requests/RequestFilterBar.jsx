@@ -21,12 +21,15 @@ const RequestFilterBar = ({
           className={styles.searchInput}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          aria-label="Search collection requests"
         />
       </div>
 
       <div className={styles.filterGroup}>
         <SlidersHorizontal className={styles.filterIcon} size={16} />
+        <label htmlFor="statusFilter" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Filter by status</label>
         <select
+          id="statusFilter"
           className={styles.selectInput}
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -40,7 +43,9 @@ const RequestFilterBar = ({
       </div>
 
       <div className={styles.filterGroup}>
+        <label htmlFor="typeFilter" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Filter by type</label>
         <select
+          id="typeFilter"
           className={styles.selectInput}
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
@@ -51,7 +56,7 @@ const RequestFilterBar = ({
         </select>
       </div>
 
-      <button onClick={handleClearFilters} className={styles.clearBtn}>
+      <button onClick={handleClearFilters} className={styles.clearBtn} aria-label="Clear filters">
         <Trash2 size={14} />
         Clear
       </button>
