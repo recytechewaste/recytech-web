@@ -160,47 +160,132 @@
 
 .list {
     overflow-y: auto;
-    padding: 8px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
 }
 
 .listItem {
     display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease;
+}
+
+.listItem:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.selectedItem {
+    border-color: #3b82f6 !important;
+    background-color: #eff6ff !important;
+    box-shadow: 0 0 0 1px #3b82f6, 0 4px 12px rgba(59, 130, 246, 0.12) !important;
+}
+
+.listItemHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.binName {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.35;
+    word-break: break-word;
+    flex: 1;
+}
+
+.listItemFooter {
+    display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: background-color 0.2s, border-color 0.2s;
+    gap: 8px;
+    padding-top: 2px;
 }
-.listItem:hover { background-color: #f9fafb; }
-.selectedItem { border-color: #3b82f6; background-color: #eff6ff; }
-.binName { font-size: 14px; font-weight: 600; color: #111827; }
-.listItemInfo { display: flex; align-items: center; flex: 1; min-width: 0; }
-.listActions { display: flex; gap: 8px; align-items: center; }
+
+.lguBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    max-width: 200px;
+}
+
+.lguIcon {
+    flex-shrink: 0;
+    color: #059669;
+}
+
+.lguText {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.unassignedBadge {
+    font-size: 11px;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.listActions {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    margin-left: auto;
+    flex-shrink: 0;
+}
 
 .actionBtn, .actionBtnDanger {
-    background: none;
-    border: none;
-    padding: 6px;
-    border-radius: 50%;
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 5px;
+    border-radius: 6px;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.2s, color 0.2s;
+    transition: all 0.15s ease;
 }
 
-.actionBtn { color: #6b7280; }
-.actionBtn:hover { background-color: #f3f4f6; color: #1f2937; }
+.actionBtn {
+    color: #64748b;
+}
+
+.actionBtn:hover {
+    background-color: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #0f172a;
+}
 
 .actionBtnDanger {
-    color: #9ca3af;
+    color: #94a3b8;
 }
-.actionBtnDanger:hover { background-color: #fef2f2; color: #ef4444; }
+
+.actionBtnDanger:hover {
+    background-color: #fee2e2;
+    border-color: #fecaca;
+    color: #ef4444;
+}
 
 .meta { font-size: 12px; color: #6b7280; }
 /* --- Center Panel: Map --- */

@@ -19,20 +19,25 @@ const BinListItem = ({ bin, isSelected, onSelect, onEdit, onDelete, canManage = 
             className={`${styles.listItem} ${isSelected ? styles.selectedItem : ''}`}
             onClick={() => onSelect(bin._id)}
         >
-            <div className={styles.listItemInfo}>
-                <strong className={styles.binName}>{bin.name}</strong>
-                {lguName && (
-                    <span style={{ fontSize: '11px', color: '#059669', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px', fontWeight: 500 }}>
-                        <Building2 size={11} /> {lguName}
-                    </span>
-                )}
-            </div>
-            <div className={styles.listActions}>
+            <div className={styles.listItemHeader}>
+                <h4 className={styles.binName} title={bin.name}>{bin.name}</h4>
                 <span className={`${styles.badge} ${bin.status === 'Empty' ? styles.badgeEmpty : bin.status === 'Full' ? styles.badgeFull : styles.badgeMaintenance}`}>
                     {bin.status}
                 </span>
+            </div>
+
+            <div className={styles.listItemFooter}>
+                {lguName ? (
+                    <span className={styles.lguBadge} title={`Assigned LGU: ${lguName}`}>
+                        <Building2 size={12} className={styles.lguIcon} />
+                        <span className={styles.lguText}>{lguName}</span>
+                    </span>
+                ) : (
+                    <span className={styles.unassignedBadge}>Unassigned</span>
+                )}
+
                 {canManage && (
-                    <>
+                    <div className={styles.listActions} onClick={(e) => e.stopPropagation()}>
                         <button
                             type="button"
                             className={styles.actionBtn}
@@ -40,7 +45,7 @@ const BinListItem = ({ bin, isSelected, onSelect, onEdit, onDelete, canManage = 
                             title="Edit bin"
                             aria-label={`Edit bin ${bin.name}`}
                         >
-                            <Pencil size={16} />
+                            <Pencil size={15} />
                         </button>
                         <button
                             type="button"
@@ -49,9 +54,9 @@ const BinListItem = ({ bin, isSelected, onSelect, onEdit, onDelete, canManage = 
                             title="Delete bin"
                             aria-label={`Delete bin ${bin.name}`}
                         >
-                            <Trash2 size={16} />
+                            <Trash2 size={15} />
                         </button>
-                    </>
+                    </div>
                 )}
             </div>
         </div>
