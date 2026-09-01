@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import LocationPickerMap from '../../components/LocationPickerMap';
+import LocationPickerMap, { toLeafletCoords } from '../../components/LocationPickerMap';
 import { Tag, QrCode, Weight, Activity, Loader2, Building2 } from 'lucide-react';
 import styles from '../../styles/BinNetwork.module.css';
 import sharedStyles from '../../styles/Layout.module.css';
@@ -16,7 +16,7 @@ const createEmptyBinForm = () => ({
     assignedLgu: '',
     location: {
         type: 'Point',
-        coordinates: [...DEFAULT_COORDINATES]
+        coordinates: [120.9842, 14.5995]
     }
 });
 
@@ -81,9 +81,10 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
     };
 
     const handleLocationPick = async (coordinates) => {
+        const [lat, lng] = toLeafletCoords(coordinates);
         const nextLocation = {
             type: 'Point',
-            coordinates
+            coordinates: [lng, lat]
         };
 
         setBinForm((current) => ({
@@ -92,7 +93,7 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
             address: 'Fetching address...'
         }));
 
-        const address = await fetchAddressFromCoordinates(coordinates[0], coordinates[1]);
+        const address = await fetchAddressFromCoordinates(lat, lng);
         setBinForm((current) => ({ ...current, address }));
         if (errors.location) setErrors((prev) => ({ ...prev, location: '' }));
     };
@@ -101,11 +102,16 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
         event.preventDefault();
         if (!validateForm()) return;
 
+        const [lat, lng] = toLeafletCoords(binForm.location?.coordinates);
         const payload = {
             ...binForm,
             capacityKg: Number(binForm.capacityKg),
             currentFillKg: initialBin?.currentFillKg || 0,
-            address: binForm.address || `Pinned at ${binForm.location.coordinates[0].toFixed(4)}, ${binForm.location.coordinates[1].toFixed(4)}`,
+            location: {
+                type: 'Point',
+                coordinates: [lng, lat]
+            },
+            address: binForm.address || `Pinned at ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
         };
         onSubmit(payload);
     };

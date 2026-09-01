@@ -12,18 +12,26 @@ const Modal = ({
 }) => {
     const bodyRef = useRef(null);
 
-    // Prevent background scroll while open and reset scroll to top
+    // Prevent background scroll while open
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden'; 
-            if (bodyRef.current) {
-                bodyRef.current.scrollTop = 0;
-            }
         }
         return () => {
             document.body.style.overflow = 'unset';
         };
     }, [isOpen]);
+
+    // Reset scroll position to top whenever modal opens
+    useEffect(() => {
+        if (isOpen && bodyRef.current) {
+            bodyRef.current.scrollTop = 0;
+            const timer = setTimeout(() => {
+                if (bodyRef.current) bodyRef.current.scrollTop = 0;
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen, children]);
 
     if (!isOpen) return null;
 
