@@ -50,7 +50,7 @@ const EWasteMetrics = ({ stats = {}, monthlyData }) => {
                     <span className={styles.kpiLabel}>Operational Bins</span>
                     <Box size={20} style={{ color: '#8b5cf6' }} />
                 </div>
-                <span className={styles.kpiValue}>{operational} <span className={styles.kpiSub}>/ {totalBins} Online</span></span>
+                <span className={styles.kpiValue}>{operational} <span className={styles.kpiSub}>/ {totalBins} Operational</span></span>
                 <p className={styles.kpiSub}>Bins active in network</p>
             </div>
         </div>
