@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import styles from '../styles/Modal.module.css';
 
@@ -10,10 +10,15 @@ const Modal = ({
     maxWidth = '500px',
     hideCloseButton = false
 }) => {
-    // Prevent background scroll while open
+    const bodyRef = useRef(null);
+
+    // Prevent background scroll while open and reset scroll to top
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden'; 
+            if (bodyRef.current) {
+                bodyRef.current.scrollTop = 0;
+            }
         }
         return () => {
             document.body.style.overflow = 'unset';
@@ -23,7 +28,7 @@ const Modal = ({
     if (!isOpen) return null;
 
     return (
-        <div className={styles.overlay}>
+        <div className={styles.overlay} onClick={onClose}>
             <div
                 className={styles.panel}
                 style={{ maxWidth }}
@@ -39,7 +44,7 @@ const Modal = ({
                         )}
                     </div>
                 )}
-                <div className={styles.body}>
+                <div ref={bodyRef} className={styles.body}>
                     {children}
                 </div>
             </div>
