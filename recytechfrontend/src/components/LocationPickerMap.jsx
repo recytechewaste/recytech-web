@@ -14,6 +14,19 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
+const DEFAULT_CENTER = [14.5995, 120.9842];
+
+export const toLeafletCoords = (coords) => {
+    if (!Array.isArray(coords) || coords.length !== 2) return DEFAULT_CENTER;
+    const [c0, c1] = coords.map(Number);
+    if (isNaN(c0) || isNaN(c1)) return DEFAULT_CENTER;
+    // If c0 is longitude (> 90 or < -90) and c1 is latitude (<= 90), swap for Leaflet [lat, lng]
+    if (Math.abs(c0) > 90 && Math.abs(c1) <= 90) {
+        return [c1, c0];
+    }
+    return [c0, c1];
+};
+
 const MapClickHandler = ({ onSelect, setMarkerPosition }) => {
     useMapEvents({
         click: (event) => {
@@ -74,19 +87,25 @@ const MapSetup = ({ center, zoom }) => {
 };
 
 const LocationPickerMap = ({ position, onSelect }) => {
-    const [markerPosition, setMarkerPosition] = useState(position);
+    const leafletCoords = toLeafletCoords(position);
+    const [markerPosition, setMarkerPosition] = useState(leafletCoords);
 
     useEffect(() => {
-        setMarkerPosition(position);
+        setMarkerPosition(toLeafletCoords(position));
     }, [position]);
 
     return (
-        <MapContainer center={position} zoom={15} style={{ height: '100%', width: '100%' }}>
+        <MapContainer
+            center={leafletCoords}
+            zoom={15}
+            style={{ height: '100%', width: '100%' }}
+            scrollWheelZoom={false}
+        >
             <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <MapSetup center={position} zoom={15} />
+            <MapSetup center={leafletCoords} zoom={15} />
             <MapClickHandler onSelect={onSelect} setMarkerPosition={setMarkerPosition} />
             <Marker position={markerPosition}>
                 <Popup>Click to place the bin pin</Popup>
