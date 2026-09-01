@@ -43,6 +43,7 @@ const Settings = () => {
         email: '',
         role: ''
     });
+    const [profileErrors, setProfileErrors] = useState({});
 
     // Password state
     const [passwordData, setPasswordData] = useState({
@@ -104,19 +105,60 @@ const Settings = () => {
     const strengthLabel = validCount <= 2 ? 'Weak' : validCount <= 4 ? 'Moderate' : 'Strong';
     const strengthColor = validCount <= 2 ? '#ef4444' : validCount <= 4 ? '#f59e0b' : '#10b981';
 
+    // Handle Name Input Change (Sanitize digits & clear errors)
+    const handleNameChange = (field, value) => {
+        const cleanedValue = value.replace(/\d/g, ''); // Instantly strip out digits
+        setFormData(prev => ({ ...prev, [field]: cleanedValue }));
+        if (profileErrors[field]) {
+            setProfileErrors(prev => ({ ...prev, [field]: '' }));
+        }
+    };
+
+    // Profile Form Validation
+    const validateProfile = () => {
+        const errors = {};
+        const nameRegex = /^[a-zA-Z\u00C0-\u024F\s.'-]+$/;
+
+        const trimmedFirst = formData.firstName.trim();
+        if (!trimmedFirst) {
+            errors.firstName = 'First name is required.';
+        } else if (trimmedFirst.length < 2) {
+            errors.firstName = 'First name must be at least 2 characters.';
+        } else if (trimmedFirst.length > 50) {
+            errors.firstName = 'First name cannot exceed 50 characters.';
+        } else if (!nameRegex.test(trimmedFirst)) {
+            errors.firstName = 'First name can only contain letters, spaces, hyphens, and apostrophes.';
+        }
+
+        const trimmedLast = formData.lastName.trim();
+        if (!trimmedLast) {
+            errors.lastName = 'Last name is required.';
+        } else if (trimmedLast.length < 2) {
+            errors.lastName = 'Last name must be at least 2 characters.';
+        } else if (trimmedLast.length > 50) {
+            errors.lastName = 'Last name cannot exceed 50 characters.';
+        } else if (!nameRegex.test(trimmedLast)) {
+            errors.lastName = 'Last name can only contain letters, spaces, hyphens, and apostrophes.';
+        }
+
+        setProfileErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
     // Handle Profile Save
     const handleProfileSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.firstName.trim() || !formData.lastName.trim()) {
-            notify('First name and last name are required.', 'error');
+        
+        if (!validateProfile()) {
+            notify('Please correct the highlighted errors before saving.', 'error');
             return;
         }
 
         setLoading(true);
         try {
             const { data } = await api.put('/users/profile', {
-                firstName: formData.firstName,
-                lastName: formData.lastName
+                firstName: formData.firstName.trim(),
+                lastName: formData.lastName.trim()
             });
 
             // Update local storage and savedUser state ONLY after successful backend response
@@ -130,6 +172,7 @@ const Settings = () => {
                 lastName: data.lastName
             }));
 
+            setProfileErrors({});
             notify('Profile information updated successfully!', 'success');
         } catch (err) {
             const msg = err.response?.data?.message || 'Failed to update profile';
@@ -253,35 +296,45 @@ const Settings = () => {
                                     </div>
                                 </div>
 
-                                <form onSubmit={handleProfileSubmit}>
+                                <form onSubmit={handleProfileSubmit} noValidate>
                                     <div className={styles.formRow}>
                                         <div className={styles.formGroup}>
-                                            <label htmlFor="settingsFirstName" className={styles.label}>First Name</label>
+                                            <label htmlFor="settingsFirstName" className={styles.label}>
+                                                First Name <span style={{ color: '#ef4444' }}>*</span>
+                                            </label>
                                             <div className={styles.inputWrapper}>
                                                 <User size={16} className={styles.inputIcon} />
                                                 <input
                                                     id="settingsFirstName"
                                                     type="text"
+                                                    placeholder="e.g., Juan"
                                                     value={formData.firstName}
-                                                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                                    className={styles.input}
-                                                    required
+                                                    onChange={(e) => handleNameChange('firstName', e.target.value)}
+                                                    className={`${styles.input} ${profileErrors.firstName ? styles.inputError : ''}`}
                                                 />
                                             </div>
+                                            {profileErrors.firstName && (
+                                                <span className={styles.error}>{profileErrors.firstName}</span>
+                                            )}
                                         </div>
                                         <div className={styles.formGroup}>
-                                            <label htmlFor="settingsLastName" className={styles.label}>Last Name</label>
+                                            <label htmlFor="settingsLastName" className={styles.label}>
+                                                Last Name <span style={{ color: '#ef4444' }}>*</span>
+                                            </label>
                                             <div className={styles.inputWrapper}>
                                                 <User size={16} className={styles.inputIcon} />
                                                 <input
                                                     id="settingsLastName"
                                                     type="text"
+                                                    placeholder="e.g., Dela Cruz"
                                                     value={formData.lastName}
-                                                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                                    className={styles.input}
-                                                    required
+                                                    onChange={(e) => handleNameChange('lastName', e.target.value)}
+                                                    className={`${styles.input} ${profileErrors.lastName ? styles.inputError : ''}`}
                                                 />
                                             </div>
+                                            {profileErrors.lastName && (
+                                                <span className={styles.error}>{profileErrors.lastName}</span>
+                                            )}
                                         </div>
                                     </div>
 

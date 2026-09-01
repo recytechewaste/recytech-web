@@ -140,8 +140,41 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id);
 
     if (user) {
-        user.firstName = req.body.firstName || user.firstName;
-        user.lastName = req.body.lastName || user.lastName;
+        if (req.body.firstName !== undefined) {
+            const trimmedFirst = req.body.firstName.trim();
+            if (!trimmedFirst || trimmedFirst.length < 2) {
+                res.status(400);
+                throw new Error('First name must be at least 2 characters');
+            }
+            if (trimmedFirst.length > 50) {
+                res.status(400);
+                throw new Error('First name cannot exceed 50 characters');
+            }
+            const nameRegex = /^[a-zA-Z\u00C0-\u024F\s.'-]+$/;
+            if (!nameRegex.test(trimmedFirst)) {
+                res.status(400);
+                throw new Error('First name can only contain letters, spaces, hyphens, and apostrophes');
+            }
+            user.firstName = trimmedFirst;
+        }
+
+        if (req.body.lastName !== undefined) {
+            const trimmedLast = req.body.lastName.trim();
+            if (!trimmedLast || trimmedLast.length < 2) {
+                res.status(400);
+                throw new Error('Last name must be at least 2 characters');
+            }
+            if (trimmedLast.length > 50) {
+                res.status(400);
+                throw new Error('Last name cannot exceed 50 characters');
+            }
+            const nameRegex = /^[a-zA-Z\u00C0-\u024F\s.'-]+$/;
+            if (!nameRegex.test(trimmedLast)) {
+                res.status(400);
+                throw new Error('Last name can only contain letters, spaces, hyphens, and apostrophes');
+            }
+            user.lastName = trimmedLast;
+        }
 
         if (req.body.password) {
             const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
