@@ -30,14 +30,43 @@ const MapSetup = ({ center, zoom }) => {
     const initial = useRef(true);
 
     useEffect(() => {
+        // Immediate invalidate
         map.invalidateSize();
+
+        // Staggered invalidations to wait for modal enter transitions and DOM reflow
+        const timeouts = [
+            setTimeout(() => map.invalidateSize(), 50),
+            setTimeout(() => map.invalidateSize(), 150),
+            setTimeout(() => map.invalidateSize(), 300),
+            setTimeout(() => map.invalidateSize(), 600)
+        ];
+
+        // Setup ResizeObserver on the map container
+        const container = map.getContainer();
+        let observer = null;
+        if (typeof ResizeObserver !== 'undefined' && container) {
+            observer = new ResizeObserver(() => {
+                map.invalidateSize();
+            });
+            observer.observe(container);
+        }
+
+        return () => {
+            timeouts.forEach(clearTimeout);
+            if (observer && container) {
+                observer.unobserve(container);
+            }
+        };
     }, [map]);
 
     useEffect(() => {
         if (initial.current) {
             initial.current = false;
+            map.invalidateSize();
+            map.setView(center, zoom);
             return;
         }
+        map.invalidateSize();
         map.flyTo(center, zoom, { duration: 0.8 });
     }, [center, zoom, map]);
 
