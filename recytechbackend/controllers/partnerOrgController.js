@@ -51,7 +51,7 @@ const createPartnerOrg = asyncHandler(async (req, res) => {
 const getAllPartnerOrgs = asyncHandler(async (req, res) => {
   const partnerOrgs = await PartnerOrganization.find({}).lean();
   const allBins = await RecyclingCenter.find({ assignedLgu: { $exists: true, $ne: null } })
-    .select('name address qrCode capacityKg currentFillKg status assignedLgu location')
+    .select('name address qrCode qrCodeImage capacityKg currentFillKg status assignedLgu location')
     .lean();
 
   const orgsWithBins = partnerOrgs.map(org => {
@@ -73,7 +73,7 @@ const getPartnerOrgById = asyncHandler(async (req, res) => {
 
   if (partnerOrg) {
     const assignedBins = await RecyclingCenter.find({ assignedLgu: req.params.id })
-      .select('name address qrCode capacityKg currentFillKg status location')
+      .select('name address qrCode qrCodeImage capacityKg currentFillKg status location')
       .lean();
     res.json({
       ...partnerOrg,

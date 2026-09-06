@@ -30,7 +30,8 @@
     "mailersend": "^3.0.0",
     "mongoose": "^9.1.5",
     "node-cache": "^5.1.2",
-    "nodemailer": "^9.0.5"
+    "nodemailer": "^9.0.5",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

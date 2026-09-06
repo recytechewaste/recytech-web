@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import LocationPickerMap, { toLeafletCoords } from '../../components/LocationPickerMap';
 import { Tag, QrCode, Weight, Activity, Loader2, Building2 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import styles from '../../styles/BinNetwork.module.css';
 import sharedStyles from '../../styles/Layout.module.css';
 
@@ -145,6 +146,12 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
                             placeholder="e.g. BIN-NORTH-001"
                         />
                     </div>
+                    {binForm.qrCode && (
+                        <div className={styles.qrPreviewCard}>
+                            <QRCodeSVG value={binForm.qrCode} size={120} level="M" />
+                            <span className={styles.qrPreviewLabel}>{binForm.qrCode}</span>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className={sharedStyles.formRow}>
