@@ -1,5 +1,15 @@
 const RecyclingCenter = require('../models/RecyclingCenter');
 const { asyncHandler } = require('../utils/asyncHandler');
+const QRCode = require('qrcode');
+
+const generateQrImage = async (qrCode) => {
+    if (!qrCode) return null;
+    return QRCode.toDataURL(qrCode, {
+        width: 256,
+        margin: 2,
+        color: { dark: '#000000', light: '#ffffff' }
+    });
+};
 
 const getCenters = asyncHandler(async (req, res) => {
     const centers = await RecyclingCenter.find()
@@ -62,12 +72,14 @@ const createCenter = asyncHandler(async (req, res) => {
     const { name, location, address, qrCode, capacityKg, currentFillKg, status, description, assignedCollector, assignedLgu } = req.body;
     
     const formattedLocation = ensureGeoJsonLocation(location);
+    const qrCodeImage = await generateQrImage(qrCode);
 
     const center = await RecyclingCenter.create({
         name,
         location: formattedLocation,
         address,
         qrCode,
+        qrCodeImage,
         capacityKg,
         currentFillKg,
         status,
@@ -87,10 +99,11 @@ const updateCenter = asyncHandler(async (req, res) => {
     const { name, location, address, qrCode, capacityKg, currentFillKg, status, description, assignedCollector, assignedLgu } = req.body;
 
     const formattedLocation = ensureGeoJsonLocation(location);
+    const qrCodeImage = await generateQrImage(qrCode);
 
     const updatedCenter = await RecyclingCenter.findByIdAndUpdate(
         req.params.id,
-        { name, location: formattedLocation, address, qrCode, capacityKg, currentFillKg, status, description, assignedCollector, assignedLgu },
+        { name, location: formattedLocation, address, qrCode, qrCodeImage, capacityKg, currentFillKg, status, description, assignedCollector, assignedLgu },
         { new: true }
     ).populate('assignedCollector', 'firstName lastName phone vehiclePlate status')
      .populate('assignedLgu', 'name contactPerson phone email jurisdiction status');

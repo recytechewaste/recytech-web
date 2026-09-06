@@ -24,6 +24,9 @@ const recyclingCenterSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    qrCodeImage: {
+        type: String,  // Base64 data URL of generated QR PNG
+    },
     capacityKg: {
         type: Number,
         default: 500,

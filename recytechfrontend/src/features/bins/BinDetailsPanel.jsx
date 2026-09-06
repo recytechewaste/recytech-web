@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Download } from 'lucide-react';
 import styles from '../../styles/BinNetwork.module.css';
 
 const BinDetailsPanel = ({ bin, onEdit, onDelete }) => {
@@ -43,15 +43,34 @@ const BinDetailsPanel = ({ bin, onEdit, onDelete }) => {
                     </div>
                     <p className={styles.detailValue}>{fillPercentage.toFixed(1)}% full ({bin.currentFillKg || 0} / {bin.capacityKg} kg)</p>
                 </div>
-                <div className={styles.detailGrid}>
-                    <div className={styles.detailGroup}>
-                        <p className={styles.detailLabel}>QR Code</p>
-                        <p className={styles.detailValue}>{bin.qrCode || 'N/A'}</p>
-                    </div>
-                    <div className={styles.detailGroup}>
-                        <p className={styles.detailLabel}>Last Emptied</p>
-                        <p className={styles.detailValue}>{bin.lastEmptied ? new Date(bin.lastEmptied).toLocaleDateString() : 'N/A'}</p>
-                    </div>
+                <div className={styles.detailGroup}>
+                    <p className={styles.detailLabel}>QR Code</p>
+                    {bin.qrCodeImage ? (
+                        <div className={styles.qrDisplayCard}>
+                            <img src={bin.qrCodeImage} alt={`QR: ${bin.qrCode}`} className={styles.qrDisplayImage} />
+                            <div className={styles.qrDisplayInfo}>
+                                <span className={styles.qrDisplayName}>{bin.qrCode}</span>
+                                <button
+                                    type="button"
+                                    className={styles.downloadQrBtn}
+                                    onClick={() => {
+                                        const link = document.createElement('a');
+                                        link.download = `${bin.qrCode || 'bin-qr'}.png`;
+                                        link.href = bin.qrCodeImage;
+                                        link.click();
+                                    }}
+                                >
+                                    <Download size={13} /> Download QR
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className={styles.detailValue}>{bin.qrCode || 'No QR assigned'}</p>
+                    )}
+                </div>
+                <div className={styles.detailGroup}>
+                    <p className={styles.detailLabel}>Last Emptied</p>
+                    <p className={styles.detailValue}>{bin.lastEmptied ? new Date(bin.lastEmptied).toLocaleDateString() : 'N/A'}</p>
                 </div>
             </div>
             <div className={styles.panelFooter}>
