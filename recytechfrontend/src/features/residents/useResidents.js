@@ -1,30 +1,31 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../../api/client';
 import { usePagination } from '../../hooks/usePagination';
+import { useToast } from '../../context/ToastContext';
 
 export const useResidents = () => {
     const [residents, setResidents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
+    const { showToast } = useToast();
 
-    const { page, limit, pages, total, goToPage, updatePaginationInfo, hasNextPage, hasPrevPage } = usePagination(1, 10);
-
-    const fetchResidents = async () => {
+    const fetchResidents = useCallback(async () => {
         setLoading(true);
         try {
             const res = await api.get('/residents', { params: { limit: 1000 } });
             setResidents(res.data.residents || res.data || []);
         } catch (error) {
             console.error('Error fetching residents:', error);
+            showToast('Failed to fetch registered users.', 'error');
         } finally {
             setLoading(false);
         }
-    };
+    }, [showToast]);
 
     useEffect(() => {
         fetchResidents();
-    }, []);
+    }, [fetchResidents]);
 
     const filteredResidents = residents.filter((resident) => {
         const search = searchTerm.toLowerCase();
@@ -38,17 +39,14 @@ export const useResidents = () => {
         return matchesSearch && matchesStatus;
     });
 
-    useEffect(() => {
-        updatePaginationInfo({
-            total: filteredResidents.length,
-            pages: Math.ceil(filteredResidents.length / limit) || 1
-        });
-    }, [filteredResidents.length, limit, updatePaginationInfo]);
-
-    const paginatedResidents = filteredResidents.slice((page - 1) * limit, page * limit);
+    const { currentData: paginatedResidents, currentPage, totalPages, setPage } = usePagination(filteredResidents, 10);
 
     return {
-        loading, searchTerm, setSearchTerm, statusFilter, setStatusFilter, filteredResidents, paginatedResidents, fetchResidents,
-        page, limit, pages, total, goToPage, hasNextPage, hasPrevPage
+        loading, 
+        searchTerm, setSearchTerm, 
+        statusFilter, setStatusFilter, 
+        filteredResidents, paginatedResidents, 
+        fetchResidents,
+        currentPage, totalPages, setPage
     };
 };

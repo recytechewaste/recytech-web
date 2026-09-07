@@ -11,20 +11,20 @@ const ResidentManagement = () => {
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
         filteredResidents, paginatedResidents, fetchResidents,
-        page, limit, pages, goToPage, hasNextPage, hasPrevPage
+        currentPage, totalPages, setPage
     } = useResidents();
 
     return (
         <div className={styles.container}>
-            <Sidebar activePage="Mobile User Management" />
+            <Sidebar activePage="Registered Users" />
             <main className={styles.main}>
                 <header className={styles.header}>
                     <div className={styles.titleGroup}>
-                        <h1>Participant Audit</h1>
-                        <p>Review verified participant activity, point balances, and contribution history.</p>
+                        <h1>Registered Users</h1>
+                        <p>Review registered mobile participants, point balances, and activity.</p>
                     </div>
                     <div className={styles.actionButtons}>
-                        <button className={styles.addBtn} onClick={() => fetchResidents()}>Refresh Audit</button>
+                        <button className={styles.addBtn} onClick={() => fetchResidents()}>Refresh Users</button>
                     </div>
                 </header>
 
@@ -39,19 +39,18 @@ const ResidentManagement = () => {
                 <ResidentTable
                     residents={paginatedResidents}
                     loading={loading}
-                    onEdit={() => { /* TODO */ }}
-                    onDelete={() => { /* TODO */ }}
+                    onEdit={() => {}}
+                    onDelete={() => {}}
                 />
 
-                <Pagination
-                    page={page}
-                    pages={pages}
-                    total={filteredResidents.length}
-                    limit={limit}
-                    goToPage={goToPage}
-                    hasNextPage={hasNextPage}
-                    hasPrevPage={hasPrevPage}
-                />
+                {totalPages > 1 && (
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setPage}
+                        totalCount={filteredResidents.length}
+                    />
+                )}
             </main>
         </div>
     );

@@ -19,15 +19,11 @@ router.post('/login', [
     validateRequest
 ], loginUser);
 
-// @desc    Register user (Public)
+// @desc    Register user (Public - Mobile & Web)
 // @route   POST /api/auth/register
 router.post('/register', [
-    body('firstName').notEmpty().withMessage('First name is required'),
-    body('lastName').notEmpty().withMessage('Last name is required'),
     body('email').isEmail().withMessage('Please provide a valid email'),
-    body('password')
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/)
-        .withMessage('Password must be at least 8 characters, including upper, lower, number, and special character'),
+    body('password').notEmpty().withMessage('Password is required'),
     validateRequest
 ], registerUser);
 

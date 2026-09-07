@@ -4,12 +4,13 @@ const { asyncHandler } = require('../utils/asyncHandler');
 const { sendWelcomeEmail, sendAccountApprovedEmail } = require('../services/emailService');
 
 const getUsers = asyncHandler(async (req, res) => {
-    const { includeCollectors } = req.query;
+    const { includeAll } = req.query;
     let query = {};
 
-    // If includeCollectors is not explicitly 'true', exclude Collector roles
-    if (includeCollectors !== 'true') {
-        query = { role: { $ne: 'Collector' } };
+    // By default, User Management only displays system/admin/staff users.
+    // Mobile actors (household, collector, partner_org) have their own dedicated management pages.
+    if (includeAll !== 'true') {
+        query = { role: { $in: ['Staff', 'Admin', 'Super Admin'] } };
     }
     const users = await User.find(query)
         .select('-password')

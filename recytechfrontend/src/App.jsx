@@ -14,6 +14,7 @@ const Collectors = lazy(() => import('./pages/Collectors'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Settings = lazy(() => import('./pages/Settings'));
 const UserManagement = lazy(() => import('./pages/UserManagement'));
+const ResidentManagement = lazy(() => import('./pages/ResidentManagement'));
 const RewardPointManager = lazy(() => import('./pages/RewardPointManager'));
 const PartnerOrgManager = lazy(() => import('./pages/PartnerOrgManager'));
 const PointHistory = lazy(() => import('./pages/PointHistory'));
@@ -137,6 +138,11 @@ function App() {
             path="/users" 
             element={<ProtectedRoute allowedRoles={['Admin', 'Super Admin']}><UserManagement /></ProtectedRoute>} 
           />
+          <Route 
+            path="/residents" 
+            element={<ProtectedRoute allowedRoles={['Admin', 'Super Admin']}><ResidentManagement /></ProtectedRoute>} 
+          />
+          <Route path="/registered-users" element={<Navigate to="/residents" replace />} />
 
           {/* Catch-all 404 Route */}
           <Route path="*" element={<NotFound />} />

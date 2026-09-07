@@ -1,6 +1,13 @@
 const mongoose = require('mongoose');
 
 const residentSchema = mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: false,
+        index: true,
+        description: "Linked canonical User account"
+    },
     email: {
         type: String,
         required: true,

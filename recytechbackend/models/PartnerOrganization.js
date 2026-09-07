@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 
 const partnerOrgSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false,
+    index: true,
+  },
   name: { type: String, required: true },
   contactPerson: { type: String, required: true },
   email: { type: String, required: true, unique: true },
