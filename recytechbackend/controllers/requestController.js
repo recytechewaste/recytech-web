@@ -316,6 +316,20 @@ const completeRequest = asyncHandler(async (req, res) => {
 
     const saved = await request.save();
 
+    // Reset the bin fill level and status so it is ready for new drop-offs
+    if (request.bin) {
+        const RecyclingCenter = require('../models/RecyclingCenter');
+        await RecyclingCenter.findByIdAndUpdate(request.bin, {
+            status: 'Empty',
+            currentFillKg: 0
+        });
+        const Bin = require('../models/Bin');
+        await Bin.findByIdAndUpdate(request.bin, {
+            status: 'Operational',
+            fillLevel: 0
+        });
+    }
+
     const populated = await Request.findById(saved._id)
         .populate({ path: 'bin', select: 'name binId address status location assignedLgu' })
         .populate({ path: 'lgu', select: 'name email contactPerson' })
