@@ -12,9 +12,8 @@ const ResidentTable = ({ residents, loading, onEdit, onDelete }) => {
                         <th className={styles.th}>Resident</th>
                         <th className={styles.th}>Email</th>
                         <th className={styles.th}>Contact Number</th>
-                        <th className={styles.th}>Status</th>
-                        <th className={styles.th}>Point Balance</th>
-                        <th className={styles.th}>Drop-offs</th>
+                        <th className={styles.th}>Points Balance</th>
+                        <th className={styles.th}>Requests</th>
                         <th className={styles.th}>Status</th>
                     </tr>
                 </thead>
@@ -34,14 +33,13 @@ const ResidentTable = ({ residents, loading, onEdit, onDelete }) => {
                                 </td>
                                 <td className={styles.td}><Skeleton width="160px" height="16px" /></td>
                                 <td className={styles.td}><Skeleton width="100px" height="16px" /></td>
-                                <td className={styles.td}><Skeleton width="60px" height="24px" borderRadius="12px" /></td>
                                 <td className={styles.td}><Skeleton width="80px" height="16px" /></td>
                                 <td className={styles.td}><Skeleton width="30px" height="16px" /></td>
                                 <td className={styles.td}><Skeleton width="60px" height="24px" borderRadius="12px" /></td>
                             </tr>
                         ))
                     ) : residents.length === 0 ? (
-                        <tr><td colSpan="8" className={styles.td} style={{textAlign:'center', padding:'40px'}}>No mobile residents found.</td></tr>
+                        <tr><td colSpan="7" className={styles.td} style={{textAlign:'center', padding:'40px'}}>No registered users found.</td></tr>
                     ) : (
                         residents.map((resident, index) => (
                             <tr key={resident._id || index}>
@@ -59,12 +57,7 @@ const ResidentTable = ({ residents, loading, onEdit, onDelete }) => {
                                 </td>
                                 <td className={styles.td}>{resident.email}</td>
                                 <td className={styles.td}>{resident.phone || '—'}</td>
-                                <td className={styles.td}>
-                                    <span className={resident.status === 'Active' ? styles.statusActive : styles.statusInactive}>
-                                        {resident.status || 'Active'}
-                                    </span>
-                                </td>
-                                <td className={styles.td} style={{color: '#059669', fontWeight: 700}}>PHP {resident.totalEarned?.toFixed(2) || '0.00'}</td>
+                                <td className={styles.td} style={{color: '#059669', fontWeight: 700}}>{resident.pointsBalance ?? resident.totalPoints ?? 0} pts</td>
                                 <td className={styles.td}>{resident.requestCount || 0}</td>
                                 <td className={styles.td}>
                                     <span className={resident.status === 'Active' ? styles.statusActive : styles.statusInactive}>

@@ -1,4 +1,7 @@
 const User = require('../models/User');
+const Resident = require('../models/Resident');
+const PartnerOrganization = require('../models/PartnerOrganization');
+const Collector = require('../models/Collector');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { AUTH_CONSTANTS } = require('../config/constants');
@@ -38,32 +41,144 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { firstName, lastName, email, password } = req.body;
-    const userExists = await User.findOne({ email });
-
-    if (userExists) {
-        res.status(400);
-        throw new Error('User already exists');
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    const user = await User.create({ 
+    const { 
         firstName, 
         lastName, 
         email, 
-        password: hashedPassword, 
-        role: 'Staff', // Hardcoded to prevent privilege escalation 
-        status: 'Inactive' // Capstone workaround: Forces admin approval before login
-    });
+        password, 
+        role, 
+        phone, 
+        contactNumber, 
+        organizationName, 
+        name,
+        contactPerson, 
+        vehicleType, 
+        vehiclePlate 
+    } = req.body;
 
-    if (user) {
-        // Do not generate a token so they aren't automatically logged in
-        res.status(201).json({ message: 'Registration successful! Your account is pending administrator approval before you can log in.' });
+    if (!email || !password) {
+        res.status(400);
+        throw new Error('Please provide email and password');
+    }
+
+    // Role mapping and normalization
+    const rawRole = (role || 'household').toString().trim().toLowerCase();
+
+    // Explicitly forbid creation of privileged administrative/staff roles via public registration
+    if (['staff', 'admin', 'super admin', 'super_admin'].includes(rawRole)) {
+        res.status(403);
+        throw new Error('Public registration cannot create privileged accounts (Staff, Admin, Super Admin).');
+    }
+
+    let canonicalRole;
+    if (['household', 'resident', 'user', 'registered user', 'registered_user'].includes(rawRole)) {
+        canonicalRole = 'household';
+    } else if (['partner_org', 'partner_organization', 'partner organization', 'partnerorg', 'lgu'].includes(rawRole)) {
+        canonicalRole = 'partner_org';
+    } else if (['collector'].includes(rawRole)) {
+        canonicalRole = 'collector';
     } else {
         res.status(400);
-        throw new Error('Invalid user data');
+        throw new Error(`Invalid registration role '${role}'. Allowed public roles: household, partner_org, collector.`);
     }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Check if User already exists
+    const userExists = await User.findOne({ email: normalizedEmail });
+    if (userExists) {
+        res.status(400);
+        throw new Error('User with this email already exists');
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Determine account names based on actor type
+    let userFirstName = (firstName || '').trim();
+    let userLastName = (lastName || '').trim();
+    const contactPhone = (phone || contactNumber || '').trim();
+    const orgName = (organizationName || name || '').trim() || (userFirstName ? `${userFirstName} ${userLastName}`.trim() : 'Partner Organization');
+    const cPerson = (contactPerson || '').trim() || (userFirstName ? `${userFirstName} ${userLastName}`.trim() : orgName);
+
+    if (canonicalRole === 'partner_org') {
+        if (!userFirstName) {
+            const parts = cPerson.split(' ');
+            userFirstName = parts[0] || orgName;
+            userLastName = parts.slice(1).join(' ') || 'Partner';
+        }
+    } else {
+        if (!userFirstName) userFirstName = 'User';
+        if (!userLastName) userLastName = canonicalRole === 'collector' ? 'Collector' : 'Resident';
+    }
+
+    // Create User record as the canonical authentication identity
+    const user = await User.create({
+        firstName: userFirstName,
+        lastName: userLastName,
+        email: normalizedEmail,
+        password: hashedPassword,
+        role: canonicalRole,
+        status: 'Active'
+    });
+
+    let profile = null;
+
+    // Atomic profile creation with rollback on failure
+    try {
+        if (canonicalRole === 'household') {
+            profile = await Resident.create({
+                user: user._id,
+                email: normalizedEmail,
+                firstName: userFirstName,
+                lastName: userLastName,
+                phone: contactPhone,
+                status: 'Active',
+                source: 'Mobile App',
+                isTemporary: false
+            });
+        } else if (canonicalRole === 'partner_org') {
+            profile = await PartnerOrganization.create({
+                user: user._id,
+                name: orgName,
+                contactPerson: cPerson,
+                email: normalizedEmail,
+                phone: contactPhone,
+                password: hashedPassword,
+                status: 'Active'
+            });
+        } else if (canonicalRole === 'collector') {
+            profile = await Collector.create({
+                user: user._id,
+                firstName: userFirstName,
+                lastName: userLastName,
+                phone: contactPhone || 'Not Provided',
+                vehicleType: vehicleType || 'Not Assigned',
+                vehiclePlate: vehiclePlate || 'Not Assigned',
+                status: 'Active'
+            });
+        }
+    } catch (profileError) {
+        // Safe rollback: remove created User if profile creation fails
+        await User.findByIdAndDelete(user._id);
+        res.status(400);
+        throw new Error(`Profile creation failed: ${profileError.message}`);
+    }
+
+    res.status(201).json({
+        message: 'Registration successful',
+        user: {
+            _id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role,
+            status: user.status
+        },
+        profileId: profile ? profile._id : null,
+        accountStatus: user.status
+    });
 });
 
 const logoutUser = asyncHandler(async (req, res) => {

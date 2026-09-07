@@ -56,6 +56,7 @@ const Sidebar = ({ activePage }) => {
     const menuItems = [
         { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard', roles: ['Admin', 'Super Admin'] },
         { name: 'User Management', icon: <Users size={20} />, path: '/users', roles: ['Admin', 'Super Admin'] },
+        { name: 'Registered Users', icon: <BookOpen size={20} />, path: '/residents', roles: ['Admin', 'Super Admin'] },
         { name: 'Collector Management', icon: <Truck size={20} />, path: '/collectors', roles: ['Admin', 'Super Admin'] },
         { name: 'Bin Location Network', icon: <Warehouse size={20} />, path: '/bin-network', roles: ['Staff', 'Super Admin'] },
         { name: 'Bin Collections', icon: <ScanLine size={20} />, path: '/bin-collection-requests', roles: ['Staff', 'Super Admin'] },
