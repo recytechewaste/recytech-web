@@ -35,6 +35,10 @@ const residentSchema = mongoose.Schema({
         type: String,
         required: false
     },
+    address: {
+        type: String,
+        required: false
+    },
     source: {
         type: String,
         enum: ['Mobile Simulation', 'Mobile App', 'Web', 'Imported'],

@@ -7,12 +7,23 @@ const {
     createUser,
     updateUser,
     deleteUser,
-    updateUserProfile
+    getUserProfile,
+    updateUserProfile,
+    changePassword
 } = require('../controllers/userController');
+
+// @desc    Get logged-in user profile with role details
+// @route   GET /api/users/profile
+router.get('/profile', protect, getUserProfile);
 
 // @desc    Update logged-in user profile
 // @route   PUT /api/users/profile
 router.put('/profile', protect, updateUserProfile);
+router.patch('/profile', protect, updateUserProfile);
+
+// @desc    Change logged-in user password
+// @route   PUT /api/users/change-password
+router.put('/change-password', protect, changePassword);
 
 // @desc    Get all users
 // @route   GET /api/users

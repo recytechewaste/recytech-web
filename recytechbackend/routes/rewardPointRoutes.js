@@ -12,7 +12,7 @@ const {
 
 // @desc    Get all reward point rules
 // @route   GET /api/reward-points
-router.get('/', protect, staffOnlyOrSuperAdmin, getRewardPoints);
+router.get('/', protect, getRewardPoints);
 
 // @desc    Bulk create/update reward point rules
 // @route   POST /api/reward-points/bulk/import
@@ -20,7 +20,7 @@ router.post('/bulk/import', protect, staffOnlyOrSuperAdmin, bulkImportRewardPoin
 
 // @desc    Get single reward point rule
 // @route   GET /api/reward-points/:id
-router.get('/:id', protect, staffOnlyOrSuperAdmin, getRewardPointById);
+router.get('/:id', protect, getRewardPointById);
 
 // @desc    Create new reward point rule
 // @route   POST /api/reward-points
