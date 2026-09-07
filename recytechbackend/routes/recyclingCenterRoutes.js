@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, staffOnlyOrSuperAdmin } = require('../middleware/authMiddleware');
+const { protect, staffOrAdmin } = require('../middleware/authMiddleware');
 const { 
     getCenters,
     getCenterByQrCode,
@@ -10,28 +10,33 @@ const {
     deleteCenter 
 } = require('../controllers/recyclingCenterController');
 
-// @desc    Get all centers
-// @route   GET /api/bin-locations
-router.get('/', protect, staffOnlyOrSuperAdmin, getCenters);
+// @desc    Get all centers (Public map view)
+// @route   GET /api/bin-locations/public
+router.get('/public', getCenters);
 
-// @desc    Get a center by QR code
-// @route   GET /api/bin-locations/qr/:qrCode
-router.get('/qr/:qrCode', protect, staffOnlyOrSuperAdmin, getCenterByQrCode);
-
-// @desc    Get a center by QR code for the resident mobile flow
+// @desc    Get a center by QR code for public resident mobile flow
 // @route   GET /api/bin-locations/public/qr/:qrCode
 router.get('/public/qr/:qrCode', getPublicCenterByQrCode);
 
+// @desc    Get all centers (Authenticated)
+// @route   GET /api/bin-locations
+router.get('/', protect, getCenters);
+
+// @desc    Get a center by QR code
+// @route   GET /api/bin-locations/qr/:qrCode
+router.get('/qr/:qrCode', protect, getCenterByQrCode);
+
 // @desc    Create a center
-// @route   POST /api/centers
-router.post('/', protect, staffOnlyOrSuperAdmin, createCenter);
+// @route   POST /api/bin-locations
+router.post('/', protect, staffOrAdmin, createCenter);
 
 // @desc    Update a center
-// @route   PUT /api/centers/:id
-router.put('/:id', protect, staffOnlyOrSuperAdmin, updateCenter);
+// @route   PUT /api/bin-locations/:id
+router.put('/:id', protect, staffOrAdmin, updateCenter);
 
 // @desc    Delete a center
-// @route   DELETE /api/centers/:id
-router.delete('/:id', protect, staffOnlyOrSuperAdmin, deleteCenter);
+// @route   DELETE /api/bin-locations/:id
+router.delete('/:id', protect, staffOrAdmin, deleteCenter);
 
 module.exports = router;
+

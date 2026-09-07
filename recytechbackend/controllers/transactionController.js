@@ -2,14 +2,19 @@ const Transaction = require('../models/Transaction');
 const Resident = require('../models/Resident');
 const Request = require('../models/Request');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { getProfileForUser, normalizeRole, CANONICAL_ROLES } = require('../utils/roleHelper');
+const mongoose = require('mongoose');
 
+// @desc    Get all transactions (Admin/Staff)
+// @route   GET /api/transactions
+// @access  Private/Admin/Staff
 const getTransactions = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
     // Filter options
-    const filterType = req.query.type; // 'Payment', 'Refund', 'Adjustment'
+    const filterType = req.query.type; // 'Payment', 'Refund', 'Adjustment', 'Redemption'
     const startDate = req.query.startDate ? new Date(req.query.startDate) : null;
     const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
 
@@ -27,8 +32,8 @@ const getTransactions = asyncHandler(async (req, res) => {
     }
 
     const transactions = await Transaction.find(query)
-        .populate('resident', 'email firstName lastName totalPoints')
-        .populate('requestId', 'wasteType quantity status')
+        .populate('resident', 'email firstName lastName totalPoints pointsBalance')
+        .populate('requestId', 'status requestType completionDate')
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 });
@@ -54,15 +59,83 @@ const getTransactions = asyncHandler(async (req, res) => {
             page,
             limit,
             total,
-            pages: Math.ceil(total / limit)
+            pages: Math.ceil(total / limit) || 1
         }
     });
 });
 
+// @desc    Get logged in resident's transactions
+// @route   GET /api/transactions/my
+// @access  Private (Household/Resident)
+const getMyTransactions = asyncHandler(async (req, res) => {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit) || 10);
+    const skip = (page - 1) * limit;
+
+    const { profileId, profile } = await getProfileForUser(req.user._id, req.user.role);
+    if (!profileId) {
+        return res.status(404).json({ message: 'Resident profile not found for this user account.' });
+    }
+
+    const query = { resident: profileId };
+
+    const transactions = await Transaction.find(query)
+        .populate('requestId', 'status requestType completionDate')
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
+
+    const total = await Transaction.countDocuments(query);
+
+    const totals = await Transaction.aggregate([
+        { $match: { resident: new mongoose.Types.ObjectId(profileId) } },
+        {
+            $group: {
+                _id: '$type',
+                total: { $sum: '$points' },
+                count: { $sum: 1 }
+            }
+        }
+    ]);
+
+    res.json({
+        resident: {
+            id: profile._id,
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            email: profile.email,
+            pointsBalance: profile.pointsBalance || 0,
+            totalPoints: profile.totalPoints || 0
+        },
+        transactions,
+        totals,
+        pagination: {
+            page,
+            limit,
+            total,
+            pages: Math.ceil(total / limit) || 1
+        }
+    });
+});
+
+// @desc    Get transactions by resident ID
+// @route   GET /api/transactions/resident/:residentId
+// @access  Private (Admin, Staff, or Self)
 const getTransactionsByResident = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+
+    const userRole = normalizeRole(req.user.role);
+
+    // If household, ensure they can only view their own transactions
+    if (userRole === CANONICAL_ROLES.HOUSEHOLD) {
+        const { profileId } = await getProfileForUser(req.user._id, req.user.role);
+        if (!profileId || profileId.toString() !== req.params.residentId) {
+            res.status(403);
+            throw new Error('Forbidden: You can only view your own transactions.');
+        }
+    }
 
     // Verify resident exists
     const resident = await Resident.findById(req.params.residentId);
@@ -72,7 +145,7 @@ const getTransactionsByResident = asyncHandler(async (req, res) => {
     }
 
     const transactions = await Transaction.find({ resident: req.params.residentId })
-        .populate('requestId', 'wasteType quantity status')
+        .populate('requestId', 'status requestType completionDate')
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 });
@@ -81,7 +154,7 @@ const getTransactionsByResident = asyncHandler(async (req, res) => {
 
     // Calculate totals for resident
     const totals = await Transaction.aggregate([
-        { $match: { resident: require('mongoose').Types.ObjectId(req.params.residentId) } },
+        { $match: { resident: new mongoose.Types.ObjectId(req.params.residentId) } },
         {
             $group: {
                 _id: '$type',
@@ -98,7 +171,7 @@ const getTransactionsByResident = asyncHandler(async (req, res) => {
             page,
             limit,
             total,
-            pages: Math.ceil(total / limit)
+            pages: Math.ceil(total / limit) || 1
         }
     });
 });
@@ -202,7 +275,8 @@ const getTransactionStats = asyncHandler(async (req, res) => {
 
 module.exports = {
     getTransactions,
+    getMyTransactions,
     getTransactionsByResident,
     getTransactionByRequest,
     getTransactionStats
-};
+};
