@@ -5,7 +5,8 @@ const residentSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: false,
-        index: true,
+        unique: true,
+        sparse: true,
         description: "Linked canonical User account"
     },
     email: {

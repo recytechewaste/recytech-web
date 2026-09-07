@@ -4,7 +4,8 @@ const collectorSchema = mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: true,
+        unique: true
     },
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
