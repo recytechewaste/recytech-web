@@ -3,9 +3,12 @@ const router = express.Router();
 const { AUTH_CONSTANTS } = require('../config/constants');
 const { body } = require('express-validator');
 const { validateRequest } = require('../middleware/validateRequest');
+const { protect } = require('../middleware/authMiddleware');
 const { 
     loginUser, 
     registerUser, 
+    logoutUser,
+    getMe,
     forgotPassword, 
     verifyPin, 
     resetPassword 
@@ -18,6 +21,14 @@ router.post('/login', [
     body('password').notEmpty().withMessage('Password is required'),
     validateRequest
 ], loginUser);
+
+// @desc    Get current authenticated session & profile
+// @route   GET /api/auth/me
+router.get('/me', protect, getMe);
+
+// @desc    Log out current user
+// @route   POST /api/auth/logout
+router.post('/logout', logoutUser);
 
 // @desc    Register user (Public - Mobile & Web)
 // @route   POST /api/auth/register
