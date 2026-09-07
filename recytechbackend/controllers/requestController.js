@@ -1,48 +1,206 @@
 const Request = require('../models/Request');
 const Bin = require('../models/Bin');
 const asyncHandler = require('express-async-handler');
-const { completeCollectionAndDistributePoints } = require('../services/pointDistributionService');
+const { getProfileForUser, normalizeRole, CANONICAL_ROLES } = require('../utils/roleHelper');
 
-
-// @desc    Get all collection requests
+// @desc    Get all collection requests (Role-scoped, Paginated, Filterable)
 // @route   GET /api/requests
-// @access  Private/Admin
+// @access  Private (Admin, Staff, Partner Org, Collector)
 const getAllRequests = asyncHandler(async (req, res) => {
-    const requests = await Request.find({})
-        .populate({ 
-            path: 'bin', 
-            select: 'name binId address status assignedLgu',
-            populate: { path: 'assignedLgu', select: 'name contactPerson email jurisdiction' }
-        })
-        .populate({ path: 'lgu', select: 'name email contactPerson' })
-        .populate({ path: 'assignedCollector', select: 'firstName lastName phone vehiclePlate' })
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit, 10) || 10);
+    const skip = (page - 1) * limit;
+
+    const { search, status, type } = req.query;
+    const userRole = normalizeRole(req.user.role);
+
+    const query = {};
+
+    // 1. Role-based scoping
+    if (userRole === CANONICAL_ROLES.PARTNER_ORG) {
+        const { profileId } = await getProfileForUser(req.user._id, req.user.role);
+        if (!profileId) {
+            return res.json({ requests: [], totalRequests: 0, totalPages: 0, currentPage: page });
+        }
+        query.lgu = profileId;
+    } else if (userRole === CANONICAL_ROLES.COLLECTOR) {
+        const { profileId } = await getProfileForUser(req.user._id, req.user.role);
+        if (!profileId) {
+            return res.json({ requests: [], totalRequests: 0, totalPages: 0, currentPage: page });
+        }
+        query.assignedCollector = profileId;
+    }
+
+    // 2. Status filter
+    if (status && status.trim() !== '') {
+        const normalizedStatus = status.trim().toLowerCase();
+        query.status = { $regex: new RegExp(`^${normalizedStatus}$`, 'i') };
+    }
+
+    // 3. Request type filter
+    if (type && type.trim() !== '') {
+        query.requestType = { $regex: new RegExp(`^${type.trim()}$`, 'i') };
+    }
+
+    // 4. Populate options
+    const populateBin = {
+        path: 'bin',
+        select: 'name binId address status location assignedLgu fillLevel',
+        populate: { path: 'assignedLgu', select: 'name contactPerson email phone jurisdiction' }
+    };
+    const populateLgu = { path: 'lgu', select: 'name email contactPerson phone address organizationType' };
+    const populateCollector = { path: 'assignedCollector', select: 'firstName lastName phone vehiclePlate vehicleType status' };
+
+    // 5. Fetch documents
+    let requestQuery = Request.find(query)
+        .populate(populateBin)
+        .populate(populateLgu)
+        .populate(populateCollector)
         .sort({ createdAt: -1 });
-    res.json(requests);
+
+    const allMatching = await requestQuery.exec();
+
+    // 6. In-memory search filter if search term provided
+    let filteredResults = allMatching;
+    if (search && search.trim() !== '') {
+        const term = search.trim().toLowerCase();
+        filteredResults = allMatching.filter((item) => {
+            const binName = item.bin?.name?.toLowerCase() || '';
+            const binCode = item.bin?.binId?.toLowerCase() || '';
+            const binAddr = item.bin?.address?.toLowerCase() || '';
+            const lguName = item.lgu?.name?.toLowerCase() || '';
+            const collectorName = item.assignedCollector
+                ? `${item.assignedCollector.firstName} ${item.assignedCollector.lastName}`.toLowerCase()
+                : '';
+            const notes = item.notes?.toLowerCase() || '';
+
+            return (
+                binName.includes(term) ||
+                binCode.includes(term) ||
+                binAddr.includes(term) ||
+                lguName.includes(term) ||
+                collectorName.includes(term) ||
+                notes.includes(term)
+            );
+        });
+    }
+
+    const totalRequests = filteredResults.length;
+    const totalPages = Math.ceil(totalRequests / limit) || 1;
+    const paginatedRequests = filteredResults.slice(skip, skip + limit);
+
+    res.json({
+        requests: paginatedRequests,
+        totalRequests,
+        totalPages,
+        currentPage: page
+    });
 });
 
-// @desc    Create a new collection request (for LGUs)
-// @route   POST /api/requests
-// @access  Private/LGU
-const createLguRequest = asyncHandler(async (req, res) => {
-    const { binId } = req.body;
-    const lguId = req.user._id; // Assuming LGU user is logged in
+// @desc    Get single collection request by ID
+// @route   GET /api/requests/:id
+// @access  Private (Admin, Staff, Assigned Partner Org, Assigned Collector)
+const getRequestById = asyncHandler(async (req, res) => {
+    const request = await Request.findById(req.params.id)
+        .populate({
+            path: 'bin',
+            select: 'name binId address status location assignedLgu fillLevel',
+            populate: { path: 'assignedLgu', select: 'name contactPerson email phone jurisdiction' }
+        })
+        .populate({ path: 'lgu', select: 'name email contactPerson phone address organizationType' })
+        .populate({ path: 'assignedCollector', select: 'firstName lastName phone vehiclePlate vehicleType status' });
 
-    const bin = await Bin.findById(binId);
+    if (!request) {
+        res.status(404);
+        throw new Error('Collection request not found');
+    }
+
+    const userRole = normalizeRole(req.user.role);
+
+    // Verify access
+    if (userRole === CANONICAL_ROLES.PARTNER_ORG) {
+        const { profileId } = await getProfileForUser(req.user._id, req.user.role);
+        if (!profileId || request.lgu?._id?.toString() !== profileId.toString()) {
+            res.status(403);
+            throw new Error('Forbidden: You can only view requests belonging to your organization.');
+        }
+    } else if (userRole === CANONICAL_ROLES.COLLECTOR) {
+        const { profileId } = await getProfileForUser(req.user._id, req.user.role);
+        if (!profileId || request.assignedCollector?._id?.toString() !== profileId.toString()) {
+            res.status(403);
+            throw new Error('Forbidden: You can only view requests assigned to you.');
+        }
+    }
+
+    res.json(request);
+});
+
+// @desc    Create a new collection request (Partner Organizations & Admins)
+// @route   POST /api/requests
+// @access  Private/Partner Org / Admin
+const createLguRequest = asyncHandler(async (req, res) => {
+    const { binId, notes, requestType } = req.body;
+
+    if (!binId) {
+        res.status(400);
+        throw new Error('A bin ID is required to create a collection request.');
+    }
+
+    // Resolve bin (either ObjectId or binId code)
+    let bin = null;
+    if (require('mongoose').Types.ObjectId.isValid(binId)) {
+        bin = await Bin.findById(binId);
+    }
+    if (!bin) {
+        bin = await Bin.findOne({ binId: binId.toString() });
+    }
+
     if (!bin) {
         res.status(404);
         throw new Error('Bin not found');
     }
 
-    // Verify the bin is assigned to the partner organization making the request
-    if (bin.assignedLgu.toString() !== lguId.toString()) {
+    const userRole = normalizeRole(req.user.role);
+    let lguId = null;
+
+    if (userRole === CANONICAL_ROLES.PARTNER_ORG) {
+        const { profileId } = await getProfileForUser(req.user._id, req.user.role);
+        if (!profileId) {
+            res.status(404);
+            throw new Error('Partner Organization profile not found for this user.');
+        }
+        lguId = profileId;
+
+        // Verify bin is assigned to this partner organization
+        if (bin.assignedLgu && bin.assignedLgu.toString() !== lguId.toString()) {
+            res.status(403);
+            throw new Error('Forbidden: You can only request collection for bins assigned to your partner organization.');
+        }
+    } else if ([CANONICAL_ROLES.ADMIN, CANONICAL_ROLES.STAFF, CANONICAL_ROLES.SUPER_ADMIN].includes(userRole)) {
+        lguId = req.body.lgu || bin.assignedLgu;
+        if (!lguId) {
+            res.status(400);
+            throw new Error('Partner Organization ID (lgu) is required when creating request as Admin.');
+        }
+    } else {
         res.status(403);
-        throw new Error('Forbidden: You can only request collection for bins assigned to your partner organization.');
+        throw new Error('Forbidden: Only Partner Organizations and Admins can create collection requests.');
     }
 
-    // Check if there's already a pending/active request for this bin
+    // Check if there's already an active request for this bin
+    const activeStatuses = [
+        'pending', 'Pending',
+        'scheduled', 'Scheduled',
+        'approved', 'Approved',
+        'assigned', 'Assigned',
+        'in_progress', 'in-progress', 'In-Progress', 'In Progress',
+        'in_transit', 'in-transit', 'In-Transit', 'In Transit',
+        'arrived', 'Arrived'
+    ];
+
     const existingRequest = await Request.findOne({
-        bin: binId,
-        status: { $in: ['Pending', 'Scheduled', 'In-Transit'] }
+        bin: bin._id,
+        status: { $in: activeStatuses }
     });
 
     if (existingRequest) {
@@ -51,16 +209,23 @@ const createLguRequest = asyncHandler(async (req, res) => {
     }
 
     const request = await Request.create({
-        bin: binId,
+        bin: bin._id,
         lgu: lguId,
+        requestType: requestType || 'manual',
+        status: 'pending',
+        notes: notes || ''
     });
 
-    res.status(201).json(request);
+    const populatedRequest = await Request.findById(request._id)
+        .populate({ path: 'bin', select: 'name binId address status location assignedLgu' })
+        .populate({ path: 'lgu', select: 'name email contactPerson phone address organizationType' });
+
+    res.status(201).json(populatedRequest);
 });
 
-// @desc    Update a request's status, schedule, and collector (for Admins)
+// @desc    Update a request's status, schedule, or assigned collector
 // @route   PUT /api/requests/:id
-// @access  Private/Admin
+// @access  Private (Admin, Staff, Assigned Collector)
 const updateRequestStatus = asyncHandler(async (req, res) => {
     const request = await Request.findById(req.params.id);
 
@@ -68,50 +233,98 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
         res.status(404);
         throw new Error('Request not found');
     }
-    const { status, assignedCollector, scheduledDate } = req.body;
 
-    if (status) request.status = status;
-    if (assignedCollector) request.assignedCollector = assignedCollector;
-    if (scheduledDate) request.scheduledDate = scheduledDate;
+    const userRole = normalizeRole(req.user.role);
+    const { status, assignedCollector, scheduledDate, notes } = req.body;
 
-    if (request.status === 'Scheduled' && (!request.assignedCollector || !request.scheduledDate)) {
-        res.status(400);
-        throw new Error('To schedule a request, you must provide both a collector and a scheduled date.');
+    if (userRole === CANONICAL_ROLES.COLLECTOR) {
+        const { profileId } = await getProfileForUser(req.user._id, req.user.role);
+        if (!profileId || request.assignedCollector?.toString() !== profileId.toString()) {
+            res.status(403);
+            throw new Error('Forbidden: You can only update requests assigned to you.');
+        }
+
+        // Collector can update status to in_progress, in_transit, arrived, cancelled
+        if (status) request.status = status.toLowerCase();
+        if (notes) request.notes = notes;
+    } else if ([CANONICAL_ROLES.ADMIN, CANONICAL_ROLES.STAFF, CANONICAL_ROLES.SUPER_ADMIN].includes(userRole)) {
+        if (status) request.status = status.toLowerCase();
+        if (assignedCollector !== undefined) request.assignedCollector = assignedCollector || null;
+        if (scheduledDate !== undefined) request.scheduledDate = scheduledDate;
+        if (notes !== undefined) request.notes = notes;
+
+        if (request.status === 'scheduled' && (!request.assignedCollector || !request.scheduledDate)) {
+            res.status(400);
+            throw new Error('To schedule a request, you must provide both an assigned collector and a scheduled date.');
+        }
+    } else {
+        res.status(403);
+        throw new Error('Not authorized to update collection requests.');
     }
 
     const updatedRequest = await request.save();
-    res.json(updatedRequest);
+
+    const populated = await Request.findById(updatedRequest._id)
+        .populate({ path: 'bin', select: 'name binId address status location assignedLgu' })
+        .populate({ path: 'lgu', select: 'name email contactPerson phone' })
+        .populate({ path: 'assignedCollector', select: 'firstName lastName phone vehiclePlate vehicleType' });
+
+    res.json(populated);
 });
 
-// @desc    Complete a collection (for Collectors) and distribute points
+// @desc    Complete a collection request (for Collectors and Admins)
 // @route   PATCH /api/requests/:id/complete
-// @access  Private/Collector
+// @access  Private (Collector, Admin, Staff)
 const completeRequest = asyncHandler(async (req, res) => {
-    const { collectedWaste } = req.body;
+    const { collectedWaste, notes } = req.body;
     const { id: requestId } = req.params;
 
-    if (!Array.isArray(collectedWaste) || collectedWaste.length === 0) {
-        res.status(400);
-        throw new Error('Collected waste data must be a non-empty array.');
+    const request = await Request.findById(requestId);
+    if (!request) {
+        res.status(404);
+        throw new Error('Request not found');
     }
-    
-    // Validate that each item in collectedWaste has the required fields
-    for (const item of collectedWaste) {
-        if (!item.category || !item.quantity || !item.unit) {
-            res.status(400);
-            throw new Error('Each item in collected waste must have category, quantity, and unit.');
+
+    const userRole = normalizeRole(req.user.role);
+
+    if (userRole === CANONICAL_ROLES.COLLECTOR) {
+        const { profileId } = await getProfileForUser(req.user._id, req.user.role);
+        if (!profileId || request.assignedCollector?.toString() !== profileId.toString()) {
+            res.status(403);
+            throw new Error('Forbidden: You can only complete requests assigned to you.');
         }
     }
 
-    try {
-        const updatedRequest = await completeCollectionAndDistributePoints(requestId, collectedWaste);
-        res.json({
-            message: 'Collection completed and points distributed successfully.',
-            request: updatedRequest
-        });
-    } catch (error) {
-        res.status(500).json({ message: `Failed to complete collection: ${error.message}` });
+    if (['completed', 'Completed'].includes(request.status)) {
+        res.status(400);
+        throw new Error('This collection request has already been completed.');
     }
+
+    if (Array.isArray(collectedWaste) && collectedWaste.length > 0) {
+        for (const item of collectedWaste) {
+            if (!item.category || item.quantity === undefined || !item.unit) {
+                res.status(400);
+                throw new Error('Each item in collected waste must have category, quantity, and unit.');
+            }
+        }
+        request.collectedWaste = collectedWaste;
+    }
+
+    request.status = 'completed';
+    request.completionDate = new Date();
+    if (notes) request.notes = notes;
+
+    const saved = await request.save();
+
+    const populated = await Request.findById(saved._id)
+        .populate({ path: 'bin', select: 'name binId address status location assignedLgu' })
+        .populate({ path: 'lgu', select: 'name email contactPerson' })
+        .populate({ path: 'assignedCollector', select: 'firstName lastName phone vehiclePlate vehicleType' });
+
+    res.json({
+        message: 'Collection request completed successfully.',
+        request: populated
+    });
 });
 
 // @desc    Delete a request
@@ -121,23 +334,24 @@ const deleteRequest = asyncHandler(async (req, res) => {
     const request = await Request.findById(req.params.id);
 
     if (request) {
-        if (request.status !== 'Pending' && request.status !== 'Cancelled') {
+        const normalizedStatus = request.status.toLowerCase();
+        if (normalizedStatus !== 'pending' && normalizedStatus !== 'cancelled') {
             res.status(400);
             throw new Error('Only Pending or Cancelled requests can be deleted.');
         }
-        await request.remove();
-        res.json({ message: 'Request removed' });
+        await request.deleteOne();
+        res.json({ message: 'Request removed successfully' });
     } else {
         res.status(404);
         throw new Error('Request not found');
     }
 });
 
-
 module.exports = {
     getAllRequests,
+    getRequestById,
     createLguRequest,
     updateRequestStatus,
     completeRequest,
-    deleteRequest,
-};
+    deleteRequest
+};
