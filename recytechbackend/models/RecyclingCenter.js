@@ -39,7 +39,7 @@ const recyclingCenterSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['Empty', 'Full', 'Maintenance'],
+        enum: ['Empty', 'Operational', 'Full', 'Maintenance', 'Active'],
         default: 'Empty'
     },
     description: {
