@@ -22,10 +22,16 @@ const generatePin = () => Math.floor(100000 + Math.random() * 900000).toString()
 
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    if (!email || !password) {
+        res.status(400);
+        throw new Error('Please provide email and password');
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (user && (await bcrypt.compare(password, user.password))) {
-        if (user.status === 'Inactive') {
+        if (['Inactive', 'Disabled', 'Rejected', 'inactive', 'disabled', 'rejected'].includes(user.status)) {
             res.status(403);
             throw new Error('Account is deactivated. Please contact your Super Admin.');
         }
@@ -33,7 +39,36 @@ const loginUser = asyncHandler(async (req, res) => {
         user.lastLogin = new Date();
         await user.save();
         const token = generateToken(res, user._id);
-        res.json({ _id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role, token });
+
+        // Lookup linked domain profile ID
+        let profileId = null;
+        if (['household', 'resident', 'Resident', 'User'].includes(user.role)) {
+            const resProfile = await Resident.findOne({ user: user._id });
+            if (resProfile) profileId = resProfile._id;
+        } else if (['partner_org', 'partner_organization', 'LGU', 'Partner Organization', 'PartnerOrganization'].includes(user.role)) {
+            const partProfile = await PartnerOrganization.findOne({ user: user._id });
+            if (partProfile) profileId = partProfile._id;
+        } else if (['collector', 'Collector'].includes(user.role)) {
+            const collProfile = await Collector.findOne({ user: user._id });
+            if (collProfile) profileId = collProfile._id;
+        }
+
+        const userPayload = {
+            _id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role,
+            status: user.status
+        };
+
+        // Return unified auth envelope along with root fields for full backward compatibility
+        res.json({
+            ...userPayload,
+            profileId,
+            token,
+            user: userPayload
+        });
     } else {
         res.status(401);
         throw new Error('Invalid email or password');
@@ -270,4 +305,54 @@ const resetPassword = asyncHandler(async (req, res) => {
     res.json({ message: 'Password has been reset successfully. You can now login with your new password.' });
 });
 
-module.exports = { loginUser, registerUser, logoutUser, forgotPassword, verifyPin, resetPassword };
+// @desc    Get current authenticated user session & profile
+// @route   GET /api/auth/me
+// @access  Private (Bearer Token / Cookie)
+const getMe = asyncHandler(async (req, res) => {
+    const user = req.user;
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+
+    let profileId = null;
+    let profileType = null;
+    let profile = null;
+
+    if (['household', 'resident', 'Resident', 'User'].includes(user.role)) {
+        profileType = 'Resident';
+        profile = await Resident.findOne({ user: user._id });
+        if (profile) profileId = profile._id;
+    } else if (['partner_org', 'partner_organization', 'LGU', 'Partner Organization', 'PartnerOrganization'].includes(user.role)) {
+        profileType = 'PartnerOrganization';
+        profile = await PartnerOrganization.findOne({ user: user._id });
+        if (profile) profileId = profile._id;
+    } else if (['collector', 'Collector'].includes(user.role)) {
+        profileType = 'Collector';
+        profile = await Collector.findOne({ user: user._id });
+        if (profile) profileId = profile._id;
+    }
+
+    const userPayload = {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        lastLogin: user.lastLogin,
+        createdAt: user.createdAt
+    };
+
+    res.json({
+        user: userPayload,
+        role: user.role,
+        status: user.status,
+        profileId,
+        profileType,
+        profile
+    });
+});
+
+module.exports = { loginUser, registerUser, logoutUser, forgotPassword, verifyPin, resetPassword, getMe };
