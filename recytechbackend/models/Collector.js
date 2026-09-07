@@ -16,9 +16,14 @@ const collectorSchema = mongoose.Schema({
         enum: ['Not Assigned', 'Motorcycle', 'Van', 'Truck', 'E-Trike', 'Bike', 'Other'],
         default: 'Not Assigned'
     },
-    status: { type: String, default: 'Active' }
+    status: { 
+        type: String, 
+        enum: ['Active', 'Inactive'],
+        default: 'Active' 
+    }
 }, {
     timestamps: true
 });
 
 module.exports = mongoose.model('Collector', collectorSchema);
+

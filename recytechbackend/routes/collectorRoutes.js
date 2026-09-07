@@ -1,27 +1,32 @@
 const express = require('express');
 const router = express.Router();
-const { protect, admin, staffOrAdmin } = require('../middleware/authMiddleware');
+const { protect, staffOrAdmin } = require('../middleware/authMiddleware');
 const {
     getCollectors,
+    getMyCollectorProfile,
+    updateCollectorStatus,
+    getAssignedJobs,
+    getCollectorStats,
     createCollector,
     updateCollector,
     deleteCollector
 } = require('../controllers/collectorController');
 
-// @desc    Get all collectors
-// @route   GET /api/collectors
-router.get('/', protect, admin, getCollectors);
+// Collector mobile self workflows
+router.get('/me', protect, getMyCollectorProfile);
+router.patch('/status', protect, updateCollectorStatus);
+router.put('/status', protect, updateCollectorStatus);
+router.get('/jobs', protect, getAssignedJobs);
+router.get('/stats', protect, getCollectorStats);
 
-// @desc    Register a new Collector
-// @route   POST /api/collectors
-router.post('/', protect, admin, createCollector);
+// Admin / Staff collector management
+router.route('/')
+    .get(protect, staffOrAdmin, getCollectors)
+    .post(protect, staffOrAdmin, createCollector);
 
-// @desc    Update a collector
-// @route   PUT /api/collectors/:id
-router.put('/:id', protect, admin, updateCollector);
-
-// @desc    Delete a collector
-// @route   DELETE /api/collectors/:id
-router.delete('/:id', protect, admin, deleteCollector);
+router.route('/:id')
+    .put(protect, staffOrAdmin, updateCollector)
+    .delete(protect, staffOrAdmin, deleteCollector);
 
 module.exports = router;
+
