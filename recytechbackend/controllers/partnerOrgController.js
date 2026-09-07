@@ -5,6 +5,219 @@ const Request = require('../models/Request');
 const User = require('../models/User');
 const Bin = require('../models/Bin');
 const RecyclingCenter = require('../models/RecyclingCenter');
+const BinDropoff = require('../models/BinDropoff');
+const { getProfileForUser, normalizeRole, CANONICAL_ROLES } = require('../utils/roleHelper');
+const mongoose = require('mongoose');
+
+// @desc    Get logged in Partner Organization's profile and dashboard overview
+// @route   GET /api/partner-organizations/me
+// @access  Private/Partner Org
+const getMyPartnerOrgProfile = asyncHandler(async (req, res) => {
+  const { profileId, profile } = await getProfileForUser(req.user._id, req.user.role);
+
+  if (!profileId || !profile) {
+    res.status(404);
+    throw new Error('Partner Organization profile not found for this user account.');
+  }
+
+  // Fetch assigned bins
+  let assignedBins = await RecyclingCenter.find({ assignedLgu: profileId })
+    .select('name address qrCode qrCodeImage capacityKg currentFillKg status location')
+    .lean();
+
+  if (!assignedBins || assignedBins.length === 0) {
+    assignedBins = await Bin.find({ assignedLgu: profileId }).lean();
+  }
+
+  const assignedBinIds = assignedBins.map(b => b._id);
+
+  // Compute dashboard counters
+  const pendingDropoffsCount = await BinDropoff.countDocuments({
+    binId: { $in: assignedBinIds },
+    status: { $in: ['pending', 'Pending'] }
+  });
+
+  const validatedDropoffsCount = await BinDropoff.countDocuments({
+    binId: { $in: assignedBinIds },
+    status: { $in: ['approved', 'Approved'] }
+  });
+
+  const activeRequestsCount = await Request.countDocuments({
+    lgu: profileId,
+    status: {
+      $in: [
+        'pending', 'Pending',
+        'scheduled', 'Scheduled',
+        'assigned', 'Assigned',
+        'in_progress', 'in-progress', 'In-Progress', 'In Progress',
+        'in_transit', 'in-transit', 'In-Transit', 'In Transit',
+        'arrived', 'Arrived'
+      ]
+    }
+  });
+
+  res.json({
+    profile,
+    user: {
+      _id: req.user._id,
+      firstName: req.user.firstName,
+      lastName: req.user.lastName,
+      email: req.user.email,
+      role: req.user.role,
+      status: req.user.status
+    },
+    assignedBins,
+    stats: {
+      assignedBinsCount: assignedBins.length,
+      pendingDropoffsCount,
+      validatedDropoffsCount,
+      activeRequestsCount
+    }
+  });
+});
+
+// @desc    Get bins assigned to logged-in Partner Organization
+// @route   GET /api/partner-organizations/my-bins
+// @access  Private/Partner Org
+const getMyBins = asyncHandler(async (req, res) => {
+  const { profileId } = await getProfileForUser(req.user._id, req.user.role);
+
+  if (!profileId) {
+    res.status(404);
+    throw new Error('Partner Organization profile not found.');
+  }
+
+  let assignedBins = await RecyclingCenter.find({ assignedLgu: profileId })
+    .populate('assignedCollector', 'firstName lastName phone vehiclePlate')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  if (!assignedBins || assignedBins.length === 0) {
+    assignedBins = await Bin.find({ assignedLgu: profileId })
+      .sort({ createdAt: -1 })
+      .lean();
+  }
+
+  res.json({
+    success: true,
+    totalBins: assignedBins.length,
+    bins: assignedBins
+  });
+});
+
+// @desc    Update status/condition of an assigned bin (Partner Org)
+// @route   PATCH /api/partner-organizations/bins/:binId/status
+// @access  Private/Partner Org
+const updateMyBinStatus = asyncHandler(async (req, res) => {
+  const { binId } = req.params;
+  const { status, fillLevel, currentFillKg, notes } = req.body;
+
+  if (!status) {
+    res.status(400);
+    throw new Error('status is required ("Operational", "Full", or "Maintenance")');
+  }
+
+  const { profileId } = await getProfileForUser(req.user._id, req.user.role);
+  if (!profileId) {
+    res.status(404);
+    throw new Error('Partner Organization profile not found.');
+  }
+
+  // Try to find in RecyclingCenter first, then Bin
+  let binDoc = await RecyclingCenter.findById(binId);
+  let isRecyclingCenter = true;
+
+  if (!binDoc) {
+    binDoc = await Bin.findById(binId);
+    isRecyclingCenter = false;
+  }
+
+  if (!binDoc) {
+    res.status(404);
+    throw new Error('Bin not found');
+  }
+
+  // Verify ownership
+  if (binDoc.assignedLgu && binDoc.assignedLgu.toString() !== profileId.toString()) {
+    res.status(403);
+    throw new Error('Forbidden: You can only update bins assigned to your organization.');
+  }
+
+  binDoc.status = status;
+  if (fillLevel !== undefined) binDoc.fillLevel = Number(fillLevel);
+  if (currentFillKg !== undefined) binDoc.currentFillKg = Number(currentFillKg);
+  if (notes !== undefined && isRecyclingCenter) binDoc.description = notes;
+
+  await binDoc.save();
+
+  res.json({
+    success: true,
+    message: `Bin status updated to ${status}.`,
+    bin: binDoc
+  });
+});
+
+// @desc    Get Partner Organization community impact & verification statistics
+// @route   GET /api/partner-organizations/stats
+// @access  Private (Partner Org, Admin, Staff)
+const getPartnerOrgStats = asyncHandler(async (req, res) => {
+  let targetLguId = null;
+
+  const userRole = normalizeRole(req.user.role);
+  if (userRole === CANONICAL_ROLES.PARTNER_ORG) {
+    const { profileId } = await getProfileForUser(req.user._id, req.user.role);
+    targetLguId = profileId;
+  } else if (req.query.partnerOrgId) {
+    targetLguId = req.query.partnerOrgId;
+  }
+
+  if (!targetLguId) {
+    res.status(400);
+    throw new Error('Partner Organization ID could not be determined.');
+  }
+
+  // Find bins assigned to this LGU
+  const assignedBins = await RecyclingCenter.find({ assignedLgu: targetLguId }).select('_id');
+  const assignedBinIds = assignedBins.map(b => b._id);
+
+  // Aggregation of approved drop-offs for this partner org's bins
+  const approvedDropoffs = await BinDropoff.find({
+    binId: { $in: assignedBinIds },
+    status: { $in: ['approved', 'Approved'] }
+  });
+
+  let totalPointsDistributed = 0;
+  let totalItemsReceived = 0;
+  const categoryBreakdown = {};
+
+  approvedDropoffs.forEach(d => {
+    totalPointsDistributed += (d.pointsAwarded || 0);
+    const count = d.quantity || d.kilograms || 1;
+    totalItemsReceived += count;
+    categoryBreakdown[d.wasteType] = (categoryBreakdown[d.wasteType] || 0) + count;
+  });
+
+  const pendingValidationsCount = await BinDropoff.countDocuments({
+    binId: { $in: assignedBinIds },
+    status: { $in: ['pending', 'Pending'] }
+  });
+
+  const completedRequestsCount = await Request.countDocuments({
+    lgu: targetLguId,
+    status: { $in: ['completed', 'Completed'] }
+  });
+
+  res.json({
+    partnerOrgId: targetLguId,
+    assignedBinsCount: assignedBinIds.length,
+    pendingValidations: pendingValidationsCount,
+    totalDropoffsValidated: approvedDropoffs.length,
+    totalPointsDistributed,
+    totalItemsReceived,
+    completedCollections: completedRequestsCount,
+    categoryBreakdown
+  });
+});
 
 // @desc    Create a new Partner Organization account
 // @route   POST /api/partner-organizations
@@ -45,7 +258,7 @@ const createPartnerOrg = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get all Partner Organizations
+// @desc    Get all Partner Organizations (Admin/Staff view)
 // @route   GET /api/partner-organizations
 // @access  Private/Staff/Admin
 const getAllPartnerOrgs = asyncHandler(async (req, res) => {
@@ -158,6 +371,10 @@ const deletePartnerOrg = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  getMyPartnerOrgProfile,
+  getMyBins,
+  updateMyBinStatus,
+  getPartnerOrgStats,
   createPartnerOrg,
   getAllPartnerOrgs,
   getPartnerOrgById,
@@ -170,3 +387,4 @@ module.exports = {
   updateLguAccount: updatePartnerOrg,
   deleteLguAccount: deletePartnerOrg,
 };
+
