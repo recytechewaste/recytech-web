@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, Truck, User, Calendar, MapPin, Building, Clock, AlertCircle } from 'lucide-react';
+import { X, CheckCircle, Truck, User, Calendar, MapPin, Building, AlertCircle, Ban } from 'lucide-react';
 import api from '../../api/client';
 import styles from '../../styles/BinCollectionRequests.module.css';
 
 const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
-    const [status, setStatus] = useState('pending');
     const [assignedCollector, setAssignedCollector] = useState('');
     const [scheduledDate, setScheduledDate] = useState('');
     const [notes, setNotes] = useState('');
@@ -15,7 +14,6 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
 
     useEffect(() => {
         if (request) {
-            setStatus(request.status?.toLowerCase() || 'pending');
             setAssignedCollector(request.assignedCollector?._id || request.assignedCollector || '');
             setNotes(request.notes || '');
 
@@ -23,7 +21,7 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                 const d = new Date(request.scheduledDate);
                 setScheduledDate(d.toISOString().split('T')[0]);
             } else {
-                // Default to tomorrow for convenient scheduling
+                // Default to today or tomorrow
                 const tomorrow = new Date();
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 setScheduledDate(tomorrow.toISOString().split('T')[0]);
@@ -50,22 +48,45 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
 
     if (!request) return null;
 
-    const handleCollectorChange = (e) => {
-        const val = e.target.value;
-        setAssignedCollector(val);
-        // Automatically suggest 'assigned' status when a collector is picked
-        if (val && (status === 'pending' || status === 'approved')) {
-            setStatus('assigned');
+    const isPending = request.status?.toLowerCase() === 'pending';
+
+    // Submit: Automatically approves and assigns the collector
+    const handleAssignAndApprove = async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        setError(null);
+
+        if (!assignedCollector) {
+            setError('Please select a collector to dispatch for this collection request.');
+            setSubmitting(false);
+            return;
+        }
+
+        try {
+            // AUTOMATIC STATUS: Once a collector is assigned, status becomes 'assigned' (or 'approved')
+            // This immediately dispatches the job to the collector's mobile app and notifies the partner org.
+            await onUpdateRequest(request._id, {
+                status: 'assigned',
+                assignedCollector,
+                scheduledDate: scheduledDate || undefined,
+                notes
+            });
+            onClose();
+        } catch (err) {
+            setError(err.response?.data?.message || err.message || 'Failed to assign and approve request.');
+        } finally {
+            setSubmitting(false);
         }
     };
 
-    const handleQuickApprove = async () => {
+    // Quick Approve without assigning a specific collector immediately
+    const handleApproveOnly = async () => {
         setSubmitting(true);
         setError(null);
         try {
             await onUpdateRequest(request._id, {
                 status: 'approved',
-                assignedCollector: assignedCollector || undefined,
+                assignedCollector: null,
                 scheduledDate: scheduledDate || undefined,
                 notes
             });
@@ -77,28 +98,19 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
         }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    // Cancel/Decline request
+    const handleCancelRequest = async () => {
+        if (!window.confirm('Are you sure you want to decline / cancel this collection request?')) return;
         setSubmitting(true);
         setError(null);
-
-        // Validation for scheduled status
-        if (status === 'scheduled' && (!assignedCollector || !scheduledDate)) {
-            setError('Please select both a collector and a scheduled date for scheduled requests.');
-            setSubmitting(false);
-            return;
-        }
-
         try {
             await onUpdateRequest(request._id, {
-                status,
-                assignedCollector: assignedCollector || null,
-                scheduledDate: scheduledDate || null,
-                notes
+                status: 'cancelled',
+                notes: notes ? `${notes} (Cancelled by Admin)` : 'Cancelled by Admin'
             });
             onClose();
         } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Failed to update request.');
+            setError(err.response?.data?.message || err.message || 'Failed to cancel request.');
         } finally {
             setSubmitting(false);
         }
@@ -129,7 +141,7 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                         </div>
                         <div>
                             <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#111827', margin: 0 }}>
-                                Review & Assign Collection Request
+                                {isPending ? 'Approve & Assign Collector' : 'Manage Collection Dispatch'}
                             </h2>
                             <p style={{ fontSize: '12px', color: '#6b7280', margin: '2px 0 0 0' }}>
                                 Request ID: <span style={{ fontFamily: 'monospace', fontWeight: '600' }}>{request._id}</span>
@@ -164,7 +176,7 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                             </span>
                         </div>
                         <span className={`${styles.statusBadge} ${styles[request.status?.toLowerCase()] || styles.pending}`}>
-                            Current: {request.status?.toUpperCase()}
+                            Current Status: {request.status?.toUpperCase()}
                         </span>
                     </div>
 
@@ -194,6 +206,26 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                     )}
                 </div>
 
+                {/* ── Workflow Automation Banner ── */}
+                <div style={{
+                    backgroundColor: '#ecfdf5',
+                    border: '1px solid #a7f3d0',
+                    borderRadius: '8px',
+                    padding: '12px 14px',
+                    marginBottom: '18px',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    fontSize: '12.5px',
+                    color: '#065f46',
+                    lineHeight: 1.45
+                }}>
+                    <CheckCircle size={18} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    <div>
+                        <strong>Automatic Workflow:</strong> Once you assign a collector and confirm, this request will automatically be <strong>Approved & Assigned</strong>. The collector will see the job in their Mobile App, and subsequent status transitions (In-Transit, Completed) are handled directly by the collector on-site.
+                    </div>
+                </div>
+
                 {/* ── Error Banner ── */}
                 {error && (
                     <div style={{ 
@@ -214,45 +246,23 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                 )}
 
                 {/* ── Action Form ── */}
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {/* Status Selection */}
-                    <div>
-                        <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '6px' }}>
-                            Update Request Status
-                        </label>
-                        <select
-                            value={status}
-                            onChange={(e) => setStatus(e.target.value)}
-                            className={styles.input}
-                            style={{ cursor: 'pointer' }}
-                        >
-                            <option value="pending">Pending (Awaiting Staff Review)</option>
-                            <option value="approved">Approved (Accepted by Admin/Staff)</option>
-                            <option value="assigned">Assigned (Dispatched to Collector)</option>
-                            <option value="scheduled">Scheduled (Specific Date & Collector)</option>
-                            <option value="in_progress">In Progress (Collector En Route)</option>
-                            <option value="cancelled">Cancelled (Declined / Duplicate)</option>
-                        </select>
-                        <p style={{ fontSize: '11px', color: '#6b7280', margin: '4px 0 0 0' }}>
-                            Setting status to <strong>Approved</strong> or <strong>Assigned</strong> reflects immediately on the Partner Org's mobile dashboard.
-                        </p>
-                    </div>
-
+                <form onSubmit={handleAssignAndApprove} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {/* Collector Assignment Dropdown */}
                     <div>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '6px' }}>
-                            Assign Collector (Mobile Job Dispatch)
+                            Select Collector to Dispatch *
                         </label>
                         <select
                             value={assignedCollector}
-                            onChange={handleCollectorChange}
+                            onChange={(e) => setAssignedCollector(e.target.value)}
                             className={styles.input}
                             disabled={loadingCollectors}
                             style={{ cursor: loadingCollectors ? 'wait' : 'pointer' }}
+                            required
                         >
-                            <option value="">-- No Collector Assigned (Unassigned) --</option>
+                            <option value="">-- Choose an Available Collector --</option>
                             {collectors.map((col) => {
-                                const vehicle = col.vehicleType || col.vehiclePlate ? `${col.vehicleType || 'Vehicle'}${col.vehiclePlate ? ` • ${col.vehiclePlate}` : ''}` : '';
+                                const vehicle = col.vehicleType || col.vehiclePlate ? `${col.vehicleType || 'Vehicle'}${col.vehiclePlate ? ` • Plate: ${col.vehiclePlate}` : ''}` : '';
                                 const duty = col.status ? `[${col.status}]` : '';
                                 return (
                                     <option key={col._id} value={col._id}>
@@ -262,7 +272,7 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                             })}
                         </select>
                         <p style={{ fontSize: '11px', color: '#6b7280', margin: '4px 0 0 0' }}>
-                            The assigned collector will immediately see this pickup request in their Mobile App under <strong>Assigned Jobs</strong>.
+                            Dispatches the task directly to the collector's mobile app under <strong>Assigned Jobs</strong>.
                         </p>
                     </div>
 
@@ -282,14 +292,14 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                     {/* Staff Notes / Dispatch Instructions */}
                     <div>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '6px' }}>
-                            Staff Instructions / Dispatch Notes
+                            Staff Instructions / Dispatch Notes (Optional)
                         </label>
                         <textarea
                             rows={3}
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             className={styles.input}
-                            placeholder="Add dispatch instructions or special access instructions for the driver..."
+                            placeholder="Add access instructions or notes for the driver (e.g. Inquire at barangay desk, proceed to back parking)..."
                             style={{ resize: 'vertical' }}
                         />
                     </div>
@@ -297,16 +307,26 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                     {/* ── Modal Footer ── */}
                     <div className={styles.modalFooter} style={{ justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                            {request.status?.toLowerCase() === 'pending' && (
+                            {request.status?.toLowerCase() !== 'cancelled' && (
                                 <button
                                     type="button"
-                                    onClick={handleQuickApprove}
+                                    onClick={handleCancelRequest}
                                     disabled={submitting}
-                                    className={styles.quickApproveBtn}
-                                    title="Quick approve without changing collector assignment"
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#dc2626',
+                                        fontSize: '12px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        padding: '6px 8px'
+                                    }}
+                                    title="Decline or cancel this collection request"
                                 >
-                                    <CheckCircle size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
-                                    Quick Approve
+                                    <Ban size={14} /> Decline Request
                                 </button>
                             )}
                         </div>
@@ -324,7 +344,7 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                                 disabled={submitting}
                                 className={styles.submitBtn}
                             >
-                                {submitting ? 'Saving...' : 'Save & Dispatch'}
+                                {submitting ? 'Dispatching...' : 'Assign & Approve'}
                             </button>
                         </div>
                     </div>
