@@ -1,6 +1,6 @@
 import React from 'react';
 import { Search, Filter, AlertTriangle } from 'lucide-react';
-import styles from '../../styles/Collectors.module.css';
+import styles from '../../styles/SensorReports.module.css';
 
 const SensorReportFilterBar = ({
     searchTerm,
@@ -12,9 +12,9 @@ const SensorReportFilterBar = ({
     handleClearFilters
 }) => {
     return (
-        <div className={styles.filterBar} style={{ flexWrap: 'wrap', gap: '10px' }}>
-            <div className={styles.searchGroup} style={{ flex: '1 1 260px' }}>
-                <Search size={18} className={styles.searchIcon} />
+        <div className={styles.filterBar}>
+            <div className={styles.searchGroup}>
+                <Search size={17} className={styles.searchIcon} />
                 <input
                     type="text"
                     placeholder="Search by bin name, partner org, reporter, or issue description..."
@@ -26,7 +26,7 @@ const SensorReportFilterBar = ({
             </div>
 
             <div className={styles.filterGroup}>
-                <Filter size={18} className={styles.filterIcon} />
+                <Filter size={15} className={styles.filterIcon} />
                 <select
                     className={styles.selectInput}
                     value={statusFilter}
@@ -42,7 +42,7 @@ const SensorReportFilterBar = ({
             </div>
 
             <div className={styles.filterGroup}>
-                <AlertTriangle size={18} className={styles.filterIcon} />
+                <AlertTriangle size={15} className={styles.filterIcon} />
                 <select
                     className={styles.selectInput}
                     value={severityFilter}

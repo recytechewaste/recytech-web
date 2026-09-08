@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { RefreshCw, Cpu, Clock, Wrench, CheckCircle, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { RefreshCw, Cpu, Clock, Wrench, CheckCircle } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import SensorReportFilterBar from '../features/sensorReports/SensorReportFilterBar';
 import SensorReportTable from '../features/sensorReports/SensorReportTable';
 import SensorReportModal from '../features/sensorReports/SensorReportModal';
 import Pagination from '../components/Pagination';
-import styles from '../styles/Collectors.module.css';
-import rpStyles from '../styles/RewardPointManager.module.css';
+import styles from '../styles/SensorReports.module.css';
 import { useSensorReports } from '../features/sensorReports/useSensorReports';
 
 const SensorReports = () => {
@@ -50,58 +49,57 @@ const SensorReports = () => {
                             Review and resolve Time-of-Flight (ToF) fullness sensor malfunctions and bin hardware damage reported by Partner Organizations.
                         </p>
                     </div>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div>
                         <button
-                            className={styles.clearBtn}
+                            className={styles.refreshBtn}
                             onClick={handleRefresh}
                             title="Refresh sensor reports"
                             aria-label="Refresh sensor incident reports"
-                            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                         >
-                            <RefreshCw size={14} /> Refresh
+                            <RefreshCw size={14} /> Refresh Data
                         </button>
                     </div>
                 </header>
 
                 {/* ── KPI Stats Bar ── */}
-                <div className={rpStyles.statsBar} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                    <div className={rpStyles.statCard}>
-                        <div className={rpStyles.statIcon} style={{ background: '#f3f4f6', color: '#374151' }}>
+                <div className={styles.statsBar}>
+                    <div className={styles.statCard}>
+                        <div className={styles.statIcon} style={{ background: '#f1f5f9', color: '#334155' }}>
                             <Cpu size={22} />
                         </div>
                         <div>
-                            <p className={rpStyles.statValue}>{stats.total}</p>
-                            <p className={rpStyles.statLabel}>Total Incidents</p>
+                            <p className={styles.statValue}>{stats.total}</p>
+                            <p className={styles.statLabel}>Total Incidents</p>
                         </div>
                     </div>
 
-                    <div className={rpStyles.statCard}>
-                        <div className={rpStyles.statIcon} style={{ background: '#fef3c7', color: '#d97706' }}>
+                    <div className={styles.statCard}>
+                        <div className={styles.statIcon} style={{ background: '#fef3c7', color: '#d97706' }}>
                             <Clock size={22} />
                         </div>
                         <div>
-                            <p className={rpStyles.statValue} style={{ color: '#d97706' }}>{stats.pending}</p>
-                            <p className={rpStyles.statLabel}>Pending Investigation</p>
+                            <p className={styles.statValue} style={{ color: '#d97706' }}>{stats.pending}</p>
+                            <p className={styles.statLabel}>Pending Investigation</p>
                         </div>
                     </div>
 
-                    <div className={rpStyles.statCard}>
-                        <div className={rpStyles.statIcon} style={{ background: '#eff6ff', color: '#2563eb' }}>
+                    <div className={styles.statCard}>
+                        <div className={styles.statIcon} style={{ background: '#eff6ff', color: '#2563eb' }}>
                             <Wrench size={22} />
                         </div>
                         <div>
-                            <p className={rpStyles.statValue} style={{ color: '#2563eb' }}>{stats.inProgress}</p>
-                            <p className={rpStyles.statLabel}>In Progress (Dispatched)</p>
+                            <p className={styles.statValue} style={{ color: '#2563eb' }}>{stats.inProgress}</p>
+                            <p className={styles.statLabel}>In Progress (Dispatched)</p>
                         </div>
                     </div>
 
-                    <div className={rpStyles.statCard}>
-                        <div className={rpStyles.statIcon} style={{ background: '#f0fdf4', color: '#16a34a' }}>
+                    <div className={styles.statCard}>
+                        <div className={styles.statIcon} style={{ background: '#ecfdf5', color: '#059669' }}>
                             <CheckCircle size={22} />
                         </div>
                         <div>
-                            <p className={rpStyles.statValue} style={{ color: '#16a34a' }}>{stats.resolved}</p>
-                            <p className={rpStyles.statLabel}>Resolved Incidents</p>
+                            <p className={styles.statValue} style={{ color: '#059669' }}>{stats.resolved}</p>
+                            <p className={styles.statLabel}>Resolved Incidents</p>
                         </div>
                     </div>
                 </div>
@@ -133,7 +131,7 @@ const SensorReports = () => {
                     />
                 )}
 
-                {/* ── Modal ── */}
+                {/* ── Incident Review Modal Dialog ── */}
                 {selectedReport && (
                     <SensorReportModal
                         report={selectedReport}
