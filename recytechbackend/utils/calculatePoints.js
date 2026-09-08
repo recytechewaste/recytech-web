@@ -2,11 +2,14 @@ const RewardPoint = require('../models/RewardPoint');
 
 /**
  * Calculate points awarded based on waste type and deposited items.
- * @param {string} wasteType - Type of waste (e.g. "Electronics", "Battery")
+ * Uses smart matching (exact match, case-insensitive match, and category substring matching)
+ * so that mobile waste types like "Small Electronics", "Batteries", etc. reliably map
+ * to the admin-configured RewardPoint rules.
+ * @param {string} wasteType - Type of waste (e.g. "Electronics", "Small Electronics", "Battery")
  * @param {number} items - Number of deposited waste items
- * @returns {object} { points: number, success: boolean, message: string }
+ * @returns {object} { points: number, success: boolean, message: string, matchedWasteType: string, pointsPerItem: number }
  */
-async function calculatePointsAwarded(wasteType, items = 1) { // Changed kilograms to items
+async function calculatePointsAwarded(wasteType, items = 1) {
     try {
         if (!wasteType || typeof wasteType !== 'string') {
             return {
@@ -16,18 +19,55 @@ async function calculatePointsAwarded(wasteType, items = 1) { // Changed kilogra
             };
         }
 
-        if (!Number.isFinite(items) || items < 0) { // Changed kilograms to items
+        const count = Number(items);
+        if (!Number.isFinite(count) || count < 0) {
             return {
                 points: 0,
                 success: false,
-                message: 'Invalid kilogram value provided'
+                message: 'Invalid item count provided'
             };
         }
 
-        const rewardPoint = await RewardPoint.findOne({
-            wasteType: wasteType.trim(),
+        const trimmed = wasteType.trim();
+
+        // 1. Exact match
+        let rewardPoint = await RewardPoint.findOne({
+            wasteType: trimmed,
             isActive: true
         });
+
+        // 2. Case-insensitive exact match
+        if (!rewardPoint) {
+            const escaped = trimmed.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+            rewardPoint = await RewardPoint.findOne({
+                wasteType: { $regex: new RegExp(`^${escaped}$`, 'i') },
+                isActive: true
+            });
+        }
+
+        // 3. Smart substring / semantic match with plural normalization
+        // e.g. "Small Electronics" matches "Electronics", "Batteries" matches "Battery", "Mobile" matches "Mobile Phone"
+        if (!rewardPoint) {
+            const allActive = await RewardPoint.find({ isActive: true });
+            const targetLower = trimmed.toLowerCase();
+            const stem = (str) => {
+                let s = str.toLowerCase().trim();
+                if (s.endsWith('ies')) s = s.slice(0, -3) + 'y';
+                else if (s.endsWith('es')) s = s.slice(0, -2);
+                else if (s.endsWith('s') && !s.endsWith('ss')) s = s.slice(0, -1);
+                return s;
+            };
+            const targetStem = stem(targetLower);
+
+            rewardPoint = allActive.find(rp => {
+                const rpLower = rp.wasteType.toLowerCase();
+                const rpStem = stem(rpLower);
+                return targetLower.includes(rpLower) || 
+                       rpLower.includes(targetLower) ||
+                       targetStem.includes(rpStem) ||
+                       rpStem.includes(targetStem);
+            });
+        }
 
         if (!rewardPoint) {
             return {
@@ -37,24 +77,15 @@ async function calculatePointsAwarded(wasteType, items = 1) { // Changed kilogra
             };
         }
 
-        const pointsPerItem = rewardPoint.pointsPerItem; // Corrected from pointsPerKg
-
-        if (!Number.isFinite(pointsPerItem) || pointsPerItem < 0) { // Corrected from pointsPerKg
-            return {
-                points: 0,
-                success: false,
-                message: `No valid points rule found for waste type: ${wasteType} or pointsPerItem is invalid` // Updated message
-            };
-        }
-
-        const calculatedPoints = items * pointsPerItem; // Corrected from kilograms * pointsPerKg
-        const roundedPoints = Math.round(calculatedPoints);
+        const pointsPerItem = rewardPoint.pointsPerItem ?? rewardPoint.pointsPerKg ?? 0;
+        const calculatedPoints = Math.round(count * pointsPerItem);
 
         return {
-            points: roundedPoints,
+            points: calculatedPoints,
             success: true,
-            message: `Points calculated: ${items} items x ${pointsPerItem} points/item = ${roundedPoints} points`, // Updated message
-            pointsPerItem: pointsPerItem // Corrected from pointsPerKg
+            matchedWasteType: rewardPoint.wasteType,
+            pointsPerItem,
+            message: `Points calculated: ${count} items x ${pointsPerItem} points/item = ${calculatedPoints} points`
         };
     } catch (error) {
         console.error('Error calculating points:', error);

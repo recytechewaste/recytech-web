@@ -6,6 +6,8 @@ const normalizePoint = (point) => {
     const pts = obj.pointsPerItem ?? obj.pointsPerKg ?? 0;
     return {
         ...obj,
+        name: obj.wasteType,
+        category: obj.wasteType,
         points: pts,
         pointsPerItem: pts,
         pointsPerKg: pts
@@ -26,6 +28,9 @@ const getRewardPoints = asyncHandler(async (req, res) => {
     res.json({
         points: normalizedPoints,
         data: normalizedPoints,
+        categories: normalizedPoints,
+        wasteTypes: normalizedPoints,
+        categoryList: normalizedPoints.map(p => p.wasteType),
         count: normalizedPoints.length
     });
 });
