@@ -70,6 +70,14 @@ const superAdmin = (req, res, next) => {
     }
 };
 
+const staffOnly = (req, res, next) => {
+    if (req.user && ['Staff', 'staff'].includes(req.user.role)) {
+        next();
+    } else {
+        res.status(403).json({ message: 'Forbidden: Access is restricted to Staff personnel only.' });
+    }
+};
+
 const lgu = (req, res, next) => {
     if (req.user && ['partner_org', 'partner_organization', 'LGU', 'Partner Organization', 'PartnerOrganization'].includes(req.user.role)) {
         next();
@@ -97,6 +105,7 @@ const household = (req, res, next) => {
 module.exports = { 
     protect, 
     admin, 
+    staffOnly,
     staffOnlyOrSuperAdmin, 
     staffOrAdmin, 
     superAdmin, 

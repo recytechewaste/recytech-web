@@ -118,6 +118,7 @@ app.use('/api/bin-locations', require('./recytechbackend/routes/recyclingCenterR
 app.use('/api/bin-dropoffs', require('./recytechbackend/routes/binDropoffRoutes'));
 app.use('/api/analytics', require('./recytechbackend/routes/analyticsRoutes'));
 app.use('/api/scheduling', require('./recytechbackend/routes/schedulingRoutes'));
+app.use('/api/sensor-reports', require('./recytechbackend/routes/sensorReportRoutes'));
 
 // Global Error Handler MUST be the last piece of middleware
 app.use(require('./recytechbackend/middleware/errorHandler').errorHandler);

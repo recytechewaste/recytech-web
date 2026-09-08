@@ -20,6 +20,7 @@ const PartnerOrgManager = lazy(() => import('./pages/PartnerOrgManager'));
 const PointHistory = lazy(() => import('./pages/PointHistory'));
 const BinNetwork = lazy(() => import('./pages/BinNetwork'));
 const BinCollectionRequests = lazy(() => import('./pages/BinCollectionRequests'));
+const SensorReports = lazy(() => import('./pages/SensorReports'));
 const Unauthorized = lazy(() => import('./pages/Unauthorized'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -113,6 +114,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
                 <BinCollectionRequests />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/sensor-reports" 
+            element={
+              <ProtectedRoute allowedRoles={['Staff']}>
+                <SensorReports />
               </ProtectedRoute>
             } 
           />
