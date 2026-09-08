@@ -1,70 +1,155 @@
-import { Eye } from 'lucide-react';
-import styles from '../../styles/UserManagement.module.css';
+import React from 'react';
+import { Eye, Edit2, Trash2, Award, Phone, Mail, MapPin } from 'lucide-react';
+import styles from '../../styles/Collectors.module.css';
 import Skeleton from '../../components/Skeleton';
+import EmptyState from '../../components/EmptyState';
 
-const ResidentTable = ({ residents, loading, onEdit, onDelete }) => {
+const ResidentTableRow = ({ resident, index, page, limit, onView, onEdit, onDelete, canManage }) => {
+    const fullName = `${resident.firstName || ''} ${resident.lastName || ''}`.trim() || 'Unknown Resident';
+    const initials = resident.firstName ? resident.firstName.charAt(0).toUpperCase() : 'R';
+    const points = (resident.pointsBalance ?? resident.totalPoints ?? 0).toLocaleString();
+
+    return (
+        <tr>
+            <td className={styles.td}>{(page - 1) * limit + index + 1}</td>
+            <td className={styles.td}>
+                <div className={styles.driverCell}>
+                    <div className={styles.avatar}>
+                        {initials}
+                    </div>
+                    <div>
+                        <div className={styles.driverName}>{fullName}</div>
+                        <div className={styles.driverId}>
+                            ID: {resident._id ? `R-${resident._id.substring(resident._id.length - 6).toUpperCase()}` : 'N/A'}
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td className={styles.td}>
+                <span style={{ color: '#374151', fontSize: '13px' }}>{resident.email}</span>
+            </td>
+            <td className={styles.td}>
+                <span style={{ color: '#4b5563', fontSize: '13px' }}>{resident.phone || '—'}</span>
+            </td>
+            <td className={styles.td}>
+                <span className={styles.plateBadge} style={{ background: '#ecfdf5', color: '#065f46', borderColor: '#a7f3d0' }}>
+                    <Award size={14} style={{ color: '#10b981' }} />
+                    {points} pts
+                </span>
+            </td>
+            <td className={styles.td} style={{ textAlign: 'center', fontWeight: 600, color: '#374151' }}>
+                {resident.requestCount || 0}
+            </td>
+            <td className={styles.td}>
+                <span className={`${styles.statusBadge} ${resident.status === 'Active' ? styles.active : styles.inactive}`}>
+                    {resident.status || 'Active'}
+                </span>
+            </td>
+            <td className={styles.td}>
+                <div className={styles.actions}>
+                    <button
+                        title="View Profile Details"
+                        aria-label={`View details for ${fullName}`}
+                        className={styles.iconBtn}
+                        onClick={() => onView(resident)}
+                    >
+                        <Eye size={16} />
+                    </button>
+                    {canManage && (
+                        <>
+                            <button
+                                title="Edit Resident"
+                                aria-label={`Edit ${fullName}`}
+                                className={styles.iconBtn}
+                                onClick={() => onEdit(resident)}
+                            >
+                                <Edit2 size={16} />
+                            </button>
+                            <button
+                                title="Deactivate / Delete Resident"
+                                aria-label={`Deactivate ${fullName}`}
+                                className={styles.iconBtnDanger}
+                                onClick={() => onDelete(resident)}
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </>
+                    )}
+                </div>
+            </td>
+        </tr>
+    );
+};
+
+const SkeletonRow = () => (
+    <tr>
+        <td className={styles.td}><Skeleton width="20px" /></td>
+        <td className={styles.td}>
+            <div className={styles.driverCell}>
+                <Skeleton width="36px" height="36px" borderRadius="50%" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <Skeleton width="120px" height="16px" />
+                    <Skeleton width="70px" height="12px" />
+                </div>
+            </div>
+        </td>
+        <td className={styles.td}><Skeleton width="150px" height="16px" /></td>
+        <td className={styles.td}><Skeleton width="100px" height="16px" /></td>
+        <td className={styles.td}><Skeleton width="80px" height="24px" borderRadius="4px" /></td>
+        <td className={styles.td} style={{ textAlign: 'center' }}><Skeleton width="30px" height="16px" style={{ margin: '0 auto' }} /></td>
+        <td className={styles.td}><Skeleton width="60px" height="24px" borderRadius="12px" /></td>
+        <td className={styles.td}>
+            <div className={styles.actions}>
+                <Skeleton width="28px" height="28px" borderRadius="4px" />
+                <Skeleton width="28px" height="28px" borderRadius="4px" />
+                <Skeleton width="28px" height="28px" borderRadius="4px" />
+            </div>
+        </td>
+    </tr>
+);
+
+const ResidentTable = ({ residents, loading, page = 1, limit = 10, onView, onEdit, onDelete, canManage = true }) => {
     return (
         <div className={styles.card}>
             <table className={styles.table}>
                 <thead>
                     <tr>
-                        <th className={styles.th} style={{width:'50px'}}>#</th>
+                        <th className={styles.th} style={{ width: '50px' }}>#</th>
                         <th className={styles.th}>Resident</th>
                         <th className={styles.th}>Email</th>
-                        <th className={styles.th}>Contact Number</th>
+                        <th className={styles.th}>Phone</th>
                         <th className={styles.th}>Points Balance</th>
-                        <th className={styles.th}>Requests</th>
+                        <th className={styles.th} style={{ textAlign: 'center' }}>Requests</th>
                         <th className={styles.th}>Status</th>
+                        <th className={styles.th}>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        Array.from({ length: 5 }).map((_, i) => (
-                            <tr key={`skeleton-${i}`}>
-                                <td className={styles.td}><Skeleton width="20px" /></td>
-                                <td className={styles.td}>
-                                    <div className={styles.userCell}>
-                                        <Skeleton width="32px" height="32px" borderRadius="50%" />
-                                        <div className={styles.userInfo}>
-                                            <Skeleton width="120px" height="16px" style={{marginBottom: '4px'}} />
-                                            <Skeleton width="60px" height="12px" />
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className={styles.td}><Skeleton width="160px" height="16px" /></td>
-                                <td className={styles.td}><Skeleton width="100px" height="16px" /></td>
-                                <td className={styles.td}><Skeleton width="80px" height="16px" /></td>
-                                <td className={styles.td}><Skeleton width="30px" height="16px" /></td>
-                                <td className={styles.td}><Skeleton width="60px" height="24px" borderRadius="12px" /></td>
-                            </tr>
-                        ))
+                        Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={`skeleton-${i}`} />)
                     ) : residents.length === 0 ? (
-                        <tr><td colSpan="7" className={styles.td} style={{textAlign:'center', padding:'40px'}}>No registered users found.</td></tr>
+                        <tr>
+                            <td colSpan="8" style={{ padding: 0 }}>
+                                <EmptyState
+                                    icon="users"
+                                    title="No registered residents found"
+                                    subtitle="Try adjusting your filters or search terms."
+                                />
+                            </td>
+                        </tr>
                     ) : (
                         residents.map((resident, index) => (
-                            <tr key={resident._id || index}>
-                                <td className={styles.td}>{index + 1}</td>
-                                <td className={styles.td}>
-                                    <div className={styles.userCell}>
-                                        <div className={styles.avatar}>
-                                            {resident.firstName ? resident.firstName.charAt(0).toUpperCase() : '?'}
-                                        </div>
-                                        <div className={styles.userInfo}>
-                                            <span className={styles.userName}>{`${resident.firstName || ''} ${resident.lastName || ''}`.trim() || 'Unknown'}</span>
-                                            <span className={styles.userId}>ID: {resident._id ? `R-${resident._id.substring(resident._id.length - 4).toUpperCase()}` : 'N/A'}</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className={styles.td}>{resident.email}</td>
-                                <td className={styles.td}>{resident.phone || '—'}</td>
-                                <td className={styles.td} style={{color: '#059669', fontWeight: 700}}>{resident.pointsBalance ?? resident.totalPoints ?? 0} pts</td>
-                                <td className={styles.td}>{resident.requestCount || 0}</td>
-                                <td className={styles.td}>
-                                    <span className={resident.status === 'Active' ? styles.statusActive : styles.statusInactive}>
-                                        {resident.status || 'Active'}
-                                    </span>
-                                </td>
-                            </tr>
+                            <ResidentTableRow
+                                key={resident._id || index}
+                                resident={resident}
+                                index={index}
+                                page={page}
+                                limit={limit}
+                                onView={onView}
+                                onEdit={onEdit}
+                                onDelete={onDelete}
+                                canManage={canManage}
+                            />
                         ))
                     )}
                 </tbody>
@@ -73,4 +158,4 @@ const ResidentTable = ({ residents, loading, onEdit, onDelete }) => {
     );
 };
 
-export default ResidentTable;
+export default ResidentTable;
