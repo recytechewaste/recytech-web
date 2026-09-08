@@ -55,6 +55,7 @@ const SensorReports = () => {
                             className={styles.clearBtn}
                             onClick={handleRefresh}
                             title="Refresh sensor reports"
+                            aria-label="Refresh sensor incident reports"
                             style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                         >
                             <RefreshCw size={14} /> Refresh

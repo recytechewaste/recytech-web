@@ -144,10 +144,11 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
                     {/* Staff Resolution Form */}
                     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '8px' }}>
                         <div>
-                            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '6px' }}>
+                            <label htmlFor="update-incident-status" style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '6px' }}>
                                 Update Incident Status
                             </label>
                             <select
+                                id="update-incident-status"
                                 value={selectedStatus}
                                 onChange={(e) => setSelectedStatus(e.target.value)}
                                 style={{
@@ -168,10 +169,11 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
                         </div>
 
                         <div>
-                            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '6px' }}>
+                            <label htmlFor="resolution-notes" style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '6px' }}>
                                 Staff Resolution Notes & Actions Taken
                             </label>
                             <textarea
+                                id="resolution-notes"
                                 rows={3}
                                 placeholder="Describe inspection findings, replaced hardware/ultrasonic sensor modules, calibration results, or technician actions..."
                                 value={resolutionNotes}
@@ -189,8 +191,9 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
                         </div>
 
                         {selectedStatus === 'Resolved' && (
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
+                            <label htmlFor="restore-bin-status" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
                                 <input
+                                    id="restore-bin-status"
                                     type="checkbox"
                                     checked={restoreBinStatus}
                                     onChange={(e) => setRestoreBinStatus(e.target.checked)}

@@ -97,7 +97,7 @@ const SensorReportTable = ({ reports, loading, onSelectReport }) => {
             <div className={styles.tableCard}>
                 <div style={{ padding: '48px', textAlign: 'center', color: '#6b7280' }}>
                     <CheckCircle size={36} color="#16a34a" style={{ margin: '0 auto 12px auto', display: 'block' }} />
-                    <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>No Sensor Incident Reports Found</h3>
+                    <p style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>No Sensor Incident Reports Found</p>
                     <p style={{ fontSize: '13px', color: '#9ca3af' }}>All smart bins and Time-of-Flight (ToF) fullness sensors are currently running in optimal condition.</p>
                 </div>
             </div>
