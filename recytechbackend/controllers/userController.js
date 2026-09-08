@@ -151,13 +151,20 @@ const getUserProfile = asyncHandler(async (req, res) => {
 
     const { profileId, profileType, profile } = await getProfileForUser(user._id, user.role);
 
+    const normalizedAccountStatus = (user.status || 'Active').toLowerCase();
+
     res.json({
-        user,
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
         role: normalizeRole(user.role),
         status: user.status,
+        accountStatus: normalizedAccountStatus,
         profileId,
         profileType,
-        profile
+        profile,
+        user
     });
 });
 

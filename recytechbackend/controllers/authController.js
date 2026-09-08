@@ -53,6 +53,8 @@ const loginUser = asyncHandler(async (req, res) => {
             if (collProfile) profileId = collProfile._id;
         }
 
+        const normalizedAccountStatus = (user.status || 'Active').toLowerCase();
+
         const userPayload = {
             _id: user._id,
             firstName: user.firstName,
@@ -66,8 +68,12 @@ const loginUser = asyncHandler(async (req, res) => {
         res.json({
             ...userPayload,
             profileId,
+            accountStatus: normalizedAccountStatus,
             token,
-            user: userPayload
+            user: {
+                ...userPayload,
+                accountStatus: normalizedAccountStatus
+            }
         });
     } else {
         res.status(401);
@@ -212,7 +218,7 @@ const registerUser = asyncHandler(async (req, res) => {
             status: user.status
         },
         profileId: profile ? profile._id : null,
-        accountStatus: user.status
+        accountStatus: (user.status || 'Active').toLowerCase()
     });
 });
 
@@ -334,6 +340,8 @@ const getMe = asyncHandler(async (req, res) => {
         if (profile) profileId = profile._id;
     }
 
+    const normalizedAccountStatus = (user.status || 'Active').toLowerCase();
+
     const userPayload = {
         _id: user._id,
         firstName: user.firstName,
@@ -341,15 +349,21 @@ const getMe = asyncHandler(async (req, res) => {
         email: user.email,
         role: user.role,
         status: user.status,
+        accountStatus: normalizedAccountStatus,
         lastLogin: user.lastLogin,
         createdAt: user.createdAt
     };
 
     res.json({
-        user: userPayload,
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
         role: user.role,
         status: user.status,
         profileId,
+        accountStatus: normalizedAccountStatus,
+        user: userPayload,
         profileType,
         profile
     });
