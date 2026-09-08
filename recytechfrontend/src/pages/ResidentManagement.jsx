@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Plus, RefreshCw, Users, CheckCircle, Award, Layers } from 'lucide-react';
+import { RefreshCw, Users, CheckCircle, Award, Layers } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import ResidentTable from '../features/residents/ResidentTable';
 import ResidentFilterBar from '../features/residents/ResidentFilterBar';
-import ResidentFormModal from '../features/residents/ResidentFormModal';
 import ResidentDetailModal from '../features/residents/ResidentDetailModal';
 import ConfirmDeleteModal from '../features/residents/ConfirmDeleteModal';
 import Pagination from '../components/Pagination';
@@ -11,34 +10,19 @@ import styles from '../styles/Collectors.module.css';
 import rpStyles from '../styles/RewardPointManager.module.css';
 import { useResidents } from '../features/residents/useResidents';
 
-const BLANK_RESIDENT_FORM = {
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    address: '',
-    password: '',
-    confirmPassword: '',
-    status: 'Active',
-    source: 'Web'
-};
-
 const ResidentManagement = () => {
     const {
         loading,
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
-        sourceFilter, setSourceFilter,
         handleClearFilters,
         filteredResidents, paginatedResidents, fetchResidents,
-        addResident, updateResident, deleteResident,
+        deleteResident,
         stats,
         currentPage, totalPages, setPage
     } = useResidents();
 
     // Modal state management
-    const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-    const [editingResident, setEditingResident] = useState(null);
     const [viewingResident, setViewingResident] = useState(null);
     const [deletingResident, setDeletingResident] = useState(null);
 
@@ -46,35 +30,12 @@ const ResidentManagement = () => {
     const userRole = userInfo.role;
     const canManage = userRole === 'Admin' || userRole === 'Super Admin';
 
-    const handleOpenAddModal = () => {
-        setEditingResident(null);
-        setIsFormModalOpen(true);
-    };
-
-    const handleOpenEditModal = (resident) => {
-        setEditingResident(resident);
-        setIsFormModalOpen(true);
-    };
-
     const handleOpenViewModal = (resident) => {
         setViewingResident(resident);
     };
 
     const handleOpenDeleteModal = (resident) => {
         setDeletingResident(resident);
-    };
-
-    const handleFormSubmit = async (formData) => {
-        let success;
-        if (editingResident) {
-            success = await updateResident(editingResident._id, formData);
-        } else {
-            success = await addResident(formData);
-        }
-        if (success) {
-            setIsFormModalOpen(false);
-            setEditingResident(null);
-        }
     };
 
     const handleConfirmDelete = async () => {
@@ -106,11 +67,6 @@ const ResidentManagement = () => {
                         >
                             <RefreshCw size={14} /> Refresh
                         </button>
-                        {canManage && (
-                            <button className={styles.addBtn} onClick={handleOpenAddModal}>
-                                <Plus size={18} /> Add Resident
-                            </button>
-                        )}
                     </div>
                 </header>
 
@@ -163,8 +119,6 @@ const ResidentManagement = () => {
                     setSearchTerm={setSearchTerm}
                     statusFilter={statusFilter}
                     setStatusFilter={setStatusFilter}
-                    sourceFilter={sourceFilter}
-                    setSourceFilter={setSourceFilter}
                     handleClearFilters={handleClearFilters}
                     total={filteredResidents.length}
                 />
@@ -176,7 +130,6 @@ const ResidentManagement = () => {
                     page={currentPage}
                     limit={10}
                     onView={handleOpenViewModal}
-                    onEdit={handleOpenEditModal}
                     onDelete={handleOpenDeleteModal}
                     canManage={canManage}
                 />
@@ -188,20 +141,6 @@ const ResidentManagement = () => {
                         totalPages={totalPages}
                         onPageChange={setPage}
                         totalCount={filteredResidents.length}
-                    />
-                )}
-
-                {/* ── Add / Edit Modal ── */}
-                {isFormModalOpen && (
-                    <ResidentFormModal
-                        isOpen={isFormModalOpen}
-                        isEditing={!!editingResident}
-                        initialData={editingResident || BLANK_RESIDENT_FORM}
-                        onClose={() => {
-                            setIsFormModalOpen(false);
-                            setEditingResident(null);
-                        }}
-                        onSubmit={handleFormSubmit}
                     />
                 )}
 
