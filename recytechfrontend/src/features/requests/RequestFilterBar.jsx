@@ -36,7 +36,12 @@ const RequestFilterBar = ({
         >
           <option value="">All Statuses</option>
           <option value="pending">Pending</option>
-          <option value="in-progress">In Progress</option>
+          <option value="approved">Approved</option>
+          <option value="assigned">Assigned</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="in_transit">In Transit</option>
+          <option value="in_progress">In Progress</option>
+          <option value="arrived">Arrived</option>
           <option value="completed">Completed</option>
           <option value="cancelled">Cancelled</option>
         </select>
