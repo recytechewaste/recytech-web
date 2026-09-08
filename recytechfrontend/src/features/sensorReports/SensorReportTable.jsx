@@ -1,42 +1,22 @@
 import React from 'react';
-import { Eye, AlertCircle, CheckCircle, Clock, Wrench, ShieldAlert } from 'lucide-react';
-import styles from '../../styles/Collectors.module.css';
+import { Eye, AlertCircle, CheckCircle, Clock, Wrench, ShieldAlert, Cpu } from 'lucide-react';
+import styles from '../../styles/SensorReports.module.css';
 
 const SensorReportTable = ({ reports, loading, onSelectReport }) => {
     const getSeverityBadge = (severity) => {
         const sevLower = (severity || 'medium').toLowerCase();
-        let bg = '#eff6ff';
-        let color = '#2563eb';
-        let border = '#bfdbfe';
+        let className = `${styles.severityBadge} ${styles.severityMedium}`;
 
         if (sevLower === 'critical') {
-            bg = '#fef2f2';
-            color = '#dc2626';
-            border = '#fecaca';
+            className = `${styles.severityBadge} ${styles.severityCritical}`;
         } else if (sevLower === 'high') {
-            bg = '#fff7ed';
-            color = '#ea580c';
-            border = '#fed7aa';
+            className = `${styles.severityBadge} ${styles.severityHigh}`;
         } else if (sevLower === 'low') {
-            bg = '#f0fdf4';
-            color = '#16a34a';
-            border = '#bbf7d0';
+            className = `${styles.severityBadge} ${styles.severityLow}`;
         }
 
         return (
-            <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '3px 8px',
-                borderRadius: '6px',
-                fontSize: '11px',
-                fontWeight: '700',
-                textTransform: 'uppercase',
-                backgroundColor: bg,
-                color: color,
-                border: `1px solid ${border}`
-            }}>
+            <span className={className}>
                 {sevLower === 'critical' && <ShieldAlert size={12} />}
                 {severity}
             </span>
@@ -45,36 +25,22 @@ const SensorReportTable = ({ reports, loading, onSelectReport }) => {
 
     const getStatusBadge = (status) => {
         const sLower = (status || 'pending').toLowerCase();
-        let bg = '#fffbeb';
-        let color = '#d97706';
+        let className = `${styles.statusBadge} ${styles.statusPending}`;
         let icon = <Clock size={12} />;
 
         if (sLower === 'in progress') {
-            bg = '#eff6ff';
-            color = '#2563eb';
+            className = `${styles.statusBadge} ${styles.statusInProgress}`;
             icon = <Wrench size={12} />;
         } else if (sLower === 'resolved') {
-            bg = '#f0fdf4';
-            color = '#16a34a';
+            className = `${styles.statusBadge} ${styles.statusResolved}`;
             icon = <CheckCircle size={12} />;
         } else if (sLower === 'dismissed') {
-            bg = '#f3f4f6';
-            color = '#6b7280';
+            className = `${styles.statusBadge} ${styles.statusDismissed}`;
             icon = <AlertCircle size={12} />;
         }
 
         return (
-            <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '4px 9px',
-                borderRadius: '12px',
-                fontSize: '12px',
-                fontWeight: '600',
-                backgroundColor: bg,
-                color: color
-            }}>
+            <span className={className}>
                 {icon}
                 {status}
             </span>
@@ -84,9 +50,11 @@ const SensorReportTable = ({ reports, loading, onSelectReport }) => {
     if (loading) {
         return (
             <div className={styles.tableCard}>
-                <div style={{ padding: '48px', textAlign: 'center', color: '#6b7280' }}>
-                    <div className={styles.spinner} style={{ margin: '0 auto 12px auto' }} />
-                    <p>Loading sensor incident reports...</p>
+                <div className={styles.emptyCard}>
+                    <div className={styles.spinner} />
+                    <p style={{ fontSize: '14px', color: '#64748b', fontWeight: 500, margin: 0 }}>
+                        Loading sensor incident reports...
+                    </p>
                 </div>
             </div>
         );
@@ -95,10 +63,14 @@ const SensorReportTable = ({ reports, loading, onSelectReport }) => {
     if (!reports || reports.length === 0) {
         return (
             <div className={styles.tableCard}>
-                <div style={{ padding: '48px', textAlign: 'center', color: '#6b7280' }}>
-                    <CheckCircle size={36} color="#16a34a" style={{ margin: '0 auto 12px auto', display: 'block' }} />
-                    <p style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>No Sensor Incident Reports Found</p>
-                    <p style={{ fontSize: '13px', color: '#9ca3af' }}>All smart bins and Time-of-Flight (ToF) fullness sensors are currently running in optimal condition.</p>
+                <div className={styles.emptyCard}>
+                    <CheckCircle size={38} color="#10b981" style={{ margin: '0 auto 12px auto', display: 'block' }} />
+                    <p style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>
+                        No Sensor Incident Reports Found
+                    </p>
+                    <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                        All smart bins and Time-of-Flight (ToF) fullness sensors are currently running in optimal condition.
+                    </p>
                 </div>
             </div>
         );
@@ -123,75 +95,48 @@ const SensorReportTable = ({ reports, loading, onSelectReport }) => {
                         {reports.map((report) => (
                             <tr key={report._id}>
                                 <td>
-                                    <div style={{ fontWeight: '600', color: '#111827' }}>
+                                    <div className={styles.binName}>
                                         {report.binId?.name || 'Unknown Smart Bin'}
                                     </div>
-                                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                                    <div className={styles.binAddress}>
                                         {report.binId?.address || 'No address specified'}
                                     </div>
                                     {report.binId?.status === 'Maintenance' && (
-                                        <span style={{ fontSize: '10px', color: '#dc2626', fontWeight: '700' }}>
-                                            [BIN IN MAINTENANCE]
+                                        <span className={styles.maintenanceTag}>
+                                            BIN IN MAINTENANCE
                                         </span>
                                     )}
                                 </td>
                                 <td>
-                                    <div style={{ fontWeight: '500', color: '#1f2937' }}>
+                                    <div className={styles.orgName}>
                                         {report.partnerOrgId?.name || report.reportedBy?.name || 'Partner Org'}
                                     </div>
-                                    <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+                                    <div className={styles.orgSub}>
                                         {report.partnerOrgId?.jurisdiction || report.reportedBy?.email || ''}
                                     </div>
                                 </td>
                                 <td>
-                                    <div style={{ fontSize: '12px', color: '#16a34a', fontWeight: '700', marginBottom: '2px' }}>
-                                        ToF Fullness Sensor
+                                    <div className={styles.sensorTag}>
+                                        <Cpu size={12} /> ToF Fullness Sensor
                                     </div>
-                                    <div style={{ 
-                                        fontSize: '13px', 
-                                        color: '#374151', 
-                                        maxWidth: '280px', 
-                                        lineHeight: 1.4
-                                    }}>
+                                    <div className={styles.issueText} title={report.issueDescription}>
                                         {report.issueDescription}
                                     </div>
                                 </td>
                                 <td>{getSeverityBadge(report.severity)}</td>
                                 <td>{getStatusBadge(report.status)}</td>
                                 <td>
-                                    <div style={{ fontSize: '13px', color: '#374151' }}>
+                                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
                                         {new Date(report.createdAt).toLocaleDateString()}
                                     </div>
-                                    <div style={{ fontSize: '11px', color: '#9ca3af' }}>
+                                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
                                         {new Date(report.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </div>
                                 </td>
                                 <td style={{ textAlign: 'right' }}>
                                     <button
                                         onClick={() => onSelectReport(report)}
-                                        className={styles.viewBtn}
-                                        style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '6px',
-                                            padding: '6px 12px',
-                                            borderRadius: '6px',
-                                            border: '1px solid #d1d5db',
-                                            backgroundColor: '#ffffff',
-                                            color: '#374151',
-                                            fontSize: '12px',
-                                            fontWeight: '600',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.15s ease'
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                                            e.currentTarget.style.borderColor = '#9ca3af';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.backgroundColor = '#ffffff';
-                                            e.currentTarget.style.borderColor = '#d1d5db';
-                                        }}
+                                        className={styles.reviewBtn}
                                         title="View report details and take staff action"
                                     >
                                         <Eye size={14} /> Review & Action

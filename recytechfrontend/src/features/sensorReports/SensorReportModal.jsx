@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertTriangle, Wrench, Clock, ShieldAlert, Cpu, Building, MapPin, User } from 'lucide-react';
-import styles from '../../styles/Collectors.module.css';
+import { X, CheckCircle, AlertTriangle, Wrench, Clock, ShieldAlert, Cpu, Building, MapPin, Check } from 'lucide-react';
+import styles from '../../styles/SensorReports.module.css';
 
 const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
     const [selectedStatus, setSelectedStatus] = useState('Pending');
@@ -30,34 +30,33 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
         }
     };
 
+    const isCritical = report.severity === 'Critical';
+    const isHigh = report.severity === 'High';
+
     return (
-        <div className={styles.modalOverlay} onClick={onClose}>
+        <div className={styles.modalOverlay} onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <div 
                 className={styles.modalContent} 
                 onClick={(e) => e.stopPropagation()}
-                style={{ maxWidth: '640px', maxHeight: '90vh', overflowY: 'auto' }}
             >
-                {/* Header */}
-                <div className={styles.modalHeader} style={{ borderBottom: '1px solid #f3f4f6', paddingBottom: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ 
-                            width: '36px', 
-                            height: '36px', 
-                            borderRadius: '8px', 
-                            backgroundColor: '#fee2e2', 
-                            color: '#dc2626',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <Cpu size={20} />
+                {/* ── Modal Header ── */}
+                <div className={styles.modalHeader}>
+                    <div className={styles.modalHeaderInfo}>
+                        <div 
+                            className={styles.modalIconWrapper}
+                            style={{
+                                backgroundColor: isCritical ? '#fee2e2' : isHigh ? '#ffedd5' : '#eff6ff',
+                                color: isCritical ? '#dc2626' : isHigh ? '#ea580c' : '#2563eb'
+                            }}
+                        >
+                            <Cpu size={22} />
                         </div>
                         <div>
-                            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#111827', margin: 0 }}>
+                            <h2 id="modal-title" className={styles.modalTitle}>
                                 Sensor Incident Review
                             </h2>
-                            <p style={{ fontSize: '12px', color: '#6b7280', margin: '2px 0 0 0' }}>
-                                Report ID: {report._id}
+                            <p className={styles.modalSubtitle}>
+                                Incident Ref: #{report._id?.substring(0, 10)}...
                             </p>
                         </div>
                     </div>
@@ -65,101 +64,92 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
                         className={styles.closeBtn} 
                         onClick={onClose} 
                         aria-label="Close modal"
-                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#9ca3af' }}
+                        title="Close"
                     >
                         <X size={20} />
                     </button>
                 </div>
 
-                {/* Body Content */}
-                <div style={{ padding: '20px 0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {/* Bin and Org info cards */}
-                    <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: '1fr 1fr', 
-                        gap: '12px',
-                        background: '#f9fafb',
-                        padding: '14px',
-                        borderRadius: '10px',
-                        border: '1px solid #e5e7eb'
-                    }}>
-                        <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase' }}>
-                                <MapPin size={13} color="#16a34a" /> Smart Bin Location
+                {/* ── Modal Body ── */}
+                <div className={styles.modalBody}>
+                    {/* Location & Reporting Partner Details */}
+                    <div className={styles.infoGrid}>
+                        <div className={styles.infoCard}>
+                            <div className={styles.infoCardLabel}>
+                                <MapPin size={13} color="#059669" /> Smart Bin Location
                             </div>
-                            <div style={{ fontSize: '14px', fontWeight: '700', color: '#111827', marginTop: '4px' }}>
+                            <div className={styles.infoCardTitle}>
                                 {report.binId?.name || 'Smart Bin'}
                             </div>
-                            <div style={{ fontSize: '12px', color: '#4b5563' }}>
-                                {report.binId?.address || 'No address provided'}
+                            <div className={styles.infoCardDesc}>
+                                {report.binId?.address || 'No address specified'}
                             </div>
-                            <div style={{ fontSize: '11px', marginTop: '4px', color: '#6b7280' }}>
-                                Status: <strong style={{ color: report.binId?.status === 'Maintenance' ? '#dc2626' : '#16a34a' }}>{report.binId?.status || 'Operational'}</strong> | Fill: {report.binId?.currentFillKg || 0} / {report.binId?.capacityKg || 500} kg
+                            <div className={styles.infoCardMeta}>
+                                Status: <strong style={{ color: report.binId?.status === 'Maintenance' ? '#dc2626' : '#059669' }}>
+                                    {report.binId?.status || 'Operational'}
+                                </strong> | Fill: {report.binId?.currentFillKg || 0} / {report.binId?.capacityKg || 500} kg
                             </div>
                         </div>
 
-                        <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '700', color: '#6b7280', textTransform: 'uppercase' }}>
+                        <div className={styles.infoCard}>
+                            <div className={styles.infoCardLabel}>
                                 <Building size={13} color="#2563eb" /> Reporting Partner Org
                             </div>
-                            <div style={{ fontSize: '14px', fontWeight: '700', color: '#111827', marginTop: '4px' }}>
+                            <div className={styles.infoCardTitle}>
                                 {report.partnerOrgId?.name || report.reportedBy?.name || 'Partner Org'}
                             </div>
-                            <div style={{ fontSize: '12px', color: '#4b5563' }}>
+                            <div className={styles.infoCardDesc}>
                                 Contact: {report.partnerOrgId?.contactPerson || report.reportedBy?.name || 'N/A'}
                             </div>
-                            <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>
-                                {report.partnerOrgId?.email || report.reportedBy?.email || ''}
+                            <div className={styles.infoCardMeta}>
+                                {report.partnerOrgId?.email || report.reportedBy?.email || 'No email recorded'}
                             </div>
                         </div>
                     </div>
 
-                    {/* Sensor Type & Severity */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <div style={{ padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#ffffff' }}>
-                            <span style={{ fontSize: '11px', fontWeight: '600', color: '#6b7280' }}>Component Reported</span>
-                            <div style={{ fontSize: '14px', fontWeight: '700', color: '#1f2937', marginTop: '2px' }}>
-                                {report.sensorType}
+                    {/* Sensor Type & Priority Badges */}
+                    <div className={styles.badgeGrid}>
+                        <div className={styles.badgeCard}>
+                            <div className={styles.badgeCardLabel}>Component Reported</div>
+                            <div className={styles.badgeCardValue} style={{ color: '#0f766e' }}>
+                                {report.sensorType || 'Time-of-Flight (ToF) Fullness Sensor'}
                             </div>
                         </div>
 
-                        <div style={{ padding: '12px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#ffffff' }}>
-                            <span style={{ fontSize: '11px', fontWeight: '600', color: '#6b7280' }}>Severity Level</span>
-                            <div style={{ fontSize: '14px', fontWeight: '700', color: report.severity === 'Critical' ? '#dc2626' : report.severity === 'High' ? '#ea580c' : '#2563eb', marginTop: '2px' }}>
-                                {report.severity} Priority
+                        <div className={styles.badgeCard}>
+                            <div className={styles.badgeCardLabel}>Severity Level</div>
+                            <div 
+                                className={styles.badgeCardValue}
+                                style={{
+                                    color: isCritical ? '#dc2626' : isHigh ? '#ea580c' : '#2563eb'
+                                }}
+                            >
+                                {report.severity || 'Medium'} Priority
                             </div>
                         </div>
                     </div>
 
-                    {/* Issue Description from Partner */}
-                    <div style={{ padding: '12px 14px', borderRadius: '8px', background: '#fffbeb', border: '1px solid #fef3c7' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '700', color: '#92400e', marginBottom: '6px' }}>
+                    {/* Issue Description Warning Box */}
+                    <div className={styles.alertBox}>
+                        <div className={styles.alertBoxHeader}>
                             <AlertTriangle size={14} /> Malfunction Details / Description
                         </div>
-                        <p style={{ fontSize: '13px', color: '#78350f', margin: 0, lineHeight: 1.5 }}>
-                            {report.issueDescription}
+                        <p className={styles.alertBoxText}>
+                            {report.issueDescription || 'No description provided by the partner.'}
                         </p>
                     </div>
 
-                    {/* Staff Resolution Form */}
-                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '8px' }}>
-                        <div>
-                            <label htmlFor="update-incident-status" style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '6px' }}>
+                    {/* Resolution & Status Form */}
+                    <form onSubmit={handleSubmit} className={styles.formSection}>
+                        <div className={styles.formGroup}>
+                            <label htmlFor="update-incident-status" className={styles.formLabel}>
                                 Update Incident Status
                             </label>
                             <select
                                 id="update-incident-status"
                                 value={selectedStatus}
                                 onChange={(e) => setSelectedStatus(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px 12px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #d1d5db',
-                                    fontSize: '14px',
-                                    fontWeight: '600',
-                                    backgroundColor: '#ffffff'
-                                }}
+                                className={styles.formSelect}
                             >
                                 <option value="Pending">⏳ Pending Investigation</option>
                                 <option value="In Progress">🔧 In Progress (Technician Dispatched)</option>
@@ -168,8 +158,8 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
                             </select>
                         </div>
 
-                        <div>
-                            <label htmlFor="resolution-notes" style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#374151', marginBottom: '6px' }}>
+                        <div className={styles.formGroup}>
+                            <label htmlFor="resolution-notes" className={styles.formLabel}>
                                 Staff Resolution Notes & Actions Taken
                             </label>
                             <textarea
@@ -178,71 +168,43 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
                                 placeholder="Describe inspection findings, replaced hardware/ultrasonic sensor modules, calibration results, or technician actions..."
                                 value={resolutionNotes}
                                 onChange={(e) => setResolutionNotes(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px 12px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #d1d5db',
-                                    fontSize: '13px',
-                                    resize: 'vertical',
-                                    boxSizing: 'border-box'
-                                }}
+                                className={styles.formTextarea}
                             />
                         </div>
 
                         {selectedStatus === 'Resolved' && (
-                            <label htmlFor="restore-bin-status" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#374151', cursor: 'pointer' }}>
+                            <label htmlFor="restore-bin-status" className={styles.checkboxLabel}>
                                 <input
                                     id="restore-bin-status"
                                     type="checkbox"
                                     checked={restoreBinStatus}
                                     onChange={(e) => setRestoreBinStatus(e.target.checked)}
-                                    style={{ width: '16px', height: '16px', accentColor: '#16a34a' }}
+                                    className={styles.checkboxInput}
                                 />
-                                Automatically restore smart bin status to <strong>Operational</strong>
+                                <span>
+                                    Automatically restore smart bin status to <strong>Operational</strong>
+                                </span>
                             </label>
                         )}
 
                         {report.resolvedBy && (
-                            <div style={{ fontSize: '11px', color: '#6b7280', background: '#f3f4f6', padding: '8px 12px', borderRadius: '6px' }}>
-                                Last resolved by: <strong>{report.resolvedBy?.name || 'Staff'}</strong> on {new Date(report.resolvedAt || report.updatedAt).toLocaleString()}
+                            <div className={styles.auditBox}>
+                                Last updated by <strong>{report.resolvedBy?.name || 'Staff'}</strong> on {new Date(report.resolvedAt || report.updatedAt).toLocaleString()}
                             </div>
                         )}
 
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                        <div className={styles.modalFooter}>
                             <button
                                 type="button"
                                 onClick={onClose}
-                                style={{
-                                    padding: '9px 16px',
-                                    borderRadius: '8px',
-                                    border: '1px solid #d1d5db',
-                                    background: '#ffffff',
-                                    color: '#4b5563',
-                                    fontWeight: '600',
-                                    fontSize: '13px',
-                                    cursor: 'pointer'
-                                }}
+                                className={styles.modalCancelBtn}
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 disabled={submitting}
-                                style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    padding: '9px 20px',
-                                    borderRadius: '8px',
-                                    border: 'none',
-                                    backgroundColor: '#16a34a',
-                                    color: '#ffffff',
-                                    fontWeight: '700',
-                                    fontSize: '13px',
-                                    cursor: submitting ? 'not-allowed' : 'pointer',
-                                    boxShadow: '0 2px 4px rgba(22, 163, 74, 0.3)'
-                                }}
+                                className={styles.modalSubmitBtn}
                             >
                                 {submitting ? 'Saving...' : 'Save & Update Status'}
                             </button>

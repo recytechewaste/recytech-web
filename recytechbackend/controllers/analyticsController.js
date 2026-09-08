@@ -6,6 +6,7 @@ const Resident = require('../models/Resident');
 const Request = require('../models/Request');
 const { LguAccount } = require('../models/PartnerOrganization');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { calculatePointsAwarded } = require('../utils/calculatePoints');
 const { linearRegression, seasonalDecomposition, statisticalSummary, detectOutliers, holtExponentialSmoothing } = require('../utils/predictiveAnalytics');
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -112,13 +113,24 @@ const getDropoffSummary = async () => {
     const bins = binStats[0] || { totalBins: 0, operationalBins: 0, nearCapacity: 0 };
     const topWasteType = wasteTypeBreakdown[0] || { _id: 'N/A' };
 
+    // Calculate total points earned from completed collection requests
+    const completedRequestsForPoints = await Request.find({ status: { $in: ['completed', 'Completed'] } }).lean();
+    let reqPointsTotal = 0;
+    for (const r of completedRequestsForPoints) {
+        for (const w of (r.collectedWaste || [])) {
+            const calc = await calculatePointsAwarded(w.category, w.quantity || 1);
+            if (calc.success) reqPointsTotal += calc.points;
+        }
+    }
+
     const totalKilograms = Math.round(((dropoffTotals.totalKilograms || 0) + requestCollectedKg) * 100) / 100;
     const totalDropoffs = (dropoffTotals.totalDropoffs || 0) + completedReqCount;
+    const totalPoints = Math.round(((dropoffTotals.totalPoints || 0) + reqPointsTotal) * 100) / 100;
 
     return {
         totalDropoffs,
         totalKilograms,
-        totalPoints: Math.round(dropoffTotals.totalPoints * 100) / 100,
+        totalPoints,
         totalBins: bins.totalBins,
         operationalBins: bins.operationalBins,
         binsNearCapacity: bins.nearCapacity,
@@ -348,7 +360,12 @@ const getRecentDropoffs = async () => {
             .lean()
     ]);
 
-    const normalizedRequests = completedRequests.map(r => {
+    const normalizedRequests = await Promise.all(completedRequests.map(async (r) => {
+        let pts = 0;
+        for (const w of (r.collectedWaste || [])) {
+            const calc = await calculatePointsAwarded(w.category, w.quantity || 1);
+            if (calc.success) pts += calc.points;
+        }
         const totalKg = (r.collectedWaste || []).reduce((sum, w) => sum + (w.quantity || 0), 0);
         const wasteType = (r.collectedWaste || []).map(w => w.category).join(', ') || 'General E-Waste';
         const partnerName = r.lgu?.name || 'Partner Org';
@@ -360,10 +377,10 @@ const getRecentDropoffs = async () => {
             participantName,
             wasteType,
             kilograms: Math.round(totalKg * 100) / 100,
-            pointsAwarded: 0,
+            pointsAwarded: pts,
             createdAt: r.completionDate || r.createdAt
         };
-    });
+    }));
 
     const combined = [...binDropoffs, ...normalizedRequests];
     combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -638,7 +655,14 @@ const getReportData = asyncHandler(async (req, res) => {
             .lean()
     ]);
 
-    const formattedReqRecent = reqRecent.map(r => {
+    let reqPointsSum = 0;
+    const formattedReqRecent = await Promise.all(reqRecent.map(async (r) => {
+        let pts = 0;
+        for (const w of (r.collectedWaste || [])) {
+            const calc = await calculatePointsAwarded(w.category, w.quantity || 1);
+            if (calc.success) pts += calc.points;
+        }
+        reqPointsSum += pts;
         const totalKg = (r.collectedWaste || []).reduce((acc, w) => acc + (w.quantity || 0), 0);
         const categories = (r.collectedWaste || []).map(w => w.category).join(', ') || 'General E-Waste';
         return {
@@ -646,10 +670,10 @@ const getReportData = asyncHandler(async (req, res) => {
             createdAt: r.completionDate || r.createdAt,
             wasteType: categories,
             kilograms: Math.round(totalKg * 100) / 100,
-            pointsAwarded: 0,
+            pointsAwarded: pts,
             status: 'Completed'
         };
-    });
+    }));
 
     const recentActivity = [...binRecent, ...formattedReqRecent];
     recentActivity.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -658,7 +682,7 @@ const getReportData = asyncHandler(async (req, res) => {
         summary: {
             totalDropoffs,
             totalKilograms,
-            totalPoints: report.totalPoints || 0,
+            totalPoints: Math.round(((report.totalPoints || 0) + reqPointsSum) * 100) / 100,
             successRate,
             totalRequests: reqStats.totalRequests,
             completedRequests: reqStats.completedRequests,

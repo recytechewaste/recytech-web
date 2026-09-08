@@ -1,6 +1,19 @@
 const RewardPoint = require('../models/RewardPoint');
 const { asyncHandler } = require('../utils/asyncHandler');
 
+const normalizePoint = (point) => {
+    const obj = point.toObject ? point.toObject() : { ...point };
+    const pts = obj.pointsPerItem ?? obj.pointsPerKg ?? 0;
+    return {
+        ...obj,
+        name: obj.wasteType,
+        category: obj.wasteType,
+        points: pts,
+        pointsPerItem: pts,
+        pointsPerKg: pts
+    };
+};
+
 const getRewardPoints = asyncHandler(async (req, res) => {
     const includeInactive = req.query.includeInactive === 'true';
 
@@ -10,10 +23,15 @@ const getRewardPoints = asyncHandler(async (req, res) => {
     }
 
     const points = await RewardPoint.find(query).sort({ wasteType: 1 });
+    const normalizedPoints = points.map(normalizePoint);
 
     res.json({
-        points,
-        count: points.length
+        points: normalizedPoints,
+        data: normalizedPoints,
+        categories: normalizedPoints,
+        wasteTypes: normalizedPoints,
+        categoryList: normalizedPoints.map(p => p.wasteType),
+        count: normalizedPoints.length
     });
 });
 
@@ -25,7 +43,7 @@ const getRewardPointById = asyncHandler(async (req, res) => {
         throw new Error('Reward point rule not found');
     }
 
-    res.json(point);
+    res.json(normalizePoint(point));
 });
 
 const createRewardPoint = asyncHandler(async (req, res) => {
