@@ -9,8 +9,6 @@ const SensorReportFilterBar = ({
     setStatusFilter,
     severityFilter,
     setSeverityFilter,
-    sensorTypeFilter,
-    setSensorTypeFilter,
     handleClearFilters
 }) => {
     return (
@@ -56,24 +54,6 @@ const SensorReportFilterBar = ({
                     <option value="Medium">Medium</option>
                     <option value="High">High</option>
                     <option value="Critical">Critical</option>
-                </select>
-            </div>
-
-            <div className={styles.filterGroup}>
-                <select
-                    className={styles.selectInput}
-                    value={sensorTypeFilter}
-                    onChange={(e) => setSensorTypeFilter(e.target.value)}
-                    aria-label="Filter by sensor type"
-                >
-                    <option value="All">All Sensor Types</option>
-                    <option value="Fill Level Sensor (Ultrasonic)">Fill Level Sensor (Ultrasonic)</option>
-                    <option value="Weight Sensor (Load Cell)">Weight Sensor (Load Cell)</option>
-                    <option value="Power / Solar / Battery">Power / Solar / Battery</option>
-                    <option value="Connectivity / GSM / GPS">Connectivity / GSM / GPS</option>
-                    <option value="Physical Lid / Motorized Lock">Physical Lid / Motorized Lock</option>
-                    <option value="Optical / Material Detection Sensor">Optical / Material Detection</option>
-                    <option value="Other Hardware Failure">Other Hardware Failure</option>
                 </select>
             </div>
 

@@ -72,7 +72,7 @@ const submitSensorReport = async (req, res) => {
             binId,
             partnerOrgId: resolvedPartnerOrgId,
             reportedBy: reporterInfo,
-            sensorType: sensorType || 'Fill Level Sensor (Ultrasonic)',
+            sensorType: sensorType || 'Time-of-Flight (ToF) Fullness Sensor',
             issueDescription,
             severity: severity || 'Medium',
             status: 'Pending'

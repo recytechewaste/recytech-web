@@ -15,7 +15,6 @@ export const useSensorReports = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [severityFilter, setSeverityFilter] = useState('All');
-    const [sensorTypeFilter, setSensorTypeFilter] = useState('All');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
 
@@ -79,7 +78,6 @@ export const useSensorReports = () => {
         setSearchTerm('');
         setStatusFilter('All');
         setSeverityFilter('All');
-        setSensorTypeFilter('All');
         setCurrentPage(1);
     };
 
@@ -88,7 +86,6 @@ export const useSensorReports = () => {
         return reports.filter((item) => {
             const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
             const matchesSeverity = severityFilter === 'All' || item.severity === severityFilter;
-            const matchesType = sensorTypeFilter === 'All' || item.sensorType === sensorTypeFilter;
 
             const searchLower = searchTerm.toLowerCase().trim();
             const binName = item.binId?.name?.toLowerCase() || '';
@@ -107,9 +104,9 @@ export const useSensorReports = () => {
                 reporterEmail.includes(searchLower) ||
                 desc.includes(searchLower);
 
-            return matchesStatus && matchesSeverity && matchesType && matchesSearch;
+            return matchesStatus && matchesSeverity && matchesSearch;
         });
-    }, [reports, statusFilter, severityFilter, sensorTypeFilter, searchTerm]);
+    }, [reports, statusFilter, severityFilter, searchTerm]);
 
     // Pagination
     const totalPages = Math.ceil(filteredReports.length / itemsPerPage) || 1;
@@ -136,8 +133,6 @@ export const useSensorReports = () => {
         setStatusFilter,
         severityFilter,
         setSeverityFilter,
-        sensorTypeFilter,
-        setSensorTypeFilter,
         handleClearFilters,
         fetchReports,
         fetchStats,

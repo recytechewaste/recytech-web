@@ -98,7 +98,7 @@ const SensorReportTable = ({ reports, loading, onSelectReport }) => {
                 <div style={{ padding: '48px', textAlign: 'center', color: '#6b7280' }}>
                     <CheckCircle size={36} color="#16a34a" style={{ margin: '0 auto 12px auto', display: 'block' }} />
                     <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '4px' }}>No Sensor Incident Reports Found</h3>
-                    <p style={{ fontSize: '13px', color: '#9ca3af' }}>All smart bins and ultrasonic sensors are currently running in optimal condition.</p>
+                    <p style={{ fontSize: '13px', color: '#9ca3af' }}>All smart bins and Time-of-Flight (ToF) fullness sensors are currently running in optimal condition.</p>
                 </div>
             </div>
         );
@@ -112,7 +112,7 @@ const SensorReportTable = ({ reports, loading, onSelectReport }) => {
                         <tr>
                             <th>Smart Bin / Location</th>
                             <th>Partner Organization</th>
-                            <th>Sensor Component</th>
+                            <th>Issue Description</th>
                             <th>Severity</th>
                             <th>Status</th>
                             <th>Reported Date</th>
@@ -144,16 +144,14 @@ const SensorReportTable = ({ reports, loading, onSelectReport }) => {
                                     </div>
                                 </td>
                                 <td>
-                                    <div style={{ fontSize: '13px', fontWeight: '500', color: '#374151' }}>
-                                        {report.sensorType}
+                                    <div style={{ fontSize: '12px', color: '#16a34a', fontWeight: '700', marginBottom: '2px' }}>
+                                        ToF Fullness Sensor
                                     </div>
                                     <div style={{ 
-                                        fontSize: '12px', 
-                                        color: '#6b7280', 
-                                        maxWidth: '220px', 
-                                        whiteSpace: 'nowrap', 
-                                        overflow: 'hidden', 
-                                        textOverflow: 'ellipsis' 
+                                        fontSize: '13px', 
+                                        color: '#374151', 
+                                        maxWidth: '280px', 
+                                        lineHeight: 1.4
                                     }}>
                                         {report.issueDescription}
                                     </div>
