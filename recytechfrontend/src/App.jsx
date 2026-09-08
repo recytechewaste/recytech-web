@@ -118,13 +118,14 @@ function App() {
             } 
           />
           <Route 
-            path="/sensor-reports" 
+            path="/sensor-issues" 
             element={
               <ProtectedRoute allowedRoles={['Staff']}>
                 <SensorReports />
               </ProtectedRoute>
             } 
           />
+          <Route path="/sensor-reports" element={<Navigate to="/sensor-issues" replace />} />
           <Route 
             path="/reports" 
             element={
