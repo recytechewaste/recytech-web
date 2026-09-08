@@ -1,27 +1,74 @@
 import React from 'react';
-import { Truck, MapPin, User, Calendar, AlertTriangle, UserCheck, Edit3, CheckCircle } from 'lucide-react';
+import { Truck, MapPin, User, Calendar, AlertTriangle, UserCheck, Edit3, CheckCircle, Clock, Wrench } from 'lucide-react';
 import styles from '../../styles/BinCollectionRequests.module.css';
 import Skeleton from '../../components/Skeleton';
 
 const RequestTable = ({ requests, loading, limit, onSelectRequest }) => {
   const getStatusPill = (status) => {
-    const lowerStatus = status?.toLowerCase();
-    switch (lowerStatus) {
+    const raw = (status || '').trim().toLowerCase().replace(/[\s_-]/g, '');
+    switch (raw) {
       case 'pending':
-        return <span className={`${styles.statusBadge} ${styles.pending}`}>Pending</span>;
+        return (
+          <span className={`${styles.statusBadge} ${styles.pending}`}>
+            <Clock size={12} /> Pending
+          </span>
+        );
       case 'approved':
-        return <span className={`${styles.statusBadge} ${styles.inProgress}`} style={{ backgroundColor: '#ecfdf5', color: '#047857' }}>Approved</span>;
+        return (
+          <span className={`${styles.statusBadge} ${styles.approved}`}>
+            <CheckCircle size={12} /> Approved
+          </span>
+        );
       case 'assigned':
-      case 'in-progress':
+        return (
+          <span className={`${styles.statusBadge} ${styles.assigned}`}>
+            <UserCheck size={12} /> Assigned
+          </span>
+        );
       case 'scheduled':
-      case 'in-transit':
-        return <span className={`${styles.statusBadge} ${styles.inProgress}`}>In Progress</span>;
+        return (
+          <span className={`${styles.statusBadge} ${styles.scheduled}`}>
+            <Calendar size={12} /> Scheduled
+          </span>
+        );
+      case 'intransit':
+        return (
+          <span className={`${styles.statusBadge} ${styles.inTransit}`}>
+            <Truck size={12} /> In Transit
+          </span>
+        );
+      case 'inprogress':
+        return (
+          <span className={`${styles.statusBadge} ${styles.inProgress}`}>
+            <Wrench size={12} /> In Progress
+          </span>
+        );
+      case 'arrived':
+        return (
+          <span className={`${styles.statusBadge} ${styles.arrived}`}>
+            <MapPin size={12} /> Arrived
+          </span>
+        );
       case 'completed':
-        return <span className={`${styles.statusBadge} ${styles.completed}`}>Completed</span>;
+        return (
+          <span className={`${styles.statusBadge} ${styles.completed}`}>
+            <CheckCircle size={12} /> Completed
+          </span>
+        );
       case 'cancelled':
-        return <span className={`${styles.statusBadge} ${styles.cancelled}`}>Cancelled</span>;
-      default:
-        return <span className={styles.statusBadge}>{status || 'N/A'}</span>;
+        return (
+          <span className={`${styles.statusBadge} ${styles.cancelled}`}>
+            <AlertTriangle size={12} /> Cancelled
+          </span>
+        );
+      default: {
+        const formatted = (status || 'N/A').replace(/[_-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        return (
+          <span className={`${styles.statusBadge} ${styles.defaultStatus}`}>
+            {formatted}
+          </span>
+        );
+      }
     }
   };
 
