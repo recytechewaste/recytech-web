@@ -1,23 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Save, X, Eye, EyeOff, Copy } from 'lucide-react';
-import styles from '../../styles/UserManagement.module.css';
+import { Save, Eye, EyeOff, Copy, Check, User, Mail, Phone, MapPin, Award, Lock, Activity, ShieldCheck } from 'lucide-react';
+import styles from '../../styles/Collectors.module.css';
+import sharedStyles from '../../styles/Layout.module.css';
+import Modal from '../../components/Modal';
 
 const ResidentFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit }) => {
-    const [formData, setFormData] = useState(initialData);
+    const [formData, setFormData] = useState(initialData || {});
     const [errors, setErrors] = useState({});
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        setFormData({ ...initialData, confirmPassword: '' });
+        setFormData(initialData || {});
         setErrors({});
         setShowPassword(false);
         setShowConfirmPassword(false);
+        setCopied(false);
     }, [initialData, isOpen]);
 
     if (!isOpen) return null;
 
-    const generatePassword = () => {
+    const generateStrongPassword = () => {
         const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         const lowercase = "abcdefghijklmnopqrstuvwxyz";
         const numbers = "0123456789";
@@ -34,35 +38,38 @@ const ResidentFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit }
             newPassword += allChars[Math.floor(Math.random() * allChars.length)];
         }
         
-        // Shuffle the characters so it doesn't follow a predictable pattern
-        newPassword = newPassword.split('').sort(() => 0.5 - Math.random()).join('');
-        
-        setFormData(prev => ({ ...prev, password: newPassword, confirmPassword: newPassword }));
+        return newPassword.split('').sort(() => 0.5 - Math.random()).join('');
+    };
+
+    const handleGeneratePassword = () => {
+        const newPass = generateStrongPassword();
+        setFormData(prev => ({ ...prev, password: newPass, confirmPassword: newPass }));
         setShowPassword(true);
         setShowConfirmPassword(true);
-        
-        if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
-        if (errors.confirmPassword) setErrors(prev => ({ ...prev, confirmPassword: '' }));
+        setErrors(prev => ({ ...prev, password: '', confirmPassword: '' }));
     };
 
     const copyToClipboard = () => {
-        if (formData.password) {
-            navigator.clipboard.writeText(formData.password);
-        }
+        if (!formData.password) return;
+        navigator.clipboard.writeText(formData.password);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     const validate = () => {
         const nextErrors = {};
-        if (!formData.firstName.trim()) nextErrors.firstName = 'First name is required';
-        if (!formData.lastName.trim()) nextErrors.lastName = 'Last name is required';
-        if (!formData.email.trim()) {
+        if (!formData.firstName?.trim()) nextErrors.firstName = 'First name is required';
+        if (!formData.lastName?.trim()) nextErrors.lastName = 'Last name is required';
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!formData.email?.trim()) {
             nextErrors.email = 'Email is required';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        } else if (!emailRegex.test(formData.email)) {
             nextErrors.email = 'Invalid email format';
         }
         
         if (!isEditing && !formData.password) {
-            nextErrors.password = 'Password is required for new users';
+            nextErrors.password = 'Password is required for new residents';
         } else if (formData.password) {
             const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
             if (!passwordRegex.test(formData.password)) {
@@ -89,7 +96,9 @@ const ResidentFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit }
         if (name === 'phone') {
             finalValue = value.replace(/\D/g, '').slice(0, 11);
         } else if (name === 'firstName' || name === 'lastName') {
-            finalValue = value.replace(/\d/g, ''); // Instantly strip out digits
+            finalValue = value.replace(/\d/g, ''); // strip out numbers
+        } else if (name === 'pointsBalance') {
+            finalValue = value === '' ? '' : Math.max(0, parseInt(value) || 0);
         }
         
         setFormData(prev => ({ ...prev, [name]: finalValue }));
@@ -104,108 +113,209 @@ const ResidentFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit }
     };
 
     return (
-        <div className={styles.modalOverlay}>
-            <div className={styles.modalContent}>
-                <div className={styles.modalHeader}>
-                    <h2 className={styles.modalTitle}>{isEditing ? 'Edit Resident' : 'Add Resident'}</h2>
-                    <button onClick={onClose} className={styles.closeBtn}><X size={20}/></button>
-                </div>
-                <form onSubmit={handleSubmit} className={styles.form}>
-                    <div className={styles.formGroup}>
-                        <label>First Name</label>
-                        <input name="firstName" placeholder="e.g., Juan" value={formData.firstName} onChange={handleInputChange} className={`${styles.input} ${errors.firstName ? styles.inputError : ''}`} />
+        <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Resident Profile' : 'Add New Resident'}>
+            <form onSubmit={handleSubmit} className={sharedStyles.form} noValidate>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                    <div className={sharedStyles.formGroup}>
+                        <label htmlFor="resFirstName">First Name <span style={{ color: '#ef4444' }}>*</span></label>
+                        <div className={sharedStyles.inputWrapper}>
+                            <User size={16} className={sharedStyles.inputIcon} />
+                            <input
+                                id="resFirstName"
+                                name="firstName"
+                                placeholder="e.g., Maria"
+                                value={formData.firstName || ''}
+                                onChange={handleInputChange}
+                                className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.firstName ? sharedStyles.inputError : ''}`}
+                            />
+                        </div>
                         {errors.firstName && <span className={styles.error}>{errors.firstName}</span>}
                     </div>
-                    <div className={styles.formGroup}>
-                        <label>Last Name</label>
-                        <input name="lastName" placeholder="e.g., Dela Cruz" value={formData.lastName} onChange={handleInputChange} className={`${styles.input} ${errors.lastName ? styles.inputError : ''}`} />
+
+                    <div className={sharedStyles.formGroup}>
+                        <label htmlFor="resLastName">Last Name <span style={{ color: '#ef4444' }}>*</span></label>
+                        <div className={sharedStyles.inputWrapper}>
+                            <User size={16} className={sharedStyles.inputIcon} />
+                            <input
+                                id="resLastName"
+                                name="lastName"
+                                placeholder="e.g., Santos"
+                                value={formData.lastName || ''}
+                                onChange={handleInputChange}
+                                className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.lastName ? sharedStyles.inputError : ''}`}
+                            />
+                        </div>
                         {errors.lastName && <span className={styles.error}>{errors.lastName}</span>}
                     </div>
-                    <div className={styles.formGroup}>
-                        <label>Email Address</label>
-                        <input name="email" type="email" placeholder="e.g., juan@example.com" value={formData.email} onChange={handleInputChange} className={`${styles.input} ${errors.email ? styles.inputError : ''}`} disabled={isEditing} />
-                        {errors.email && <span className={styles.error}>{errors.email}</span>}
+                </div>
+
+                <div className={sharedStyles.formGroup}>
+                    <label htmlFor="resEmail">Email Address <span style={{ color: '#ef4444' }}>*</span></label>
+                    <div className={sharedStyles.inputWrapper}>
+                        <Mail size={16} className={sharedStyles.inputIcon} />
+                        <input
+                            id="resEmail"
+                            name="email"
+                            type="email"
+                            placeholder="e.g., resident@example.com"
+                            value={formData.email || ''}
+                            onChange={handleInputChange}
+                            className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.email ? sharedStyles.inputError : ''}`}
+                            disabled={isEditing}
+                        />
                     </div>
-                    {!isEditing && (
-                    <>
-                    <div className={styles.formGroup}>
-                        <div className={styles.passwordHeader}>
-                            <label>Password <span style={{color: '#ef4444'}}>*</span></label>
-                            <button type="button" onClick={generatePassword} className={styles.generateBtn}>
-                                Generate Password
-                            </button>
-                        </div>
-                        <div className={styles.passwordWrapper}>
-                            <input 
-                                name="password" 
-                                type={showPassword ? "text" : "password"} 
-                                value={formData.password || ''} 
-                                onChange={handleInputChange} 
-                                placeholder="Enter password"
-                                className={`${styles.input} ${errors.password ? styles.inputError : ''}`} 
-                                style={{ width: '100%', paddingRight: '65px' }}
+                    {errors.email && <span className={styles.error}>{errors.email}</span>}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                    <div className={sharedStyles.formGroup}>
+                        <label htmlFor="resPhone">Phone Number</label>
+                        <div className={sharedStyles.inputWrapper}>
+                            <Phone size={16} className={sharedStyles.inputIcon} />
+                            <input
+                                id="resPhone"
+                                name="phone"
+                                placeholder="e.g., 09123456789"
+                                maxLength="11"
+                                value={formData.phone || ''}
+                                onChange={handleInputChange}
+                                className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.phone ? sharedStyles.inputError : ''}`}
                             />
-                            <button 
-                                type="button" 
-                                onClick={copyToClipboard}
-                                className={styles.copyBtn}
-                                title="Copy Password"
-                            >
-                                <Copy size={16} />
-                            </button>
-                            <button 
-                                type="button" 
-                                onClick={() => setShowPassword(!showPassword)}
-                                className={styles.eyeBtn}
-                            >
-                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                            </button>
                         </div>
-                        {errors.password && <span className={styles.error}>{errors.password}</span>}
-                    </div>
-                    <div className={styles.formGroup}>
-                        <label>Confirm Password <span style={{color: '#ef4444'}}>*</span></label>
-                        <div className={styles.passwordWrapper}>
-                            <input 
-                                name="confirmPassword" 
-                                type={showConfirmPassword ? "text" : "password"} 
-                                value={formData.confirmPassword || ''} 
-                                onChange={handleInputChange} 
-                                placeholder="Re-enter password"
-                                className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ''}`} 
-                                style={{ width: '100%', paddingRight: '40px' }}
-                            />
-                            <button 
-                                type="button" 
-                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className={styles.eyeBtn}
-                            >
-                                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                            </button>
-                        </div>
-                        {errors.confirmPassword && <span className={styles.error}>{errors.confirmPassword}</span>}
-                    </div>
-                    </>
-                    )}
-                    <div className={styles.formGroup}>
-                        <label>Phone Number</label>
-                        <input name="phone" placeholder="e.g., 09123456789" maxLength="11" value={formData.phone} onChange={handleInputChange} className={`${styles.input} ${errors.phone ? styles.inputError : ''}`} />
                         {errors.phone && <span className={styles.error}>{errors.phone}</span>}
                     </div>
-                    <div className={styles.formGroup}>
-                        <label>Status</label>
-                        <select name="status" value={formData.status} onChange={handleInputChange} className={styles.selectInput} style={{width: '100%', border: '1px solid #d1d5db'}}>
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
+
+                    <div className={sharedStyles.formGroup}>
+                        <label htmlFor="resStatus">Account Status</label>
+                        <div className={sharedStyles.inputWrapper}>
+                            <Activity size={16} className={sharedStyles.inputIcon} />
+                            <select
+                                id="resStatus"
+                                name="status"
+                                value={formData.status || 'Active'}
+                                onChange={handleInputChange}
+                                className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}
+                            >
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
                     </div>
-                    <div className={styles.modalFooter}>
-                        <button type="button" onClick={onClose} className={styles.cancelBtn}>Cancel</button>
-                        <button type="submit" className={styles.submitBtn}><Save size={16} style={{marginRight:'6px'}}/> Save Resident</button>
+                </div>
+
+                <div className={sharedStyles.formGroup}>
+                    <label htmlFor="resAddress">Complete Address</label>
+                    <div className={sharedStyles.inputWrapper}>
+                        <MapPin size={16} className={sharedStyles.inputIcon} />
+                        <input
+                            id="resAddress"
+                            name="address"
+                            placeholder="e.g., 123 Rizal St, Barangay San Isidro"
+                            value={formData.address || ''}
+                            onChange={handleInputChange}
+                            className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}
+                        />
                     </div>
-                </form>
-            </div>
-        </div>
+                </div>
+
+                {isEditing ? (
+                    <div className={sharedStyles.formGroup}>
+                        <label htmlFor="resPoints">Points Balance</label>
+                        <div className={sharedStyles.inputWrapper}>
+                            <Award size={16} className={sharedStyles.inputIcon} />
+                            <input
+                                id="resPoints"
+                                name="pointsBalance"
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                                value={formData.pointsBalance !== undefined ? formData.pointsBalance : (formData.totalPoints || 0)}
+                                onChange={handleInputChange}
+                                className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}
+                            />
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <div className={sharedStyles.formGroup}>
+                            <div className={styles.passwordHeader}>
+                                <label htmlFor="resPassword">Password <span style={{ color: '#ef4444' }}>*</span></label>
+                                <button type="button" onClick={handleGeneratePassword} className={styles.generateBtn}>
+                                    Generate Password
+                                </button>
+                            </div>
+                            <div className={sharedStyles.inputWrapper}>
+                                <Lock size={16} className={sharedStyles.inputIcon} />
+                                <input
+                                    id="resPassword"
+                                    name="password"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Enter secure password"
+                                    value={formData.password || ''}
+                                    onChange={handleInputChange}
+                                    className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.password ? sharedStyles.inputError : ''}`}
+                                    style={{ width: '100%', paddingRight: '65px' }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={copyToClipboard}
+                                    className={styles.copyBtn}
+                                    title="Copy Password"
+                                    aria-label="Copy generated password"
+                                >
+                                    {copied ? <Check size={16} color="#059669" /> : <Copy size={16} />}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className={styles.eyeBtn}
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                >
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
+                            {errors.password && <span className={styles.error}>{errors.password}</span>}
+                        </div>
+
+                        <div className={sharedStyles.formGroup}>
+                            <label htmlFor="resConfirmPassword">Confirm Password <span style={{ color: '#ef4444' }}>*</span></label>
+                            <div className={sharedStyles.inputWrapper}>
+                                <Lock size={16} className={sharedStyles.inputIcon} />
+                                <input
+                                    id="resConfirmPassword"
+                                    name="confirmPassword"
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    placeholder="Re-enter password"
+                                    value={formData.confirmPassword || ''}
+                                    onChange={handleInputChange}
+                                    className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.confirmPassword ? sharedStyles.inputError : ''}`}
+                                    style={{ width: '100%', paddingRight: '40px' }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className={styles.eyeBtn}
+                                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                                >
+                                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
+                            {errors.confirmPassword && <span className={styles.error}>{errors.confirmPassword}</span>}
+                        </div>
+                    </>
+                )}
+
+                <div className={sharedStyles.modalFooter}>
+                    <button type="button" onClick={onClose} className={sharedStyles.cancelBtn}>
+                        Cancel
+                    </button>
+                    <button type="submit" className={sharedStyles.submitBtn}>
+                        <Save size={16} style={{ marginRight: '6px' }} />
+                        {isEditing ? 'Update Resident' : 'Save Resident'}
+                    </button>
+                </div>
+            </form>
+        </Modal>
     );
 };
 
