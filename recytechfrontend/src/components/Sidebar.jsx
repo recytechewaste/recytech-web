@@ -16,6 +16,7 @@ import {
     History,
     ChevronLeft,
     ChevronRight,
+    AlertTriangle,
     Settings as SettingsIcon
 } from 'lucide-react';
 import logo from '../assets/recytech_logo.webp';
@@ -60,6 +61,7 @@ const Sidebar = ({ activePage }) => {
         { name: 'Collector Management', icon: <Truck size={20} />, path: '/collectors', roles: ['Admin', 'Super Admin'] },
         { name: 'Bin Location Network', icon: <Warehouse size={20} />, path: '/bin-network', roles: ['Staff', 'Super Admin'] },
         { name: 'Bin Collections', icon: <ScanLine size={20} />, path: '/bin-collection-requests', roles: ['Staff', 'Super Admin'] },
+        { name: 'Sensor Issue Reports', icon: <AlertTriangle size={20} />, path: '/sensor-reports', roles: ['Staff'] },
         { name: 'Partner Organization Management', icon: <Users2 size={20} />, path: '/partner-organizations', roles: ['Admin', 'Super Admin'] },
         { name: 'Reward Points', icon: <Coins size={20} />, path: '/reward-points', roles: ['Staff', 'Super Admin'] },
         { name: 'Reports and Analytics', icon: <BarChart3 size={20} />, path: '/reports', roles: ['Staff', 'Admin', 'Super Admin'] },
