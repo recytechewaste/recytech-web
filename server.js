@@ -111,6 +111,8 @@ app.use('/api/residents', require('./recytechbackend/routes/residentRoutes'));
 app.use('/api/partner-organizations', require('./recytechbackend/routes/partnerOrgRoutes'));
 app.use('/api/lgus', require('./recytechbackend/routes/partnerOrgRoutes'));
 app.use('/api/reward-points', require('./recytechbackend/routes/rewardPointRoutes'));
+app.use('/api/rewards', require('./recytechbackend/routes/rewardPointRoutes'));
+app.use('/api/points', require('./recytechbackend/routes/rewardPointRoutes'));
 app.use('/api/transactions', require('./recytechbackend/routes/transactionRoutes'));
 app.use('/api/bins', require('./recytechbackend/routes/binRoutes'));
 app.use('/api/requests', require('./recytechbackend/routes/requestRoutes'));
