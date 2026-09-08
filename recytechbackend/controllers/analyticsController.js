@@ -1,14 +1,64 @@
+require('../models/PartnerOrganization');
+require('../models/Collector');
 const BinDropoff = require('../models/BinDropoff');
 const RecyclingCenter = require('../models/RecyclingCenter');
 const Resident = require('../models/Resident');
 const Request = require('../models/Request');
+const { LguAccount } = require('../models/PartnerOrganization');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { linearRegression, seasonalDecomposition, statisticalSummary, detectOutliers, holtExponentialSmoothing } = require('../utils/predictiveAnalytics');
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+/**
+ * Helper to combine waste type breakdowns from resident drop-offs and completed collector requests.
+ */
+const getCombinedWasteTypeBreakdown = async (matchQueryBin = {}, matchQueryRequest = {}) => {
+    const [binBreakdown, reqBreakdown] = await Promise.all([
+        BinDropoff.aggregate([
+            ...(Object.keys(matchQueryBin).length > 0 ? [{ $match: matchQueryBin }] : []),
+            { $group: { _id: '$wasteType', count: { $sum: 1 }, totalKg: { $sum: '$kilograms' }, totalPoints: { $sum: '$pointsAwarded' } } }
+        ]),
+        Request.aggregate([
+            { $match: { status: { $in: ['completed', 'Completed'] }, ...matchQueryRequest } },
+            { $unwind: { path: '$collectedWaste', preserveNullAndEmptyArrays: false } },
+            {
+                $group: {
+                    _id: '$collectedWaste.category',
+                    count: { $sum: 1 },
+                    totalKg: { $sum: '$collectedWaste.quantity' },
+                    totalPoints: { $sum: 0 }
+                }
+            }
+        ])
+    ]);
+
+    const combinedMap = {};
+    binBreakdown.forEach(item => {
+        if (!item._id) return;
+        combinedMap[item._id] = {
+            _id: item._id,
+            count: item.count || 0,
+            totalKg: item.totalKg || 0,
+            totalPoints: item.totalPoints || 0
+        };
+    });
+
+    reqBreakdown.forEach(item => {
+        if (!item._id) return;
+        if (!combinedMap[item._id]) {
+            combinedMap[item._id] = { _id: item._id, count: 0, totalKg: 0, totalPoints: 0 };
+        }
+        combinedMap[item._id].count += item.count || 0;
+        combinedMap[item._id].totalKg += item.totalKg || 0;
+        combinedMap[item._id].totalPoints += item.totalPoints || 0;
+    });
+
+    return Object.values(combinedMap).sort((a, b) => (b.totalKg - a.totalKg) || (b.count - a.count));
+};
+
 const getDropoffSummary = async () => {
-    const [totals, wasteTypeBreakdown, binStats, pendingRequestsCount] = await Promise.all([
+    const [totals, reqTotals, wasteTypeBreakdown, binStats, pendingRequestsCount, completedReqCount] = await Promise.all([
         BinDropoff.aggregate([
             {
                 $group: {
@@ -19,10 +69,17 @@ const getDropoffSummary = async () => {
                 }
             }
         ]),
-        BinDropoff.aggregate([
-            { $group: { _id: '$wasteType', count: { $sum: 1 }, totalKg: { $sum: '$kilograms' } } },
-            { $sort: { count: -1, _id: 1 } }
+        Request.aggregate([
+            { $match: { status: { $in: ['completed', 'Completed'] } } },
+            { $unwind: { path: '$collectedWaste', preserveNullAndEmptyArrays: false } },
+            {
+                $group: {
+                    _id: null,
+                    totalKg: { $sum: '$collectedWaste.quantity' }
+                }
+            }
         ]),
+        getCombinedWasteTypeBreakdown(),
         RecyclingCenter.aggregate([
             {
                 $group: {
@@ -46,16 +103,21 @@ const getDropoffSummary = async () => {
                 }
             }
         ]),
-        Request.countDocuments({ status: 'pending' })
+        Request.countDocuments({ status: { $in: ['pending', 'Pending'] } }),
+        Request.countDocuments({ status: { $in: ['completed', 'Completed'] } })
     ]);
 
     const dropoffTotals = totals[0] || { totalDropoffs: 0, totalKilograms: 0, totalPoints: 0 };
+    const requestCollectedKg = reqTotals[0]?.totalKg || 0;
     const bins = binStats[0] || { totalBins: 0, operationalBins: 0, nearCapacity: 0 };
     const topWasteType = wasteTypeBreakdown[0] || { _id: 'N/A' };
 
+    const totalKilograms = Math.round(((dropoffTotals.totalKilograms || 0) + requestCollectedKg) * 100) / 100;
+    const totalDropoffs = (dropoffTotals.totalDropoffs || 0) + completedReqCount;
+
     return {
-        totalDropoffs: dropoffTotals.totalDropoffs,
-        totalKilograms: Math.round(dropoffTotals.totalKilograms * 100) / 100,
+        totalDropoffs,
+        totalKilograms,
         totalPoints: Math.round(dropoffTotals.totalPoints * 100) / 100,
         totalBins: bins.totalBins,
         operationalBins: bins.operationalBins,
@@ -70,22 +132,61 @@ const getMonthlyDropoffTrends = async () => {
     const start = new Date(targetYear, 0, 1);
     const end = new Date(targetYear + 1, 0, 1);
 
-    const trends = await BinDropoff.aggregate([
-        { $match: { createdAt: { $gte: start, $lt: end } } },
-        {
-            $group: {
-                _id: { month: { $month: '$createdAt' } },
-                dropoffs: { $sum: 1 },
-                kilograms: { $sum: '$kilograms' },
-                points: { $sum: '$pointsAwarded' }
+    const [dropoffTrends, requestTrends] = await Promise.all([
+        BinDropoff.aggregate([
+            { $match: { createdAt: { $gte: start, $lt: end } } },
+            {
+                $group: {
+                    _id: { month: { $month: '$createdAt' } },
+                    dropoffs: { $sum: 1 },
+                    kilograms: { $sum: '$kilograms' },
+                    points: { $sum: '$pointsAwarded' }
+                }
             }
-        }
+        ]),
+        Request.aggregate([
+            {
+                $match: {
+                    status: { $in: ['completed', 'Completed'] },
+                    $or: [
+                        { completionDate: { $gte: start, $lt: end } },
+                        { createdAt: { $gte: start, $lt: end } }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    month: { $month: { $ifNull: ['$completionDate', '$createdAt'] } },
+                    totalWasteKg: { $sum: '$collectedWaste.quantity' }
+                }
+            },
+            {
+                $group: {
+                    _id: { month: '$month' },
+                    collections: { $sum: 1 },
+                    kilograms: { $sum: '$totalWasteKg' }
+                }
+            }
+        ])
     ]);
 
-    const trendMap = trends.reduce((acc, item) => {
-        acc[item._id.month] = item;
-        return acc;
-    }, {});
+    const trendMap = {};
+    dropoffTrends.forEach(item => {
+        trendMap[item._id.month] = {
+            dropoffs: item.dropoffs || 0,
+            kilograms: item.kilograms || 0,
+            points: item.points || 0
+        };
+    });
+
+    requestTrends.forEach(item => {
+        const m = item._id.month;
+        if (!trendMap[m]) {
+            trendMap[m] = { dropoffs: 0, kilograms: 0, points: 0 };
+        }
+        trendMap[m].dropoffs += item.collections || 0;
+        trendMap[m].kilograms += item.kilograms || 0;
+    });
 
     return MONTHS.map((name, index) => {
         const month = index + 1;
@@ -103,18 +204,74 @@ const getDropoffPredictiveAnalytics = async () => {
     const start = new Date(new Date().getFullYear() - 1, 0, 1);
     const end = new Date(new Date().getFullYear() + 1, 0, 1);
 
-    const monthlyData = await BinDropoff.aggregate([
-        { $match: { createdAt: { $gte: start, $lt: end } } },
-        {
-            $group: {
-                _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
-                dropoffs: { $sum: 1 },
-                kilograms: { $sum: '$kilograms' },
-                points: { $sum: '$pointsAwarded' }
+    const [monthlyDropoffs, monthlyRequests] = await Promise.all([
+        BinDropoff.aggregate([
+            { $match: { createdAt: { $gte: start, $lt: end } } },
+            {
+                $group: {
+                    _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+                    dropoffs: { $sum: 1 },
+                    kilograms: { $sum: '$kilograms' },
+                    points: { $sum: '$pointsAwarded' }
+                }
             }
-        },
-        { $sort: { '_id.year': 1, '_id.month': 1 } }
+        ]),
+        Request.aggregate([
+            {
+                $match: {
+                    status: { $in: ['completed', 'Completed'] },
+                    $or: [
+                        { completionDate: { $gte: start, $lt: end } },
+                        { createdAt: { $gte: start, $lt: end } }
+                    ]
+                }
+            },
+            {
+                $project: {
+                    year: { $year: { $ifNull: ['$completionDate', '$createdAt'] } },
+                    month: { $month: { $ifNull: ['$completionDate', '$createdAt'] } },
+                    totalWasteKg: { $sum: '$collectedWaste.quantity' }
+                }
+            },
+            {
+                $group: {
+                    _id: { year: '$year', month: '$month' },
+                    collections: { $sum: 1 },
+                    kilograms: { $sum: '$totalWasteKg' }
+                }
+            }
+        ])
     ]);
+
+    const combinedMonthlyMap = {};
+    monthlyDropoffs.forEach(item => {
+        const key = `${item._id.year}-${item._id.month}`;
+        combinedMonthlyMap[key] = {
+            _id: item._id,
+            dropoffs: item.dropoffs || 0,
+            kilograms: item.kilograms || 0,
+            points: item.points || 0
+        };
+    });
+
+    monthlyRequests.forEach(item => {
+        const key = `${item._id.year}-${item._id.month}`;
+        if (!combinedMonthlyMap[key]) {
+            combinedMonthlyMap[key] = {
+                _id: item._id,
+                dropoffs: 0,
+                kilograms: 0,
+                points: 0
+            };
+        }
+        combinedMonthlyMap[key].dropoffs += item.collections || 0;
+        combinedMonthlyMap[key].kilograms += item.kilograms || 0;
+    });
+
+    const monthlyData = Object.values(combinedMonthlyMap).sort((a, b) => {
+        if (a._id.year !== b._id.year) return a._id.year - b._id.year;
+        return a._id.month - b._id.month;
+    });
 
     if (!monthlyData || monthlyData.length === 0) {
         return {
@@ -134,12 +291,11 @@ const getDropoffPredictiveAnalytics = async () => {
     const stats = statisticalSummary(dropoffValues);
     const outliers = detectOutliers(dropoffValues);
 
-    // Holt's Double Exponential Smoothing for fast, robust short-term forecasting
     const holt = holtExponentialSmoothing(dropoffValues, 0.3, 0.2);
 
     const predictions = [];
     for (let i = 1; i <= 3; i++) {
-        const ci = holt.confidenceInterval(i, 1.645); // 90% confidence interval
+        const ci = holt.confidenceInterval(i, 1.645);
         predictions.push({
             month: `Month +${i}`,
             predictedDropoffs: ci.point,
@@ -178,10 +334,40 @@ const getDropoffPredictiveAnalytics = async () => {
 };
 
 const getRecentDropoffs = async () => {
-    return BinDropoff.find()
-        .populate('binId', 'name address status')
-        .sort({ createdAt: -1 })
-        .limit(10);
+    const [binDropoffs, completedRequests] = await Promise.all([
+        BinDropoff.find()
+            .populate('binId', 'name address status')
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .lean(),
+        Request.find({ status: { $in: ['completed', 'Completed'] } })
+            .populate({ path: 'lgu', select: 'name' })
+            .populate({ path: 'assignedCollector', select: 'firstName lastName' })
+            .sort({ completionDate: -1, createdAt: -1 })
+            .limit(10)
+            .lean()
+    ]);
+
+    const normalizedRequests = completedRequests.map(r => {
+        const totalKg = (r.collectedWaste || []).reduce((sum, w) => sum + (w.quantity || 0), 0);
+        const wasteType = (r.collectedWaste || []).map(w => w.category).join(', ') || 'General E-Waste';
+        const partnerName = r.lgu?.name || 'Partner Org';
+        const collectorName = r.assignedCollector ? `${r.assignedCollector.firstName} ${r.assignedCollector.lastName}` : '';
+        const participantName = collectorName ? `${partnerName} (${collectorName})` : partnerName;
+
+        return {
+            _id: r._id,
+            participantName,
+            wasteType,
+            kilograms: Math.round(totalKg * 100) / 100,
+            pointsAwarded: 0,
+            createdAt: r.completionDate || r.createdAt
+        };
+    });
+
+    const combined = [...binDropoffs, ...normalizedRequests];
+    combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return combined.slice(0, 10);
 };
 
 const getDashboardData = asyncHandler(async (req, res) => {
@@ -190,10 +376,7 @@ const getDashboardData = asyncHandler(async (req, res) => {
         getMonthlyDropoffTrends(),
         getDropoffPredictiveAnalytics(),
         getRecentDropoffs(),
-        BinDropoff.aggregate([
-            { $group: { _id: '$wasteType', count: { $sum: 1 }, totalKg: { $sum: '$kilograms' } } },
-            { $sort: { count: -1, _id: 1 } }
-        ])
+        getCombinedWasteTypeBreakdown()
     ]);
 
     const categoryDistribution = wasteTypeBreakdown.map(item => ({
@@ -222,10 +405,7 @@ const getSummaryData = asyncHandler(async (req, res) => {
 });
 
 const getCategoryDistributionData = asyncHandler(async (req, res) => {
-    const wasteTypeBreakdown = await BinDropoff.aggregate([
-        { $group: { _id: '$wasteType', count: { $sum: 1 }, totalKg: { $sum: '$kilograms' } } },
-        { $sort: { count: -1, _id: 1 } }
-    ]);
+    const wasteTypeBreakdown = await getCombinedWasteTypeBreakdown();
 
     const categories = wasteTypeBreakdown.map(item => ({
         name: item._id,
@@ -245,8 +425,6 @@ const getPredictiveAnalyticsData = asyncHandler(async (req, res) => {
     const predictiveData = await getDropoffPredictiveAnalytics();
     res.json({ predictiveAnalytics: predictiveData });
 });
-
-const { LguAccount } = require('../models/PartnerOrganization');
 
 const getReportData = asyncHandler(async (req, res) => {
     const { timeframe = 'month', wasteType, lguId } = req.query;
@@ -277,10 +455,23 @@ const getReportData = asyncHandler(async (req, res) => {
         requestLguFilter.lgu = lguId;
     }
 
+    const requestDateFilter = {
+        $or: [
+            { completionDate: dateFilter },
+            { createdAt: dateFilter }
+        ]
+    };
+
+    const completedRequestMatch = {
+        ...requestDateFilter,
+        ...requestLguFilter,
+        status: { $in: ['completed', 'Completed'] }
+    };
+
     // Fetch all available LGU accounts for the filter dropdown
     const lguAccounts = await LguAccount.find({}).select('_id name').lean();
 
-    const [reportResults, requestResults, binResults] = await Promise.all([
+    const [reportResults, requestResults, binResults, reqWasteTotals] = await Promise.all([
         BinDropoff.aggregate([
             { $match: matchQuery },
             {
@@ -298,19 +489,19 @@ const getReportData = asyncHandler(async (req, res) => {
                     totalDropoffs: 1,
                     totalKilograms: 1,
                     totalPoints: 1,
-                    successRate: {
-                        $cond: [{ $eq: ['$totalDropoffs', 0] }, 0, { $multiply: [{ $divide: ['$completedDropoffs', '$totalDropoffs'] }, 100] }]
-                    }
+                    completedDropoffs: 1
                 }
             }
         ]),
         Request.aggregate([
-            { $match: { createdAt: dateFilter, ...requestLguFilter } },
+            { $match: { ...requestDateFilter, ...requestLguFilter } },
             {
                 $group: {
                     _id: null,
                     totalRequests: { $sum: 1 },
-                    completedRequests: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } }
+                    completedRequests: {
+                        $sum: { $cond: [{ $in: ['$status', ['completed', 'Completed']] }, 1, 0] }
+                    }
                 }
             }
         ]),
@@ -323,44 +514,152 @@ const getReportData = asyncHandler(async (req, res) => {
                     activeBins: { $sum: { $cond: [{ $ne: ['$status', 'Maintenance'] }, 1, 0] } }
                 }
             }
+        ]),
+        Request.aggregate([
+            { $match: completedRequestMatch },
+            { $unwind: { path: '$collectedWaste', preserveNullAndEmptyArrays: false } },
+            ...(wasteType && wasteType !== 'All' ? [{ $match: { 'collectedWaste.category': wasteType } }] : []),
+            {
+                $group: {
+                    _id: null,
+                    totalKilograms: { $sum: '$collectedWaste.quantity' }
+                }
+            }
         ])
     ]);
 
-    const report = reportResults[0] || { totalDropoffs: 0, totalKilograms: 0, totalPoints: 0, successRate: 0 };
+    const report = reportResults[0] || { totalDropoffs: 0, totalKilograms: 0, totalPoints: 0, completedDropoffs: 0 };
     const reqStats = requestResults[0] || { totalRequests: 0, completedRequests: 0 };
     const bStats = binResults[0] || { totalBins: 0, activeBins: 0 };
+    const reqWasteKg = reqWasteTotals[0]?.totalKilograms || 0;
 
-    const summaryByWasteType = await BinDropoff.aggregate([
-        { $match: matchQuery },
-        {
-            $group: {
-                _id: '$wasteType',
-                count: { $sum: 1 },
-                totalKg: { $sum: '$kilograms' },
-                totalPoints: { $sum: '$pointsAwarded' }
-            }
-        },
-        { $sort: { count: -1 } }
-    ]);
-    
-    const weeklyTrend = await BinDropoff.aggregate([
-        { $match: matchQuery },
-        {
-            $group: {
-                _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-                count: { $sum: 1 }
-            }
-        },
-        { $sort: { _id: 1 } }
+    const totalCompletedReq = reqStats.completedRequests || 0;
+    const totalDropoffs = (report.totalDropoffs || 0) + totalCompletedReq;
+    const totalKilograms = Math.round(((report.totalKilograms || 0) + reqWasteKg) * 100) / 100;
+    const totalCompletedEvents = (report.completedDropoffs || 0) + totalCompletedReq;
+    const successRate = totalDropoffs > 0 ? Math.round((totalCompletedEvents / totalDropoffs) * 100) : 0;
+
+    // Summary by Waste Type
+    const [binWasteBreakdown, reqWasteBreakdown] = await Promise.all([
+        BinDropoff.aggregate([
+            { $match: matchQuery },
+            {
+                $group: {
+                    _id: '$wasteType',
+                    count: { $sum: 1 },
+                    totalKg: { $sum: '$kilograms' },
+                    totalPoints: { $sum: '$pointsAwarded' }
+                }
+            },
+            { $sort: { count: -1 } }
+        ]),
+        Request.aggregate([
+            { $match: completedRequestMatch },
+            { $unwind: { path: '$collectedWaste', preserveNullAndEmptyArrays: false } },
+            ...(wasteType && wasteType !== 'All' ? [{ $match: { 'collectedWaste.category': wasteType } }] : []),
+            {
+                $group: {
+                    _id: '$collectedWaste.category',
+                    count: { $sum: 1 },
+                    totalKg: { $sum: '$collectedWaste.quantity' },
+                    totalPoints: { $sum: 0 }
+                }
+            },
+            { $sort: { count: -1 } }
+        ])
     ]);
 
-    const recentActivity = await BinDropoff.find(matchQuery)
-        .sort({ createdAt: -1 })
-        .limit(10);
+    const wasteMap = {};
+    binWasteBreakdown.forEach(item => {
+        if (!item._id) return;
+        wasteMap[item._id] = { _id: item._id, count: item.count || 0, totalKg: item.totalKg || 0, totalPoints: item.totalPoints || 0 };
+    });
+    reqWasteBreakdown.forEach(item => {
+        if (!item._id) return;
+        if (!wasteMap[item._id]) {
+            wasteMap[item._id] = { _id: item._id, count: 0, totalKg: 0, totalPoints: 0 };
+        }
+        wasteMap[item._id].count += item.count || 0;
+        wasteMap[item._id].totalKg += item.totalKg || 0;
+    });
+    const summaryByWasteType = Object.values(wasteMap).sort((a, b) => b.count - a.count || b.totalKg - a.totalKg);
+
+    // Weekly / Daily Trend
+    const [binWeeklyTrend, reqWeeklyTrend] = await Promise.all([
+        BinDropoff.aggregate([
+            { $match: matchQuery },
+            {
+                $group: {
+                    _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ]),
+        Request.aggregate([
+            { $match: completedRequestMatch },
+            {
+                $group: {
+                    _id: {
+                        $dateToString: {
+                            format: '%Y-%m-%d',
+                            date: { $ifNull: ['$completionDate', '$createdAt'] }
+                        }
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { _id: 1 } }
+        ])
+    ]);
+
+    const trendDateMap = {};
+    binWeeklyTrend.forEach(d => {
+        trendDateMap[d._id] = (trendDateMap[d._id] || 0) + d.count;
+    });
+    reqWeeklyTrend.forEach(d => {
+        trendDateMap[d._id] = (trendDateMap[d._id] || 0) + d.count;
+    });
+    const weeklyTrend = Object.keys(trendDateMap)
+        .sort()
+        .map(dateKey => ({ _id: dateKey, count: trendDateMap[dateKey] }));
+
+    // Recent Activity
+    const [binRecent, reqRecent] = await Promise.all([
+        BinDropoff.find(matchQuery)
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .lean(),
+        Request.find(completedRequestMatch)
+            .populate('lgu', 'name')
+            .populate('assignedCollector', 'firstName lastName')
+            .sort({ completionDate: -1, createdAt: -1 })
+            .limit(10)
+            .lean()
+    ]);
+
+    const formattedReqRecent = reqRecent.map(r => {
+        const totalKg = (r.collectedWaste || []).reduce((acc, w) => acc + (w.quantity || 0), 0);
+        const categories = (r.collectedWaste || []).map(w => w.category).join(', ') || 'General E-Waste';
+        return {
+            _id: r._id,
+            createdAt: r.completionDate || r.createdAt,
+            wasteType: categories,
+            kilograms: Math.round(totalKg * 100) / 100,
+            pointsAwarded: 0,
+            status: 'Completed'
+        };
+    });
+
+    const recentActivity = [...binRecent, ...formattedReqRecent];
+    recentActivity.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     res.json({
         summary: {
-            ...report,
+            totalDropoffs,
+            totalKilograms,
+            totalPoints: report.totalPoints || 0,
+            successRate,
             totalRequests: reqStats.totalRequests,
             completedRequests: reqStats.completedRequests,
             totalBins: bStats.totalBins,
@@ -368,7 +667,7 @@ const getReportData = asyncHandler(async (req, res) => {
         },
         summaryByWasteType,
         weeklyTrend,
-        recentActivity,
+        recentActivity: recentActivity.slice(0, 10),
         lguAccounts
     });
 });
