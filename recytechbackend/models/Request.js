@@ -3,8 +3,13 @@ const mongoose = require('mongoose');
 const requestSchema = new mongoose.Schema({
     bin: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Bin',
+        refPath: 'binModel',
         required: [true, 'A bin ID is required for the collection request.']
+    },
+    binModel: {
+        type: String,
+        enum: ['Bin', 'RecyclingCenter'],
+        default: 'Bin'
     },
     lgu: {
         type: mongoose.Schema.Types.ObjectId,

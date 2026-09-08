@@ -1,5 +1,6 @@
 const Request = require('../models/Request');
 const Bin = require('../models/Bin');
+const RecyclingCenter = require('../models/RecyclingCenter');
 const asyncHandler = require('express-async-handler');
 const { getProfileForUser, normalizeRole, CANONICAL_ROLES } = require('../utils/roleHelper');
 
@@ -45,7 +46,7 @@ const getAllRequests = asyncHandler(async (req, res) => {
     // 4. Populate options
     const populateBin = {
         path: 'bin',
-        select: 'name binId address status location assignedLgu fillLevel',
+        select: 'name binId binCode qrCode address status location assignedLgu fillLevel capacityKg currentFillKg',
         populate: { path: 'assignedLgu', select: 'name contactPerson email phone jurisdiction' }
     };
     const populateLgu = { path: 'lgu', select: 'name email contactPerson phone address organizationType' };
@@ -104,7 +105,7 @@ const getRequestById = asyncHandler(async (req, res) => {
     const request = await Request.findById(req.params.id)
         .populate({
             path: 'bin',
-            select: 'name binId address status location assignedLgu fillLevel',
+            select: 'name binId binCode qrCode address status location assignedLgu fillLevel capacityKg currentFillKg',
             populate: { path: 'assignedLgu', select: 'name contactPerson email phone jurisdiction' }
         })
         .populate({ path: 'lgu', select: 'name email contactPerson phone address organizationType' })
@@ -146,13 +147,29 @@ const createLguRequest = asyncHandler(async (req, res) => {
         throw new Error('A bin ID is required to create a collection request.');
     }
 
-    // Resolve bin (either ObjectId or binId code)
+    // Resolve bin (either from Bin or RecyclingCenter by ObjectId, code, qrCode, or name)
     let bin = null;
+    let binModel = 'Bin';
+
     if (require('mongoose').Types.ObjectId.isValid(binId)) {
         bin = await Bin.findById(binId);
+        if (bin) binModel = 'Bin';
     }
     if (!bin) {
-        bin = await Bin.findOne({ binId: binId.toString() });
+        bin = await Bin.findOne({
+            $or: [{ binId: binId.toString() }, { binCode: binId.toString() }]
+        });
+        if (bin) binModel = 'Bin';
+    }
+    if (!bin && require('mongoose').Types.ObjectId.isValid(binId)) {
+        bin = await RecyclingCenter.findById(binId);
+        if (bin) binModel = 'RecyclingCenter';
+    }
+    if (!bin) {
+        bin = await RecyclingCenter.findOne({
+            $or: [{ qrCode: binId.toString() }, { name: binId.toString() }]
+        });
+        if (bin) binModel = 'RecyclingCenter';
     }
 
     if (!bin) {
@@ -210,6 +227,7 @@ const createLguRequest = asyncHandler(async (req, res) => {
 
     const request = await Request.create({
         bin: bin._id,
+        binModel: binModel || 'Bin',
         lgu: lguId,
         requestType: requestType || 'manual',
         status: 'pending',
@@ -217,7 +235,7 @@ const createLguRequest = asyncHandler(async (req, res) => {
     });
 
     const populatedRequest = await Request.findById(request._id)
-        .populate({ path: 'bin', select: 'name binId address status location assignedLgu' })
+        .populate({ path: 'bin', select: 'name binId binCode qrCode address status location assignedLgu fillLevel capacityKg currentFillKg' })
         .populate({ path: 'lgu', select: 'name email contactPerson phone address organizationType' });
 
     res.status(201).json(populatedRequest);
@@ -265,7 +283,7 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
     const updatedRequest = await request.save();
 
     const populated = await Request.findById(updatedRequest._id)
-        .populate({ path: 'bin', select: 'name binId address status location assignedLgu' })
+        .populate({ path: 'bin', select: 'name binId binCode qrCode address status location assignedLgu fillLevel capacityKg currentFillKg' })
         .populate({ path: 'lgu', select: 'name email contactPerson phone' })
         .populate({ path: 'assignedCollector', select: 'firstName lastName phone vehiclePlate vehicleType' });
 
@@ -331,7 +349,7 @@ const completeRequest = asyncHandler(async (req, res) => {
     }
 
     const populated = await Request.findById(saved._id)
-        .populate({ path: 'bin', select: 'name binId address status location assignedLgu' })
+        .populate({ path: 'bin', select: 'name binId binCode qrCode address status location assignedLgu fillLevel capacityKg currentFillKg' })
         .populate({ path: 'lgu', select: 'name email contactPerson' })
         .populate({ path: 'assignedCollector', select: 'firstName lastName phone vehiclePlate vehicleType' });
 
