@@ -21,8 +21,6 @@ const SensorReports = () => {
         setStatusFilter,
         severityFilter,
         setSeverityFilter,
-        sensorTypeFilter,
-        setSensorTypeFilter,
         handleClearFilters,
         fetchReports,
         fetchStats,
@@ -49,7 +47,7 @@ const SensorReports = () => {
                     <div className={styles.titleGroup}>
                         <h1 className={styles.pageTitle}>Sensor Incident Reports</h1>
                         <p className={styles.subTitle}>
-                            Review and resolve sensor malfunctions, ultrasonic errors, and bin hardware damage reported by Partner Organizations.
+                            Review and resolve Time-of-Flight (ToF) fullness sensor malfunctions and bin hardware damage reported by Partner Organizations.
                         </p>
                     </div>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -115,8 +113,6 @@ const SensorReports = () => {
                     setStatusFilter={setStatusFilter}
                     severityFilter={severityFilter}
                     setSeverityFilter={setSeverityFilter}
-                    sensorTypeFilter={sensorTypeFilter}
-                    setSensorTypeFilter={setSensorTypeFilter}
                     handleClearFilters={handleClearFilters}
                 />
 

@@ -20,6 +20,7 @@ const sensorReportSchema = new mongoose.Schema({
     sensorType: {
         type: String,
         enum: [
+            'Time-of-Flight (ToF) Fullness Sensor',
             'Fill Level Sensor (Ultrasonic)',
             'Weight Sensor (Load Cell)',
             'Power / Solar / Battery',
@@ -28,7 +29,7 @@ const sensorReportSchema = new mongoose.Schema({
             'Optical / Material Detection Sensor',
             'Other Hardware Failure'
         ],
-        default: 'Fill Level Sensor (Ultrasonic)'
+        default: 'Time-of-Flight (ToF) Fullness Sensor'
     },
     issueDescription: {
         type: String,
