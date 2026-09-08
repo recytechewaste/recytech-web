@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import axios from 'axios';
+import apiClient from '../../api/client';
 import { useToast } from '../../context/ToastContext';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export const useSensorReports = () => {
     const [reports, setReports] = useState([]);
@@ -23,18 +21,10 @@ export const useSensorReports = () => {
 
     const { showToast } = useToast();
 
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem('token');
-        return token ? { Authorization: `Bearer ${token}` } : {};
-    };
-
     const fetchReports = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${API_BASE_URL}/api/sensor-incidents`, {
-                headers: getAuthHeaders(),
-                withCredentials: true
-            });
+            const res = await apiClient.get('/sensor-incidents');
             if (res.data?.success) {
                 setReports(res.data.data || []);
             }
@@ -48,10 +38,7 @@ export const useSensorReports = () => {
 
     const fetchStats = useCallback(async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/api/sensor-incidents/summary`, {
-                headers: getAuthHeaders(),
-                withCredentials: true
-            });
+            const res = await apiClient.get('/sensor-incidents/summary');
             if (res.data?.success && res.data.stats) {
                 setStats(res.data.stats);
             }
@@ -67,14 +54,11 @@ export const useSensorReports = () => {
 
     const updateStatus = async (reportId, newStatus, resolutionNotes, restoreBinStatus = true) => {
         try {
-            const res = await axios.patch(
-                `${API_BASE_URL}/api/sensor-incidents/${reportId}/status`,
-                { status: newStatus, resolutionNotes, restoreBinStatus },
-                {
-                    headers: getAuthHeaders(),
-                    withCredentials: true
-                }
-            );
+            const res = await apiClient.patch(`/sensor-incidents/${reportId}/status`, {
+                status: newStatus,
+                resolutionNotes,
+                restoreBinStatus
+            });
 
             if (res.data?.success) {
                 showToast(res.data.message || `Status updated to ${newStatus}`, 'success');
