@@ -31,7 +31,7 @@ export const useSensorReports = () => {
     const fetchReports = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${API_BASE_URL}/api/sensor-reports`, {
+            const res = await axios.get(`${API_BASE_URL}/api/sensor-incidents`, {
                 headers: getAuthHeaders(),
                 withCredentials: true
             });
@@ -48,7 +48,7 @@ export const useSensorReports = () => {
 
     const fetchStats = useCallback(async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/api/sensor-reports/stats`, {
+            const res = await axios.get(`${API_BASE_URL}/api/sensor-incidents/summary`, {
                 headers: getAuthHeaders(),
                 withCredentials: true
             });
@@ -68,7 +68,7 @@ export const useSensorReports = () => {
     const updateStatus = async (reportId, newStatus, resolutionNotes, restoreBinStatus = true) => {
         try {
             const res = await axios.patch(
-                `${API_BASE_URL}/api/sensor-reports/${reportId}/status`,
+                `${API_BASE_URL}/api/sensor-incidents/${reportId}/status`,
                 { status: newStatus, resolutionNotes, restoreBinStatus },
                 {
                     headers: getAuthHeaders(),
