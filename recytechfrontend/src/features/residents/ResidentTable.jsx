@@ -56,24 +56,14 @@ const ResidentTableRow = ({ resident, index, page, limit, onView, onEdit, onDele
                         <Eye size={16} />
                     </button>
                     {canManage && (
-                        <>
-                            <button
-                                title="Edit Resident"
-                                aria-label={`Edit ${fullName}`}
-                                className={styles.iconBtn}
-                                onClick={() => onEdit(resident)}
-                            >
-                                <Edit2 size={16} />
-                            </button>
-                            <button
-                                title="Deactivate / Delete Resident"
-                                aria-label={`Deactivate ${fullName}`}
-                                className={styles.iconBtnDanger}
-                                onClick={() => onDelete(resident)}
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </>
+                        <button
+                            title="Deactivate / Delete Resident"
+                            aria-label={`Deactivate ${fullName}`}
+                            className={styles.iconBtnDanger}
+                            onClick={() => onDelete(resident)}
+                        >
+                            <Trash2 size={16} />
+                        </button>
                     )}
                 </div>
             </td>

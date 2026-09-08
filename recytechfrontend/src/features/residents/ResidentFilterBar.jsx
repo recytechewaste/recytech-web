@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Filter, Shield } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 import styles from '../../styles/Collectors.module.css';
 
 const ResidentFilterBar = ({
@@ -7,8 +7,6 @@ const ResidentFilterBar = ({
     setSearchTerm,
     statusFilter,
     setStatusFilter,
-    sourceFilter,
-    setSourceFilter,
     handleClearFilters,
     total
 }) => {
@@ -37,22 +35,6 @@ const ResidentFilterBar = ({
                     <option value="">All Statuses</option>
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
-                </select>
-            </div>
-
-            <div className={styles.filterGroup}>
-                <Shield size={18} className={styles.filterIcon} />
-                <select
-                    className={styles.selectInput}
-                    value={sourceFilter}
-                    onChange={(e) => setSourceFilter(e.target.value)}
-                    aria-label="Filter residents by source"
-                >
-                    <option value="">All Sources</option>
-                    <option value="Mobile App">Mobile App</option>
-                    <option value="Web">Web</option>
-                    <option value="Mobile Simulation">Mobile Simulation</option>
-                    <option value="Imported">Imported</option>
                 </select>
             </div>
 

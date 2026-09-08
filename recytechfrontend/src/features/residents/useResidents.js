@@ -8,7 +8,6 @@ export const useResidents = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
-    const [sourceFilter, setSourceFilter] = useState('');
     const { showToast } = useToast();
 
     const fetchResidents = useCallback(async () => {
@@ -31,7 +30,6 @@ export const useResidents = () => {
     const handleClearFilters = () => {
         setSearchTerm('');
         setStatusFilter('');
-        setSourceFilter('');
     };
 
     const addResident = async (residentData) => {
@@ -84,10 +82,9 @@ export const useResidents = () => {
                 resident.address?.toLowerCase().includes(search)
             );
             const matchesStatus = statusFilter ? resident.status === statusFilter : true;
-            const matchesSource = sourceFilter ? resident.source === sourceFilter : true;
-            return matchesSearch && matchesStatus && matchesSource;
+            return matchesSearch && matchesStatus;
         });
-    }, [residents, searchTerm, statusFilter, sourceFilter]);
+    }, [residents, searchTerm, statusFilter]);
 
     const stats = useMemo(() => {
         const total = residents.length;
@@ -103,7 +100,6 @@ export const useResidents = () => {
         loading, 
         searchTerm, setSearchTerm, 
         statusFilter, setStatusFilter, 
-        sourceFilter, setSourceFilter,
         handleClearFilters,
         filteredResidents, paginatedResidents, 
         fetchResidents,
