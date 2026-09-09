@@ -466,10 +466,22 @@ const getReportData = asyncHandler(async (req, res) => {
     let lguBinIds = null;
     let requestLguFilter = {};
     if (lguId && lguId !== 'All') {
-        const lguBins = await RecyclingCenter.find({ assignedLgu: lguId }).select('_id').lean();
+        const mongoose = require('mongoose');
+        const lguObjId = mongoose.Types.ObjectId.isValid(lguId) ? new mongoose.Types.ObjectId(lguId) : lguId;
+        const lguBins = await RecyclingCenter.find({
+            $or: [{ assignedLgu: lguObjId }, { assignedLgu: lguId }]
+        }).select('_id').lean();
         lguBinIds = lguBins.map(b => b._id);
-        matchQuery.bin = { $in: lguBinIds };
-        requestLguFilter.lgu = lguId;
+        
+        matchQuery.$or = [{ binId: { $in: lguBinIds } }, { bin: { $in: lguBinIds } }];
+
+        const reqOrConditions = [
+            { lgu: lguObjId }
+        ];
+        if (lguBinIds.length > 0) {
+            reqOrConditions.push({ bin: { $in: lguBinIds } });
+        }
+        requestLguFilter = { $or: reqOrConditions };
     }
 
     const requestDateFilter = {
@@ -485,8 +497,8 @@ const getReportData = asyncHandler(async (req, res) => {
         status: { $in: ['completed', 'Completed'] }
     };
 
-    // Fetch all available LGU accounts for the filter dropdown
-    const lguAccounts = await LguAccount.find({}).select('_id name').lean();
+    // Fetch active LGU accounts for the filter dropdown
+    const lguAccounts = await LguAccount.find({ status: { $ne: 'Inactive' } }).select('_id name').lean();
 
     const [reportResults, requestResults, binResults, reqWasteTotals] = await Promise.all([
         BinDropoff.aggregate([
