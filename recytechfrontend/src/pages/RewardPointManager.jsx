@@ -36,7 +36,7 @@ const RewardPointManager = () => {
 
     const { 
         points, allPoints, filteredTotal, loading, fetchPoints, 
-        currentPage, totalPages, setPage,
+        currentPage, totalPages, setPage, itemsPerPage = 8,
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
     } = useRewardPoints();
@@ -201,7 +201,7 @@ const RewardPointManager = () => {
                 {/* ── Card Grid ── */}
                 {loading ? (
                     <div className={styles.grid}>
-                        {Array.from({ length: 6 }).map((_, i) => (
+                        {Array.from({ length: itemsPerPage }).map((_, i) => (
                             <div key={`sk-${i}`} className={rpStyles.card}>
                                 <div className={rpStyles.cardColorBar} style={{ background: '#e5e7eb' }} />
                                 <div className={rpStyles.cardBody}>
@@ -311,7 +311,7 @@ const RewardPointManager = () => {
                 {!loading && totalPages > 1 && (
                     <div className={rpStyles.paginationWrapper}>
                         <p className={rpStyles.paginationInfo}>
-                            Showing {((currentPage - 1) * 6) + 1}–{Math.min(currentPage * 6, filteredTotal)} of {filteredTotal} rules
+                            Showing {((currentPage - 1) * itemsPerPage) + 1}–{Math.min(currentPage * itemsPerPage, filteredTotal)} of {filteredTotal} rules
                         </p>
                         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setPage} />
                     </div>

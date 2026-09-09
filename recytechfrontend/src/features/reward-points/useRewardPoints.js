@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import api from '../../api/client';
 import { usePagination } from '../../hooks/usePagination';
 
-const ITEMS_PER_PAGE = 6;
+export const ITEMS_PER_PAGE = 8;
 
 export const useRewardPoints = () => {
     const [allPoints, setAllPoints] = useState([]);
@@ -53,6 +53,7 @@ export const useRewardPoints = () => {
         currentPage, 
         totalPages, 
         setPage,
+        itemsPerPage: ITEMS_PER_PAGE,
         searchTerm,
         setSearchTerm,
         statusFilter,
