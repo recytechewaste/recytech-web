@@ -3,6 +3,7 @@ const router = express.Router();
 const { protect, staffOrAdmin } = require('../middleware/authMiddleware');
 const { 
     getCenters,
+    getPublicCenters,
     getCenterByQrCode,
     getPublicCenterByQrCode,
     createCenter,
@@ -10,11 +11,11 @@ const {
     deleteCenter 
 } = require('../controllers/recyclingCenterController');
 
-// @desc    Get all centers (Public map view)
+// @desc    Get all centers (Public map view) — allowlisted fields only
 // @route   GET /api/bin-locations/public
-router.get('/public', getCenters);
+router.get('/public', getPublicCenters);
 
-// @desc    Get a center by QR code for public resident mobile flow
+// @desc    Get a center by QR code for public resident mobile flow — allowlisted fields only
 // @route   GET /api/bin-locations/public/qr/:qrCode
 router.get('/public/qr/:qrCode', getPublicCenterByQrCode);
 

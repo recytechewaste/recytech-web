@@ -146,7 +146,9 @@ const updateMyBinStatus = asyncHandler(async (req, res) => {
   binDoc.status = status;
   if (fillLevel !== undefined) binDoc.fillLevel = Number(fillLevel);
   if (currentFillKg !== undefined) binDoc.currentFillKg = Number(currentFillKg);
-  if (notes !== undefined && isRecyclingCenter) binDoc.description = notes;
+  // NOTE: `notes` from a bin-status update must NOT be written into RecyclingCenter.description.
+  // description is a permanent administrative field, not a status-update log.
+  // SensorReport.issueDescription is the correct field for incident/status notes.
 
   await binDoc.save();
 
