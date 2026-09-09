@@ -19,6 +19,32 @@ const formatBinForClient = (doc) => {
     return obj;
 };
 
+/**
+ * PUBLIC DTO – explicit allowlist for /api/bins responses.
+ * NEVER expose description, notes, issueDescription, resolutionNotes,
+ * or any internal/admin metadata through this serializer.
+ */
+const toPublicBinDTO = (doc) => {
+    if (!doc) return null;
+    const full = formatBinForClient(doc);
+    return {
+        _id:                 full._id,
+        binId:               full.binId,
+        name:                full.name,
+        address:             full.address,
+        latitude:            full.latitude,
+        longitude:           full.longitude,
+        lat:                 full.lat,
+        lng:                 full.lng,
+        location:            full.location,
+        qrCode:              full.qrCode,
+        capacityKg:          full.capacityKg,
+        currentFillKg:       full.currentFillKg,
+        status:              full.status,
+        isAvailableForDropoff: full.isAvailableForDropoff,
+    };
+};
+
 // @desc    Create a new bin
 // @route   POST /api/bins
 // @access  Private/Admin
@@ -47,15 +73,12 @@ const createBin = asyncHandler(async (req, res) => {
 // @access  Public / Private
 const getAllBins = asyncHandler(async (req, res) => {
     const [recyclingCenters, legacyBins] = await Promise.all([
-        RecyclingCenter.find({})
-            .sort({ createdAt: -1 })
-            .populate('assignedCollector', 'firstName lastName phone vehiclePlate status')
-            .populate('assignedLgu', 'name contactPerson phone email jurisdiction status'),
-        Bin.find({}).populate('assignedLgu', 'name')
+        RecyclingCenter.find({}).sort({ createdAt: -1 }).lean(),
+        Bin.find({}).lean()
     ]);
 
-    const formattedCenters = recyclingCenters.map(formatBinForClient);
-    const formattedLegacy = legacyBins.map(formatBinForClient);
+    const formattedCenters = recyclingCenters.map(toPublicBinDTO);
+    const formattedLegacy = legacyBins.map(toPublicBinDTO);
 
     // Prefer web RecyclingCenter bins, fallback/combine with any unique legacy bins
     const seenIds = new Set(formattedCenters.map(b => b.binId?.toString() || b._id?.toString()));
@@ -74,20 +97,19 @@ const getAllBins = asyncHandler(async (req, res) => {
 // @route   GET /api/bins/:id
 // @access  Public / Private
 const getBinById = asyncHandler(async (req, res) => {
-    let bin = await RecyclingCenter.findById(req.params.id)
-        .populate('assignedCollector', 'firstName lastName phone vehiclePlate status')
-        .populate('assignedLgu', 'name contactPerson phone email jurisdiction status');
+    let bin = await RecyclingCenter.findById(req.params.id).lean();
 
     if (!bin) {
-        bin = await Bin.findById(req.params.id).populate('assignedLgu', 'name');
+        bin = await Bin.findById(req.params.id).lean();
     }
 
     if (!bin) {
-        bin = await RecyclingCenter.findOne({ qrCode: req.params.id }) || await Bin.findOne({ binId: req.params.id });
+        bin = await RecyclingCenter.findOne({ qrCode: req.params.id }).lean()
+            || await Bin.findOne({ binId: req.params.id }).lean();
     }
 
     if (bin) {
-        res.json(formatBinForClient(bin));
+        res.json(toPublicBinDTO(bin));
     } else {
         res.status(404);
         throw new Error('Bin not found');

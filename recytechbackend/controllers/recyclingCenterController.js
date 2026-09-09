@@ -26,12 +26,47 @@ const formatBinResponse = (center) => {
     return obj;
 };
 
+/**
+ * PUBLIC DTO – explicit allowlist for unauthenticated endpoints.
+ * NEVER add description, notes, issueDescription, resolutionNotes, or any
+ * internal/admin metadata to this list.
+ */
+const toPublicDTO = (center) => {
+    if (!center) return null;
+    const full = formatBinResponse(center);
+    return {
+        _id:                 full._id,
+        binId:               full.binId,
+        name:                full.name,
+        address:             full.address,
+        latitude:            full.latitude,
+        longitude:           full.longitude,
+        lat:                 full.lat,
+        lng:                 full.lng,
+        location:            full.location,
+        qrCode:              full.qrCode,
+        capacityKg:          full.capacityKg,
+        currentFillKg:       full.currentFillKg,
+        status:              full.status,
+        isAvailableForDropoff: full.isAvailableForDropoff,
+    };
+};
+
+// Authenticated (Staff/Admin) — returns full formatted object including admin fields
 const getCenters = asyncHandler(async (req, res) => {
     const centers = await RecyclingCenter.find()
         .sort({ createdAt: -1 })
         .populate('assignedCollector', 'firstName lastName phone vehiclePlate status')
         .populate('assignedLgu', 'name contactPerson phone email jurisdiction status');
     res.json(centers.map(formatBinResponse));
+});
+
+// Public (no auth) — returns allowlisted fields only; safe for Household/mobile consumers
+const getPublicCenters = asyncHandler(async (req, res) => {
+    const centers = await RecyclingCenter.find()
+        .sort({ createdAt: -1 })
+        .lean();
+    res.json(centers.map(toPublicDTO));
 });
 
 const getCenterByQrCode = asyncHandler(async (req, res) => {
@@ -47,6 +82,7 @@ const getCenterByQrCode = asyncHandler(async (req, res) => {
     res.json(formatBinResponse(center));
 });
 
+// Public QR scan — allowlisted fields only; safe for Household/mobile consumers
 const getPublicCenterByQrCode = asyncHandler(async (req, res) => {
     const qrCode = req.params.qrCode?.trim();
 
@@ -55,16 +91,14 @@ const getPublicCenterByQrCode = asyncHandler(async (req, res) => {
         throw new Error('QR code is required');
     }
 
-    const center = await RecyclingCenter.findOne({ qrCode })
-        .populate('assignedCollector', 'firstName lastName phone vehiclePlate status')
-        .populate('assignedLgu', 'name contactPerson phone email jurisdiction status');
+    const center = await RecyclingCenter.findOne({ qrCode }).lean();
 
     if (!center) {
         res.status(404);
         throw new Error('Bin not found');
     }
 
-    res.json(formatBinResponse(center));
+    res.json(toPublicDTO(center));
 });
 
 
@@ -145,6 +179,7 @@ const deleteCenter = asyncHandler(async (req, res) => {
 
 module.exports = {
     getCenters,
+    getPublicCenters,
     getCenterByQrCode,
     getPublicCenterByQrCode,
     createCenter,
