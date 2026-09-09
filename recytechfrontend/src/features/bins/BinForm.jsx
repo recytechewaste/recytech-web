@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import LocationPickerMap, { toLeafletCoords } from '../../components/LocationPickerMap';
-import { Tag, QrCode, Weight, Activity, Loader2, Building2 } from 'lucide-react';
+import { Tag, QrCode, Weight, Activity, Loader2, Building2, MapPin } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import styles from '../../styles/BinNetwork.module.css';
 import sharedStyles from '../../styles/Layout.module.css';
@@ -62,7 +62,10 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
         if (!binForm.capacityKg || isNaN(capacity) || capacity <= 0) {
             newErrors.capacityKg = 'Capacity must be a positive number.';
         }
-        if (!binForm.address || binForm.address === 'Fetching address...') {
+        if (!binForm.address?.trim() || binForm.address === 'Fetching address...') {
+            newErrors.address = 'Location / Address is required.';
+        }
+        if (!binForm.location?.coordinates || binForm.location.coordinates.length !== 2) {
             newErrors.location = 'Please click on the map to set the bin location.';
         }
         setErrors(newErrors);
@@ -88,15 +91,21 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
             coordinates: [lng, lat]
         };
 
+        const hasCustomAddress = binForm.address && !binForm.address.startsWith('Pinned at') && binForm.address !== 'Fetching address...';
+
         setBinForm((current) => ({
             ...current,
             location: nextLocation,
-            address: 'Fetching address...'
+            address: hasCustomAddress ? current.address : 'Fetching address...'
         }));
 
-        const address = await fetchAddressFromCoordinates(lat, lng);
-        setBinForm((current) => ({ ...current, address }));
+        const fetchedAddress = await fetchAddressFromCoordinates(lat, lng);
+        setBinForm((current) => ({
+            ...current,
+            address: hasCustomAddress ? current.address : fetchedAddress
+        }));
         if (errors.location) setErrors((prev) => ({ ...prev, location: '' }));
+        if (errors.address) setErrors((prev) => ({ ...prev, address: '' }));
     };
 
     const handleSubmit = (event) => {
@@ -112,7 +121,7 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
                 type: 'Point',
                 coordinates: [lng, lat]
             },
-            address: binForm.address || `Pinned at ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+            address: binForm.address.trim(),
         };
         onSubmit(payload);
     };
@@ -217,7 +226,25 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
             </div>
 
             <div className={sharedStyles.formGroup}>
-                <label>Location <span style={{ color: '#ef4444' }}>*</span></label>
+                <label>Location / Address <span style={{ color: '#ef4444' }}>*</span></label>
+                <div className={sharedStyles.inputWrapper}>
+                    <MapPin size={16} className={sharedStyles.inputIcon} />
+                    <input
+                        name="address"
+                        className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.address ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`}
+                        value={binForm.address}
+                        onChange={handleChange}
+                        placeholder="e.g. National University, M.F. Jhocson St, Sampaloc, Manila"
+                    />
+                </div>
+                {errors.address && <span className={styles.fieldError}>{errors.address}</span>}
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>
+                    Type the readable landmark/address above or click the map below to pin coordinates.
+                </p>
+            </div>
+
+            <div className={sharedStyles.formGroup}>
+                <label>Map Coordinates <span style={{ color: '#ef4444' }}>*</span></label>
                 <div className={`${sharedStyles.mapPickerCard} ${errors.location ? sharedStyles.mapPickerError + ' ' + sharedStyles.shake : ''}`}>
                     <div className={styles.mapPickerHeader}>
                         <span>
