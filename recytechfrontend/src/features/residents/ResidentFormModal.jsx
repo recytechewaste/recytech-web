@@ -97,8 +97,6 @@ const ResidentFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit }
             finalValue = value.replace(/\D/g, '').slice(0, 11);
         } else if (name === 'firstName' || name === 'lastName') {
             finalValue = value.replace(/\d/g, ''); // strip out numbers
-        } else if (name === 'pointsBalance') {
-            finalValue = value === '' ? '' : Math.max(0, parseInt(value) || 0);
         }
         
         setFormData(prev => ({ ...prev, [name]: finalValue }));
@@ -218,24 +216,7 @@ const ResidentFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit }
                     </div>
                 </div>
 
-                {isEditing ? (
-                    <div className={sharedStyles.formGroup}>
-                        <label htmlFor="resPoints">Points Balance</label>
-                        <div className={sharedStyles.inputWrapper}>
-                            <Award size={16} className={sharedStyles.inputIcon} />
-                            <input
-                                id="resPoints"
-                                name="pointsBalance"
-                                type="number"
-                                min="0"
-                                placeholder="0"
-                                value={formData.pointsBalance !== undefined ? formData.pointsBalance : (formData.totalPoints || 0)}
-                                onChange={handleInputChange}
-                                className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}
-                            />
-                        </div>
-                    </div>
-                ) : (
+                {!isEditing && (
                     <>
                         <div className={sharedStyles.formGroup}>
                             <div className={styles.passwordHeader}>

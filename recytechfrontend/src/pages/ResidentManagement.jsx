@@ -56,7 +56,7 @@ const ResidentManagement = () => {
                 <header className={styles.header}>
                     <div className={styles.titleGroup}>
                         <h1 className={styles.pageTitle}>Registered Users</h1>
-                        <p className={styles.subTitle}>Manage and monitor registered community residents, point balances, and recycling activity.</p>
+                        <p className={styles.subTitle}>Manage and monitor registered community residents and account statuses.</p>
                     </div>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                         <button 
@@ -71,7 +71,7 @@ const ResidentManagement = () => {
                 </header>
 
                 {/* ── Stats Summary Bar ── */}
-                <div className={rpStyles.statsBar}>
+                <div className={rpStyles.statsBar} style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                     <div className={rpStyles.statCard}>
                         <div className={rpStyles.statIcon} style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
                             <Users size={20} color="white" />
@@ -88,27 +88,17 @@ const ResidentManagement = () => {
                         </div>
                         <div>
                             <p className={rpStyles.statValue}>{stats.active}</p>
-                            <p className={rpStyles.statLabel}>Active Participants</p>
+                            <p className={rpStyles.statLabel}>Active Accounts</p>
                         </div>
                     </div>
 
                     <div className={rpStyles.statCard}>
-                        <div className={rpStyles.statIcon} style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
-                            <Award size={20} color="white" />
+                        <div className={rpStyles.statIcon} style={{ background: 'linear-gradient(135deg, #64748b, #475569)' }}>
+                            <Users size={20} color="white" />
                         </div>
                         <div>
-                            <p className={rpStyles.statValue}>{stats.points.toLocaleString()}</p>
-                            <p className={rpStyles.statLabel}>Total Points Balance</p>
-                        </div>
-                    </div>
-
-                    <div className={rpStyles.statCard}>
-                        <div className={rpStyles.statIcon} style={{ background: 'linear-gradient(135deg, #0284c7, #0369a1)' }}>
-                            <Layers size={20} color="white" />
-                        </div>
-                        <div>
-                            <p className={rpStyles.statValue}>{stats.requests}</p>
-                            <p className={rpStyles.statLabel}>Lifetime Requests</p>
+                            <p className={rpStyles.statValue}>{stats.inactive}</p>
+                            <p className={rpStyles.statLabel}>Inactive Accounts</p>
                         </div>
                     </div>
                 </div>
