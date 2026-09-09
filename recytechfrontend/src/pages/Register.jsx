@@ -96,8 +96,12 @@ const Register = () => {
 
         setLoading(true);
         try {
-            const { data } = await api.post('/auth/register', formData);
-            setSuccessMessage(data.message || 'Registration successful! Your account is pending administrator approval before you can log in.');
+            const { data } = await api.post('/auth/register', {
+                ...formData,
+                role: 'Staff',
+                source: 'web'
+            });
+            setSuccessMessage(data.message ? `${data.message}! Your Staff account has been created successfully.` : 'Registration successful! You can now log in with your Staff account.');
             setShowSuccessModal(true);
         } catch (error) {
             const msg = error.response?.data?.message || "Registration failed. Email might already be taken.";
