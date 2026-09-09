@@ -11,10 +11,10 @@ const { protect, staffOnlyOrSuperAdmin } = require('../middleware/authMiddleware
 
 router.route('/')
   .post(protect, staffOnlyOrSuperAdmin, createBin)
-  .get(protect, staffOnlyOrSuperAdmin, getAllBins);
+  .get(getAllBins);
 
 router.route('/:id')
-  .get(protect, staffOnlyOrSuperAdmin, getBinById)
+  .get(getBinById)
   .put(protect, staffOnlyOrSuperAdmin, updateBin)
   .delete(protect, staffOnlyOrSuperAdmin, deleteBin);
 

@@ -11,12 +11,27 @@ const generateQrImage = async (qrCode) => {
     });
 };
 
+const formatBinResponse = (center) => {
+    if (!center) return null;
+    const obj = center.toObject ? center.toObject() : { ...center };
+    if (obj.location && Array.isArray(obj.location.coordinates) && obj.location.coordinates.length === 2) {
+        obj.longitude = Number(obj.location.coordinates[0]);
+        obj.latitude = Number(obj.location.coordinates[1]);
+        obj.lng = Number(obj.location.coordinates[0]);
+        obj.lat = Number(obj.location.coordinates[1]);
+    }
+    obj.binId = obj.binId || obj._id;
+    obj.binName = obj.binName || obj.name;
+    obj.isAvailableForDropoff = ['Empty', 'Operational', 'Active'].includes(obj.status);
+    return obj;
+};
+
 const getCenters = asyncHandler(async (req, res) => {
     const centers = await RecyclingCenter.find()
         .sort({ createdAt: -1 })
         .populate('assignedCollector', 'firstName lastName phone vehiclePlate status')
         .populate('assignedLgu', 'name contactPerson phone email jurisdiction status');
-    res.json(centers);
+    res.json(centers.map(formatBinResponse));
 });
 
 const getCenterByQrCode = asyncHandler(async (req, res) => {
@@ -29,7 +44,7 @@ const getCenterByQrCode = asyncHandler(async (req, res) => {
         throw new Error('Bin not found');
     }
 
-    res.json(center);
+    res.json(formatBinResponse(center));
 });
 
 const getPublicCenterByQrCode = asyncHandler(async (req, res) => {
@@ -49,8 +64,9 @@ const getPublicCenterByQrCode = asyncHandler(async (req, res) => {
         throw new Error('Bin not found');
     }
 
-    res.json(center);
+    res.json(formatBinResponse(center));
 });
+
 
 const ensureGeoJsonLocation = (loc) => {
     if (!loc || !Array.isArray(loc.coordinates) || loc.coordinates.length !== 2) return loc;
