@@ -24,10 +24,10 @@ const generateActionInsights = (predictiveInsights) => {
             color: '#10b981',
             bg: '#ecfdf5',
             border: '#a7f3d0',
-            title: 'Rising Drop-Off Volume',
+            title: 'Rising Collection Volume',
             message: nextPred
-                ? `Drop-offs are trending upward — next month forecast is ~${nextPred.predictedDropoffs} drop-offs. Consider pre-dispatching additional collectors.`
-                : 'Drop-off activity is increasing. Monitor bin fill rates more closely for timely pickups.'
+                ? `Requests are trending upward — next month forecast is ~${nextPred.predictedDropoffs} requests. Consider pre-dispatching additional collectors.`
+                : 'Collection request activity is increasing. Monitor bin fill rates closely for timely pickups.'
         });
     } else if (trend === 'Decreasing' && confidence >= 50) {
         actions.push({
@@ -35,8 +35,8 @@ const generateActionInsights = (predictiveInsights) => {
             color: '#ef4444',
             bg: '#fef2f2',
             border: '#fecaca',
-            title: 'Declining Drop-Off Activity',
-            message: 'Drop-offs are trending downward. This could indicate reduced community engagement — consider running a recycling awareness campaign.'
+            title: 'Declining Collection Activity',
+            message: 'Collection requests are trending downward. Consider optimizing bin collection schedules.'
         });
     } else {
         actions.push({
@@ -45,7 +45,7 @@ const generateActionInsights = (predictiveInsights) => {
             bg: '#f9fafb',
             border: '#e5e7eb',
             title: 'Stable Activity',
-            message: 'Drop-off volume is stable with no significant growth or decline detected.'
+            message: 'Collection request volume is stable with no significant growth or decline detected.'
         });
     }
 
@@ -193,7 +193,7 @@ const PredictiveInsights = ({ predictiveInsights = {} }) => {
                             <Info size={18} />
                             {showTooltip && (
                                 <div className={styles.tooltip}>
-                                    Uses historical drop-off data to predict future volume trends. High confidence means the data follows a clear pattern.
+                                    Uses historical collection request data to predict future volume trends. High confidence means the data follows a clear pattern.
                                 </div>
                             )}
                         </div>
@@ -208,7 +208,7 @@ const PredictiveInsights = ({ predictiveInsights = {} }) => {
                                 <div key={idx} className={styles.forecastItem}>
                                     <div className={styles.forecastMonth}>{pred.month}</div>
                                     <div className={styles.forecastValue}>{pred.predictedDropoffs}</div>
-                                    <div className={styles.forecastDetail}>est. drop-offs</div>
+                                    <div className={styles.forecastDetail}>est. requests</div>
                                     {pred.lowerBound !== undefined && pred.upperBound !== undefined ? (
                                         <div style={{ fontSize: '11px', color: '#475569', fontWeight: 600, marginTop: '4px', background: '#ffffff', padding: '2px 6px', borderRadius: '4px', border: '1px solid #e2e8f0' }}>
                                             Range: {pred.lowerBound} – {pred.upperBound}
@@ -235,7 +235,7 @@ const PredictiveInsights = ({ predictiveInsights = {} }) => {
                                 Not enough data to generate predictions yet.
                             </p>
                             <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
-                                Continue collecting drop-off data to unlock forecasting.
+                                Continue completing collection requests to unlock forecasting.
                             </p>
                         </div>
                     )}
