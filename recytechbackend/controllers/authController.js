@@ -88,6 +88,7 @@ const registerUser = asyncHandler(async (req, res) => {
         email, 
         password, 
         role, 
+        source,
         phone, 
         contactNumber, 
         organizationName, 
@@ -103,16 +104,19 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 
     // Role mapping and normalization
-    const rawRole = (role || 'household').toString().trim().toLowerCase();
+    // Registrations from web portal default to 'Staff'
+    const rawRole = (role || (source === 'web' ? 'staff' : 'household')).toString().trim().toLowerCase();
 
-    // Explicitly forbid creation of privileged administrative/staff roles via public registration
-    if (['staff', 'admin', 'super admin', 'super_admin'].includes(rawRole)) {
+    // Explicitly forbid creation of top-level administrative accounts (Admin, Super Admin) via public registration
+    if (['admin', 'super admin', 'super_admin', 'superadmin'].includes(rawRole)) {
         res.status(403);
-        throw new Error('Public registration cannot create privileged accounts (Staff, Admin, Super Admin).');
+        throw new Error('Public registration cannot create administrative accounts (Admin, Super Admin).');
     }
 
     let canonicalRole;
-    if (['household', 'resident', 'user', 'registered user', 'registered_user'].includes(rawRole)) {
+    if (['staff'].includes(rawRole)) {
+        canonicalRole = 'Staff';
+    } else if (['household', 'resident', 'user', 'registered user', 'registered_user'].includes(rawRole)) {
         canonicalRole = 'household';
     } else if (['partner_org', 'partner_organization', 'partner organization', 'partnerorg', 'lgu'].includes(rawRole)) {
         canonicalRole = 'partner_org';
@@ -120,7 +124,7 @@ const registerUser = asyncHandler(async (req, res) => {
         canonicalRole = 'collector';
     } else {
         res.status(400);
-        throw new Error(`Invalid registration role '${role}'. Allowed public roles: household, partner_org, collector.`);
+        throw new Error(`Invalid registration role '${role}'. Allowed public roles: Staff, household, partner_org, collector.`);
     }
 
     const normalizedEmail = email.trim().toLowerCase();
@@ -149,6 +153,9 @@ const registerUser = asyncHandler(async (req, res) => {
             userFirstName = parts[0] || orgName;
             userLastName = parts.slice(1).join(' ') || 'Partner';
         }
+    } else if (canonicalRole === 'Staff') {
+        if (!userFirstName) userFirstName = 'Staff';
+        if (!userLastName) userLastName = 'Member';
     } else {
         if (!userFirstName) userFirstName = 'User';
         if (!userLastName) userLastName = canonicalRole === 'collector' ? 'Collector' : 'Resident';
