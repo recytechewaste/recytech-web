@@ -25,7 +25,7 @@ const ReportCharts = ({ weeklyTrend, summaryByWasteType }) => {
             <div className={styles.chartCard}>
                 <div className={styles.sectionHeader}>
                     <h3 className={styles.sectionTitle}>Weekly Collection Trends</h3>
-                    <p className={styles.sectionSubtext}>Total drop-offs recorded per day.</p>
+                    <p className={styles.sectionSubtext}>Total requests completed per day.</p>
                 </div>
                 <div style={{ height: '300px' }}>
                     {weeklyTrend && weeklyTrend.length > 0 ? (
@@ -42,7 +42,7 @@ const ReportCharts = ({ weeklyTrend, summaryByWasteType }) => {
                                         fontWeight: '500',
                                     }}
                                 />
-                                <Bar dataKey="collections" name="Total Drop-offs" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={40} />
+                                <Bar dataKey="collections" name="Requests Completed" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={40} />
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (

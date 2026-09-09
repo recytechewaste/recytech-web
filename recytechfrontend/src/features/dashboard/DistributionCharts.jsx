@@ -11,7 +11,7 @@ const DistributionCharts = ({ categoryData }) => {
     return (
         <div className={styles.sectionContainer}>
             <h2 className={styles.sectionTitle}>Waste Type Distribution</h2>
-            <p className={styles.sectionSubtext}>Breakdown of collected waste categories from bin drop-offs.</p>
+            <p className={styles.sectionSubtext}>Breakdown of collected waste categories from bin collections.</p>
 
             <div className={styles.chartCard}>
                 <div className={styles.chartCardHeader}>
@@ -24,7 +24,7 @@ const DistributionCharts = ({ categoryData }) => {
                         <Info size={18} />
                         {showTooltip && (
                             <div className={styles.tooltip}>
-                                Shows the proportion of different waste categories dropped off at bins to help identify material trends.
+                                Shows the proportion of different waste categories collected from bins to help identify material trends.
                             </div>
                         )}
                     </div>

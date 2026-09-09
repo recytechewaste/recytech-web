@@ -4,7 +4,7 @@ const getStatusClass = (status = '') => status.toLowerCase().replace(/\s/g, '');
 
 const RecentRequestsTable = ({ dropoffs = [] }) => (
     <div className={styles.activityCard}>
-        <h3 className={styles.cardTitle}>Recent Drop-off Activity</h3>
+        <h3 className={styles.cardTitle}>Recent Collection Requests</h3>
         <table className={styles.activityTable}>
             <thead>
                 <tr>
@@ -18,7 +18,7 @@ const RecentRequestsTable = ({ dropoffs = [] }) => (
             <tbody>
                 {dropoffs.length === 0 ? (
                     <tr>
-                        <td colSpan="5" className={styles.emptyActivityTd}>No recent drop-off activity.</td>
+                        <td colSpan="5" className={styles.emptyActivityTd}>No recent collection request activity.</td>
                     </tr>
                 ) : (
                     dropoffs.map((dropoff) => (

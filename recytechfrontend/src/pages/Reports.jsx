@@ -55,7 +55,7 @@ const Reports = () => {
                 <div className={headerStyles.header}>
                     <div>
                         <h1 className={headerStyles.pageTitle}>Reports & Analytics</h1>
-                        <p className={headerStyles.subTitle}>Performance metrics and drop-off activity.</p>
+                        <p className={headerStyles.subTitle}>Performance metrics and collection request activity.</p>
                     </div>
                     <button onClick={handleExportPDF} disabled={isExporting} className={styles.exportBtn}>
                         {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
@@ -133,7 +133,7 @@ const Reports = () => {
                             <div className={styles.sectionContainer}>
                                 <div className={styles.sectionHeader}>
                                     <h2 className={styles.sectionTitle}>Recent Activity</h2>
-                                    <p className={styles.sectionSubtext}>A log of the most recent drop-off events.</p>
+                                    <p className={styles.sectionSubtext}>A log of the most recent collection events.</p>
                                 </div>
                                 <ReportTable data={reportData.recentActivity} />
                             </div>

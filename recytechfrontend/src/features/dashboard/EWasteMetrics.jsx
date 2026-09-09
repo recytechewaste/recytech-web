@@ -15,7 +15,7 @@ const EWasteMetrics = ({ stats = {}, monthlyData }) => {
     return (
     <div className={styles.sectionContainer}>
         <h2 className={styles.sectionTitle}>Bin Network Overview</h2>
-        <p className={styles.sectionSubtext}>Drop-off volume, urgent bin alerts, and operational status.</p>
+        <p className={styles.sectionSubtext}>Collection request volume, urgent bin alerts, and operational status.</p>
 
         <div className={styles.kpiGrid}>
             <div className={styles.kpiCard}>
@@ -57,7 +57,7 @@ const EWasteMetrics = ({ stats = {}, monthlyData }) => {
 
         <div className={styles.chartCard}>
             <div className={styles.chartCardHeader}>
-                <h3 className={styles.chartTitle}>Monthly Drop-off Volume</h3>
+                <h3 className={styles.chartTitle}>Monthly Collection Volume</h3>
                 <div
                     style={{ position: 'relative', cursor: 'help', color: '#9CA3AF', display: 'flex' }}
                     onMouseEnter={() => setShowVolumeTooltip(true)}
@@ -65,7 +65,7 @@ const EWasteMetrics = ({ stats = {}, monthlyData }) => {
                 >
                     <Info size={18} />
                     {showVolumeTooltip && (
-                        <div className={styles.tooltip}>Shows the number of bin drop-offs and total kilograms collected per month.</div>
+                        <div className={styles.tooltip}>Shows the number of collection requests and total kilograms collected per month.</div>
                     )}
                 </div>
             </div>
@@ -77,7 +77,7 @@ const EWasteMetrics = ({ stats = {}, monthlyData }) => {
                             <YAxis axisLine={false} tickLine={false} fontSize={12} />
                             <Tooltip cursor={{ fill: '#f3f4f6' }} />
                             <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                            <Bar dataKey="dropoffs" name="Drop-offs" fill="#10B981" radius={[4, 4, 0, 0]} barSize={20} />
+                            <Bar dataKey="dropoffs" name="Requests" fill="#10B981" radius={[4, 4, 0, 0]} barSize={20} />
                             <Bar dataKey="kilograms" name="Kilograms" fill="#2563EB" radius={[4, 4, 0, 0]} barSize={20} />
                         </BarChart>
                     </ResponsiveContainer>
