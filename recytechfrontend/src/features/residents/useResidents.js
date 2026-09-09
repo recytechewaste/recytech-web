@@ -89,9 +89,8 @@ export const useResidents = () => {
     const stats = useMemo(() => {
         const total = residents.length;
         const active = residents.filter(r => r.status === 'Active').length;
-        const points = residents.reduce((sum, r) => sum + (r.pointsBalance || r.totalPoints || 0), 0);
-        const requests = residents.reduce((sum, r) => sum + (r.requestCount || 0), 0);
-        return { total, active, points, requests };
+        const inactive = residents.filter(r => r.status !== 'Active').length;
+        return { total, active, inactive };
     }, [residents]);
 
     const { currentData: paginatedResidents, currentPage, totalPages, setPage } = usePagination(filteredResidents, 10);

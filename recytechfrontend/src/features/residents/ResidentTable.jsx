@@ -7,7 +7,6 @@ import EmptyState from '../../components/EmptyState';
 const ResidentTableRow = ({ resident, index, page, limit, onView, onEdit, onDelete, canManage }) => {
     const fullName = `${resident.firstName || ''} ${resident.lastName || ''}`.trim() || 'Unknown Resident';
     const initials = resident.firstName ? resident.firstName.charAt(0).toUpperCase() : 'R';
-    const points = (resident.pointsBalance ?? resident.totalPoints ?? 0).toLocaleString();
 
     return (
         <tr>
@@ -30,15 +29,6 @@ const ResidentTableRow = ({ resident, index, page, limit, onView, onEdit, onDele
             </td>
             <td className={styles.td}>
                 <span style={{ color: '#4b5563', fontSize: '13px' }}>{resident.phone || '—'}</span>
-            </td>
-            <td className={styles.td}>
-                <span className={styles.plateBadge} style={{ background: '#ecfdf5', color: '#065f46', borderColor: '#a7f3d0' }}>
-                    <Award size={14} style={{ color: '#10b981' }} />
-                    {points} pts
-                </span>
-            </td>
-            <td className={styles.td} style={{ textAlign: 'center', fontWeight: 600, color: '#374151' }}>
-                {resident.requestCount || 0}
             </td>
             <td className={styles.td}>
                 <span className={`${styles.statusBadge} ${resident.status === 'Active' ? styles.active : styles.inactive}`}>
@@ -85,12 +75,9 @@ const SkeletonRow = () => (
         </td>
         <td className={styles.td}><Skeleton width="150px" height="16px" /></td>
         <td className={styles.td}><Skeleton width="100px" height="16px" /></td>
-        <td className={styles.td}><Skeleton width="80px" height="24px" borderRadius="4px" /></td>
-        <td className={styles.td} style={{ textAlign: 'center' }}><Skeleton width="30px" height="16px" style={{ margin: '0 auto' }} /></td>
         <td className={styles.td}><Skeleton width="60px" height="24px" borderRadius="12px" /></td>
         <td className={styles.td}>
             <div className={styles.actions}>
-                <Skeleton width="28px" height="28px" borderRadius="4px" />
                 <Skeleton width="28px" height="28px" borderRadius="4px" />
                 <Skeleton width="28px" height="28px" borderRadius="4px" />
             </div>
@@ -108,8 +95,6 @@ const ResidentTable = ({ residents, loading, page = 1, limit = 10, onView, onEdi
                         <th className={styles.th}>Resident</th>
                         <th className={styles.th}>Email</th>
                         <th className={styles.th}>Phone</th>
-                        <th className={styles.th}>Points Balance</th>
-                        <th className={styles.th} style={{ textAlign: 'center' }}>Requests</th>
                         <th className={styles.th}>Status</th>
                         <th className={styles.th}>Actions</th>
                     </tr>
@@ -119,7 +104,7 @@ const ResidentTable = ({ residents, loading, page = 1, limit = 10, onView, onEdi
                         Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={`skeleton-${i}`} />)
                     ) : residents.length === 0 ? (
                         <tr>
-                            <td colSpan="8" style={{ padding: 0 }}>
+                            <td colSpan="6" style={{ padding: 0 }}>
                                 <EmptyState
                                     icon="users"
                                     title="No registered residents found"

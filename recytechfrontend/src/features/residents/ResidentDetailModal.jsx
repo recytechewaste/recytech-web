@@ -45,26 +45,7 @@ const ResidentDetailModal = ({ resident, isOpen, onClose }) => {
                 </div>
             </div>
 
-            {/* Quick Stats Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '24px' }}>
-                <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#166534', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>
-                        <Award size={16} /> Points Balance
-                    </div>
-                    <div style={{ fontSize: '20px', fontWeight: 800, color: '#15803d' }}>
-                        {(resident.pointsBalance ?? resident.totalPoints ?? 0).toLocaleString()} <span style={{ fontSize: '12px', fontWeight: 500 }}>pts</span>
-                    </div>
-                </div>
 
-                <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#475569', fontSize: '12px', fontWeight: 600, marginBottom: '4px' }}>
-                        <Layers size={16} /> Total Requests
-                    </div>
-                    <div style={{ fontSize: '20px', fontWeight: 800, color: '#1e293b' }}>
-                        {resident.requestCount || 0}
-                    </div>
-                </div>
-            </div>
 
             {/* Contact & Account Information */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '14px', marginBottom: '24px' }}>
