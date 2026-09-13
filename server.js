@@ -69,7 +69,7 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Device-ID']
 }));
 
 app.use(express.json({ limit: '50mb' })); 
@@ -124,6 +124,7 @@ app.use('/api/analytics', require('./recytechbackend/routes/analyticsRoutes'));
 app.use('/api/scheduling', require('./recytechbackend/routes/schedulingRoutes'));
 app.use('/api/sensor-reports', require('./recytechbackend/routes/sensorReportRoutes'));
 app.use('/api/sensor-incidents', require('./recytechbackend/routes/sensorReportRoutes'));
+app.use('/api/iot', require('./recytechbackend/routes/iotRoutes'));
 
 // Global Error Handler MUST be the last piece of middleware
 app.use(require('./recytechbackend/middleware/errorHandler').errorHandler);
