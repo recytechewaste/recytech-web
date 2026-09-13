@@ -21,3 +21,7 @@ yarn-error.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# IoT device provisioning — NEVER commit plaintext device credentials
+device-credentials*.json
+recytechbackend/scripts/device-credentials*.json
