@@ -228,8 +228,10 @@ const submitSensorReading = async (req, res) => {
         const isNewer = !bin.lastSensorUpdatedAt || measuredAt > bin.lastSensorUpdatedAt;
 
         if (calibrationError) {
-            // Reading stored but bin state NOT updated — calibration not set
-            return res.status(207).json({
+            // Reading stored in audit table but bin state NOT updated — calibration not configured.
+            // HTTP 422: request is valid, reading was stored, but the server cannot compute
+            // fill percentage without calibration values.
+            return res.status(422).json({
                 success: true,
                 readingStored: true,
                 binUpdated: false,

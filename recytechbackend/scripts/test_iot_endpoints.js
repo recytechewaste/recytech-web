@@ -128,7 +128,7 @@ async function runTests() {
         }
     }
 
-    // E. Valid reading with missing calibration → 207 (stored, bin not updated)
+    // E. Valid reading with missing calibration → 422 (stored, bin not updated)
     {
         const r = await request({
             method: 'POST',
@@ -136,10 +136,10 @@ async function runTests() {
             headers: validHeaders(),
             body: { readingId: uid(), distanceMm: 300, measuredAt: new Date().toISOString() }
         });
-        // First real bin may or may not have calibration set — accept 207 or 201
-        const ok = r.status === 207 || r.status === 201;
+        // First real bin may or may not have calibration set — accept 422 (missing calib) or 201 (calibrated)
+        const ok = r.status === 422 || r.status === 201;
         log(
-            'E. Reading with missing/valid calibration → 207 or 201 (no corrupt update)',
+            'E. Reading with missing calibration → 422 (stored, no corrupt update) or 201 if calibrated',
             ok,
             `HTTP ${r.status} | binUpdated=${r.body?.binUpdated} | warning=${r.body?.warning || 'none'}`
         );
