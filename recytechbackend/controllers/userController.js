@@ -86,8 +86,8 @@ const updateUser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.params.id);
 
     if (user) {
-        const wasInactive = user.status === 'Inactive';
-        const isNowActive = status === 'Active';
+        const wasInactive = !user.status || ['inactive', 'pending'].includes(user.status.toLowerCase());
+        const isNowActive = Boolean(status && status.toLowerCase() === 'active');
 
         user.firstName = firstName || user.firstName;
         user.lastName = lastName || user.lastName;

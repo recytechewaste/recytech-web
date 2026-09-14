@@ -101,7 +101,9 @@ const Register = () => {
                 role: 'Staff',
                 source: 'web'
             });
-            setSuccessMessage(data.message ? `${data.message}! Your Staff account has been created successfully.` : 'Registration successful! You can now log in with your Staff account.');
+            setSuccessMessage(
+                'Registration submitted! Your Staff account has been created and is pending administrator approval. You will receive an email once an administrator has activated your account.'
+            );
             setShowSuccessModal(true);
         } catch (error) {
             const msg = error.response?.data?.message || "Registration failed. Email might already be taken.";
@@ -294,14 +296,14 @@ const Register = () => {
                     <div className={styles.modalContent}>
                         <div className={styles.modalBody}>
                             <CheckCircle size={60} color="#059669" className={styles.modalIcon} />
-                            <h2 className={styles.modalTitle}>Success!</h2>
+                            <h2 className={styles.modalTitle}>Registration Submitted!</h2>
                             <p className={styles.modalText}>{successMessage}</p>
                             <button 
                                 className={styles.modalBtn} 
                                 onClick={() => navigate('/login')}
                                 style={{background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'}}
                             >
-                                Go to Login
+                                Back to Login
                             </button>
                         </div>
                     </div>
