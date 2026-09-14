@@ -76,102 +76,819 @@ button:focus-visible {
 }
 
 /* ==========================================================================
-   Dark Theme Overrides
+   Dark Theme Design System
    ========================================================================== */
 :root[data-theme="dark"] {
-  --primary-text-color: #f1f5f9;
+  --primary-text-color: #f8fafc;
   --secondary-text-color: #94a3b8;
   --link-color: #34d399;
   --link-hover-color: #10b981;
-  --background-color: #0b0f19;
-  --card-background-color: #151e2e;
+  --background-color: #0b1120;
+  --card-background-color: #131d31;
   --border-color: #1e293b;
-  --input-border-color: #334155;
+  --input-border-color: #22324f;
   color-scheme: dark;
 }
 
-[data-theme="dark"] body {
-  background-color: #0b0f19;
-  color: #f1f5f9;
+/* ── 1. Global Shell & Scrollbars ── */
+[data-theme="dark"] body,
+[data-theme="dark"] #root {
+  background-color: #0b1120;
+  color: #f8fafc;
 }
 
 [data-theme="dark"] main,
-[data-theme="dark"] [class*="main"],
-[data-theme="dark"] [class*="container"] {
-  background-color: #0b0f19 !important;
-  color: #f1f5f9;
+[data-theme="dark"] [class*="main" i],
+[data-theme="dark"] [class*="container" i] {
+  background-color: #0b1120 !important;
+  color: #f8fafc;
 }
 
-[data-theme="dark"] [class*="contentCard"],
-[data-theme="dark"] [class*="card"],
-[data-theme="dark"] [class*="navCard"],
-[data-theme="dark"] [class*="tableCard"],
-[data-theme="dark"] [class*="tableContainer"],
-[data-theme="dark"] [class*="modal"] {
-  background-color: #151e2e !important;
-  border-color: #1e293b !important;
-  color: #f1f5f9 !important;
+[data-theme="dark"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-[data-theme="dark"] [class*="preferenceCard"] {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: #0b1120;
 }
 
-[data-theme="dark"] [class*="preferenceCard"] h4 {
-  color: #f1f5f9 !important;
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
 }
 
-[data-theme="dark"] [class*="preferenceCard"] p {
-  color: #94a3b8 !important;
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #334155;
 }
 
-[data-theme="dark"] [class*="preferenceCard"] select {
-  background-color: #151e2e !important;
-  color: #f1f5f9 !important;
-  border-color: #334155 !important;
-}
-
-[data-theme="dark"] [class*="cardTitle"],
-[data-theme="dark"] [class*="pageTitle"],
-[data-theme="dark"] [class*="title"] {
-  color: #f1f5f9 !important;
-}
-
-[data-theme="dark"] [class*="cardSubtext"],
-[data-theme="dark"] [class*="subTitle"] {
-  color: #94a3b8 !important;
-}
-
-[data-theme="dark"] [class*="navItem"] {
-  color: #94a3b8 !important;
-}
-
-[data-theme="dark"] [class*="navItemActive"] {
-  background-color: #1e293b !important;
+/* ── 2. Headings & Typography ── */
+[data-theme="dark"] [class*="pageTitle" i] {
   color: #34d399 !important;
+  letter-spacing: -0.02em;
 }
 
+[data-theme="dark"] [class*="subTitle" i],
+[data-theme="dark"] [class*="subtitle" i],
+[data-theme="dark"] [class*="sectionSubtext" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="sectionTitle" i],
+[data-theme="dark"] [class*="cardTitle" i],
+[data-theme="dark"] [class*="listTitle" i],
+[data-theme="dark"] [class*="panelTitle" i],
+[data-theme="dark"] [class*="chartTitle" i] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="userName" i] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="userRole" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="userPill" i] {
+  background-color: #131d31 !important;
+  border-color: #1e293b !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ── 3. KPI & Stat Cards ── */
+[data-theme="dark"] [class*="statCard" i],
+[data-theme="dark"] [class*="kpiCard" i],
+[data-theme="dark"] [class*="forecastCard" i],
+[data-theme="dark"] [class*="telemetryCard" i] {
+  background: #131d31 !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme="dark"] [class*="statCard" i]:hover,
+[data-theme="dark"] [class*="kpiCard" i]:hover {
+  border-color: #10b981 !important;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.12) !important;
+}
+
+[data-theme="dark"] [class*="statValue" i],
+[data-theme="dark"] [class*="kpiValue" i] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="statLabel" i],
+[data-theme="dark"] [class*="kpiLabel" i],
+[data-theme="dark"] [class*="kpiSub" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="statIcon" i] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] [class*="kpiValue" i] span {
+  color: #94a3b8 !important;
+}
+
+/* Dashboard KPI Warning / Info / Danger Variants */
+[data-theme="dark"] [class*="kpiWarning" i] {
+  background: #271705 !important;
+  border-color: #854d0e !important;
+}
+
+[data-theme="dark"] [class*="kpiWarning" i] [class*="kpiValue" i] {
+  color: #fcd34d !important;
+}
+
+[data-theme="dark"] [class*="kpiInfo" i] {
+  background: #0d1e3d !important;
+  border-color: #1d4ed8 !important;
+}
+
+[data-theme="dark"] [class*="kpiInfo" i] [class*="kpiValue" i] {
+  color: #93c5fd !important;
+}
+
+[data-theme="dark"] [class*="kpiDanger" i] {
+  background: #2b0d10 !important;
+  border-color: #991b1b !important;
+}
+
+[data-theme="dark"] [class*="kpiDanger" i] [class*="kpiValue" i] {
+  color: #fca5a5 !important;
+}
+
+/* ── 4. Filter Bars, Search Inputs & Controls ── */
+[data-theme="dark"] [class*="filterBar" i],
+[data-theme="dark"] [class*="filterCard" i] {
+  background: #131d31 !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="dark"] [class*="searchGroup" i],
+[data-theme="dark"] [class*="filterGroup" i] {
+  background-color: #0d1527 !important;
+  border: 1px solid #22324f !important;
+}
+
+[data-theme="dark"] [class*="searchGroup" i]:focus-within,
+[data-theme="dark"] [class*="filterGroup" i]:focus-within {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+}
+
+[data-theme="dark"] [class*="searchInput" i],
+[data-theme="dark"] [class*="selectInput" i],
+[data-theme="dark"] [class*="filterSelect" i],
 [data-theme="dark"] input,
 [data-theme="dark"] select,
 [data-theme="dark"] textarea {
-  background-color: #1e293b !important;
-  color: #f1f5f9 !important;
-  border-color: #334155 !important;
+  background-color: #0d1527 !important;
+  border-color: #22324f !important;
+  color: #f8fafc !important;
 }
 
-[data-theme="dark"] table th {
-  background-color: #1e293b !important;
+[data-theme="dark"] [class*="searchInput" i]::placeholder,
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: #64748b !important;
+}
+
+[data-theme="dark"] select option {
+  background-color: #131d31 !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="searchIcon" i],
+[data-theme="dark"] [class*="filterIcon" i] {
   color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="clearBtn" i],
+[data-theme="dark"] [class*="resetFilterBtn" i] {
+  background-color: #1a263f !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #22324f !important;
+}
+
+[data-theme="dark"] [class*="clearBtn" i]:hover,
+[data-theme="dark"] [class*="resetFilterBtn" i]:hover {
+  background-color: #22324f !important;
+  color: #ffffff !important;
   border-color: #334155 !important;
 }
 
-[data-theme="dark"] table td {
-  border-color: #1e293b !important;
+[data-theme="dark"] [class*="refreshBtn" i] {
+  background-color: #09261f !important;
+  color: #34d399 !important;
+  border: 1px solid #059669 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] [class*="refreshBtn" i]:hover {
+  background-color: #064e3b !important;
+  color: #a7f3d0 !important;
+  border-color: #10b981 !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25) !important;
+}
+
+/* ── 5. Tables & Cards ── */
+[data-theme="dark"] [class*="tableCard" i],
+[data-theme="dark"] [class*="activityCard" i],
+[data-theme="dark"] [class*="chartCard" i],
+[data-theme="dark"] [class*="contentCard" i] {
+  background: #131d31 !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+  color: #f8fafc;
+}
+
+[data-theme="dark"] table th,
+[data-theme="dark"] [class*="th" i],
+[data-theme="dark"] [class*="activityTable" i] th {
+  background: #0d2227 !important;
+  color: #34d399 !important;
+  border-bottom: 2px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+[data-theme="dark"] table td,
+[data-theme="dark"] [class*="td" i],
+[data-theme="dark"] [class*="activityTable" i] td {
+  border-bottom: 1px solid #1e293b !important;
   color: #e2e8f0 !important;
 }
 
-[data-theme="dark"] table tr:hover td {
-  background-color: #1a2436 !important;
+[data-theme="dark"] table tbody tr:hover,
+[data-theme="dark"] table tbody tr:hover td,
+[data-theme="dark"] table tbody tr:hover [class*="td" i] {
+  background-color: #172338 !important;
 }
+
+/* Cell typography & metadata */
+[data-theme="dark"] [class*="binName" i] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="binAddress" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="orgName" i] {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] [class*="orgSub" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="driverName" i] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="driverId" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="issueText" i] {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] [class*="sensorTag" i] {
+  color: #34d399 !important;
+}
+
+[data-theme="dark"] [class*="reportedDateText" i] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="totalUsers" i],
+[data-theme="dark"] [class*="resultCount" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="emptyCard" i],
+[data-theme="dark"] [class*="emptyTd" i],
+[data-theme="dark"] [class*="emptyActivityTd" i],
+[data-theme="dark"] [class*="emptyChart" i] {
+  background-color: #0d1527 !important;
+  color: #94a3b8 !important;
+  border-color: #22324f !important;
+}
+
+/* ── 6. Badges & Tags ── */
+/* Status Badges */
+[data-theme="dark"] [class*="statusPending" i],
+[data-theme="dark"] [class*="pending" i] {
+  background-color: #331b05 !important;
+  color: #fcd34d !important;
+  border: 1px solid #854d0e !important;
+}
+
+[data-theme="dark"] [class*="statusInProgress" i],
+[data-theme="dark"] [class*="inProgress" i],
+[data-theme="dark"] [class*="assigned" i],
+[data-theme="dark"] [class*="inTransit" i] {
+  background-color: #0d1e3d !important;
+  color: #93c5fd !important;
+  border: 1px solid #1d4ed8 !important;
+}
+
+[data-theme="dark"] [class*="statusResolved" i],
+[data-theme="dark"] [class*="resolved" i],
+[data-theme="dark"] [class*="approved" i],
+[data-theme="dark"] [class*="completed" i],
+[data-theme="dark"] [class*="statusActive" i] {
+  background-color: #062d1f !important;
+  color: #6ee7b7 !important;
+  border: 1px solid #059669 !important;
+}
+
+[data-theme="dark"] [class*="statusDismissed" i],
+[data-theme="dark"] [class*="dismissed" i],
+[data-theme="dark"] [class*="statusInactive" i],
+[data-theme="dark"] [class*="cancelled" i],
+[data-theme="dark"] [class*="rejected" i] {
+  background-color: #330f14 !important;
+  color: #fca5a5 !important;
+  border: 1px solid #991b1b !important;
+}
+
+[data-theme="dark"] [class*="scheduled" i] {
+  background-color: #250e42 !important;
+  color: #d8b4fe !important;
+  border: 1px solid #7c3aed !important;
+}
+
+[data-theme="dark"] [class*="arrived" i] {
+  background-color: #331405 !important;
+  color: #fdba74 !important;
+  border: 1px solid #c2410c !important;
+}
+
+/* Severity Badges */
+[data-theme="dark"] [class*="severityCritical" i] {
+  background-color: #330f14 !important;
+  color: #fca5a5 !important;
+  border: 1px solid #991b1b !important;
+}
+
+[data-theme="dark"] [class*="severityHigh" i] {
+  background-color: #331405 !important;
+  color: #fdba74 !important;
+  border: 1px solid #c2410c !important;
+}
+
+[data-theme="dark"] [class*="severityMedium" i] {
+  background-color: #0d1e3d !important;
+  color: #93c5fd !important;
+  border: 1px solid #1d4ed8 !important;
+}
+
+[data-theme="dark"] [class*="severityLow" i] {
+  background-color: #062d1f !important;
+  color: #6ee7b7 !important;
+  border: 1px solid #059669 !important;
+}
+
+/* Maintenance & Network Tags */
+[data-theme="dark"] [class*="maintenanceTag" i] {
+  background-color: #330f14 !important;
+  color: #fca5a5 !important;
+  border: 1px solid #991b1b !important;
+}
+
+[data-theme="dark"] [class*="plateBadge" i],
+[data-theme="dark"] [class*="lguBadge" i] {
+  background-color: #09261f !important;
+  color: #34d399 !important;
+  border: 1px solid #059669 !important;
+}
+
+/* ── 7. Action & Review Buttons ── */
+[data-theme="dark"] [class*="reviewBtn" i] {
+  background-color: #1a263f !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #22324f !important;
+}
+
+[data-theme="dark"] [class*="reviewBtn" i]:hover {
+  background-color: #22324f !important;
+  color: #ffffff !important;
+  border-color: #34d399 !important;
+}
+
+[data-theme="dark"] [class*="resolvedReviewBtn" i] {
+  background-color: #062d1f !important;
+  color: #6ee7b7 !important;
+  border: 1px solid #059669 !important;
+}
+
+[data-theme="dark"] [class*="resolvedReviewBtn" i]:hover {
+  background-color: #064e3b !important;
+  color: #a7f3d0 !important;
+  border-color: #10b981 !important;
+}
+
+[data-theme="dark"] [class*="actionBtn" i],
+[data-theme="dark"] [class*="iconBtn" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="actionBtn" i]:hover,
+[data-theme="dark"] [class*="iconBtn" i]:hover {
+  background-color: #1a263f !important;
+  color: #f8fafc !important;
+  border-color: #22324f !important;
+}
+
+[data-theme="dark"] [class*="actionBtnDanger" i],
+[data-theme="dark"] [class*="iconBtnDanger" i] {
+  color: #f87171 !important;
+}
+
+[data-theme="dark"] [class*="actionBtnDanger" i]:hover,
+[data-theme="dark"] [class*="iconBtnDanger" i]:hover {
+  background-color: #330f14 !important;
+  border-color: #991b1b !important;
+}
+
+/* ── 8. Settings & Preferences ── */
+[data-theme="dark"] [class*="navCard" i] {
+  background-color: #131d31 !important;
+  border: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] [class*="navItem" i] {
+  color: #94a3b8 !important;
+  background: transparent !important;
+}
+
+[data-theme="dark"] [class*="navItem" i]:hover {
+  background-color: #1a263f !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="navItemActive" i] {
+  background-color: #063726 !important;
+  color: #34d399 !important;
+  border-left: 3px solid #10b981 !important;
+}
+
+[data-theme="dark"] [class*="profileHeaderCard" i] {
+  background: linear-gradient(135deg, #09261e 0%, #064e3b 100%) !important;
+  border: 1px solid #059669 !important;
+}
+
+[data-theme="dark"] [class*="profileMetaName" i] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="label" i],
+[data-theme="dark"] label {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] [class*="preferenceCard" i] {
+  background-color: #0d1527 !important;
+  border: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] [class*="preferenceCard" i]:hover {
+  border-color: #22324f !important;
+}
+
+[data-theme="dark"] [class*="preferenceCard" i] h4,
+[data-theme="dark"] [class*="preferenceCard" i] strong {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="preferenceCard" i] p {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="toggleSlider" i] {
+  background-color: #334155 !important;
+}
+
+[data-theme="dark"] [class*="strengthMeter" i] {
+  background-color: #0d1527 !important;
+  border: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] [class*="strengthTitle" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="strengthBarTrack" i] {
+  background-color: #1e293b !important;
+}
+
+/* ── 9. Modals & Dialogs ── */
+[data-theme="dark"] [class*="modalOverlay" i],
+[data-theme="dark"] [class*="overlay" i] {
+  background-color: rgba(0, 0, 0, 0.75) !important;
+}
+
+[data-theme="dark"] [class*="modalContent" i],
+[data-theme="dark"] [class*="panel" i] {
+  background-color: #131d31 !important;
+  border: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="dark"] [class*="modalHeader" i],
+[data-theme="dark"] [class*="modalContent" i] [class*="header" i],
+[data-theme="dark"] [class*="panel" i] [class*="header" i] {
+  background-color: #131d31 !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] [class*="modalTitle" i],
+[data-theme="dark"] [class*="modalContent" i] h2,
+[data-theme="dark"] [class*="panel" i] [class*="title" i] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="modalSubtitle" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="infoCard" i],
+[data-theme="dark"] [class*="badgeCard" i] {
+  background-color: #0d1527 !important;
+  border: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] [class*="infoCardTitle" i],
+[data-theme="dark"] [class*="badgeCardValue" i] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="infoCardLabel" i],
+[data-theme="dark"] [class*="badgeCardLabel" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="infoCardDesc" i],
+[data-theme="dark"] [class*="infoCardMeta" i] {
+  color: #94a3b8 !important;
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] [class*="resolutionCard" i] {
+  background-color: #0d1527 !important;
+  border: 1px solid #1e293b !important;
+  border-left: 4px solid #10b981 !important;
+}
+
+[data-theme="dark"] [class*="resolutionCardHeader" i] {
+  color: #34d399 !important;
+}
+
+[data-theme="dark"] [class*="resolutionCardText" i] {
+  background-color: #131d31 !important;
+  border: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="resolutionMetaGrid" i] {
+  border-color: #1e293b !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="resolutionMetaItem" i] strong {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="resolvedNoticeBanner" i] {
+  background-color: #062d1f !important;
+  border: 1px solid #059669 !important;
+  color: #a7f3d0 !important;
+}
+
+[data-theme="dark"] [class*="resolvedNoticeTitle" i] {
+  color: #6ee7b7 !important;
+}
+
+[data-theme="dark"] [class*="auditBox" i] {
+  background-color: #0d1527 !important;
+  color: #94a3b8 !important;
+  border-left: 3px solid #10b981 !important;
+}
+
+[data-theme="dark"] [class*="modalFooter" i] {
+  border-top: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] [class*="modalCancelBtn" i] {
+  background-color: #1a263f !important;
+  color: #cbd5e1 !important;
+  border: 1px solid #22324f !important;
+}
+
+[data-theme="dark"] [class*="modalCancelBtn" i]:hover {
+  background-color: #22324f !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [class*="formLabel" i] {
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] [class*="formSelect" i],
+[data-theme="dark"] [class*="formTextarea" i] {
+  background-color: #0d1527 !important;
+  border: 1.5px solid #22324f !important;
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="closeBtn" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="closeBtn" i]:hover {
+  background-color: #1a263f !important;
+  color: #f8fafc !important;
+}
+
+/* ── 10. Bin Network Mission Control ── */
+[data-theme="dark"] [class*="leftPanel" i],
+[data-theme="dark"] [class*="rightPanel" i] {
+  background-color: #131d31 !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] [class*="listHeader" i],
+[data-theme="dark"] [class*="panelHeader" i] {
+  border-bottom: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] [class*="listItem" i],
+[data-theme="dark"] [class*="binCard" i] {
+  background-color: #0d1527 !important;
+  border: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] [class*="listItem" i]:hover,
+[data-theme="dark"] [class*="binCard" i]:hover {
+  background-color: #162238 !important;
+  border-color: #22324f !important;
+}
+
+[data-theme="dark"] [class*="selectedItem" i] {
+  background-color: #10243d !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 1px #38bdf8, 0 4px 12px rgba(56, 189, 248, 0.15) !important;
+}
+
+[data-theme="dark"] [class*="detailGroup" i] {
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] [class*="detailLabel" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="detailValue" i] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="qrDisplayCard" i] {
+  background-color: #0d1527 !important;
+  border: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] [class*="qrDisplayName" i] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="downloadQrBtn" i] {
+  background-color: #1a263f !important;
+  border: 1px solid #22324f !important;
+  color: #34d399 !important;
+}
+
+[data-theme="dark"] [class*="panelFooter" i] {
+  border-top: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] [class*="panelActionBtn" i] {
+  background-color: #1a263f !important;
+  border: 1px solid #22324f !important;
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] [class*="panelActionDanger" i] {
+  background-color: #330f14 !important;
+  border-color: #991b1b !important;
+  color: #fca5a5 !important;
+}
+
+/* ── 11. Pagination ── */
+[data-theme="dark"] [class*="paginationContainer" i],
+[data-theme="dark"] [class*="paginationWrapper" i] {
+  border-top: 1px solid #1e293b !important;
+}
+
+[data-theme="dark"] [class*="resultsText" i],
+[data-theme="dark"] [class*="paginationInfo" i] {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] [class*="resultsText" i] span {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="arrowButton" i] {
+  background-color: #131d31 !important;
+  border: 1px solid #22324f !important;
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] [class*="arrowButton" i]:hover:not(:disabled) {
+  background-color: #1a263f !important;
+  color: #34d399 !important;
+  border-color: #10b981 !important;
+}
+
+[data-theme="dark"] [class*="arrowButton" i]:disabled {
+  background-color: #0d1527 !important;
+  color: #475569 !important;
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] [class*="pageInfo" i] {
+  color: #f8fafc !important;
+}
+
+/* ── 12. Reward Points & Types ── */
+[data-theme="dark"] [class*="pointsNumber" i] {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] [class*="description" i] {
+  color: #94a3b8 !important;
+  border-top-color: #1e293b !important;
+}
+
+[data-theme="dark"] [class*="typeChip" i] {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ── 13. Recharts & Third-Party Dark Overrides ── */
+[data-theme="dark"] .recharts-default-tooltip {
+  background-color: #131d31 !important;
+  border: 1px solid #1e293b !important;
+  color: #f8fafc !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .recharts-tooltip-item {
+  color: #f8fafc !important;
+}
+
+[data-theme="dark"] .recharts-legend-item-text {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .recharts-cartesian-grid-horizontal line,
+[data-theme="dark"] .recharts-cartesian-grid-vertical line {
+  stroke: #1e293b !important;
+}
+
+[data-theme="dark"] .recharts-text {
+  fill: #94a3b8 !important;
+}
+
+/* Leaflet dark popups */
+[data-theme="dark"] .leaflet-popup-content-wrapper,
+[data-theme="dark"] .leaflet-popup-tip {
+  background-color: #131d31 !important;
+  color: #f8fafc !important;
+  border: 1px solid #1e293b;
+}
+
+[data-theme="dark"] .leaflet-bar a {
+  background-color: #131d31 !important;
+  color: #f8fafc !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+
+/* Code blocks & avatars */
+[data-theme="dark"] code {
+  background-color: #1a263f !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] [class*="avatar" i] {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
 
