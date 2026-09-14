@@ -153,6 +153,7 @@ const sendWelcomeEmail = async (email, firstName, role = 'User') => {
     const provider = getActiveProvider();
     const recipientName = firstName || 'User';
     const subject = 'Welcome to RecyTech - Account Setup';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://recytech-web.vercel.app';
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
             <h2 style="color: #059669;">Welcome to RecyTech, ${recipientName}!</h2>
@@ -161,10 +162,13 @@ const sendWelcomeEmail = async (email, firstName, role = 'User') => {
             <div style="background: #f3f4f6; padding: 15px; border-left: 4px solid #059669; margin: 20px 0;">
                 <strong>Next Steps:</strong>
                 <ol>
-                    <li>Go to the RecyTech portal.</li>
+                    <li>Go to the <a href="${frontendUrl}/login" style="color: #059669; font-weight: bold; text-decoration: underline;">RecyTech Portal</a>.</li>
                     <li>Click on <strong>"Forgot Password"</strong>.</li>
                     <li>Enter this email address (<strong>${email}</strong>) to receive your secure setup PIN.</li>
                 </ol>
+            </div>
+            <div style="margin: 25px 0;">
+                <a href="${frontendUrl}/forgot-password" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Set Up Password Now</a>
             </div>
             <p>If you need assistance, please contact your Super Admin.</p>
         </div>
@@ -218,6 +222,7 @@ const sendAccountApprovedEmail = async (email, firstName) => {
     const provider = getActiveProvider();
     const recipientName = firstName || 'User';
     const subject = 'Your RecyTech Account is Approved';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://recytech-web.vercel.app';
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
             <h2 style="color: #059669;">Account Approved!</h2>
@@ -225,7 +230,7 @@ const sendAccountApprovedEmail = async (email, firstName) => {
             <p>Good news! Your RecyTech account has been successfully reviewed and approved by an administrator.</p>
             <p>You can now log in to the portal using your email address and the password you created during registration.</p>
             <div style="margin: 30px 0;">
-                <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Log In Now</a>
+                <a href="${frontendUrl}/login" style="background-color: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Log In Now</a>
             </div>
             <p>Welcome to the team!</p>
         </div>
