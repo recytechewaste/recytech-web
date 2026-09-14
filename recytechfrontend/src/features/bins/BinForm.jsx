@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import LocationPickerMap, { toLeafletCoords } from '../../components/LocationPickerMap';
-import { Tag, QrCode, Weight, Activity, Loader2, Building2, MapPin } from 'lucide-react';
+import { Tag, QrCode, Activity, Loader2, Building2, MapPin } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import styles from '../../styles/BinNetwork.module.css';
 import sharedStyles from '../../styles/Layout.module.css';
@@ -58,10 +58,6 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
         if (!binForm.name.trim()) {
             newErrors.name = 'Bin name is required.';
         }
-        const capacity = Number(binForm.capacityKg);
-        if (!binForm.capacityKg || isNaN(capacity) || capacity <= 0) {
-            newErrors.capacityKg = 'Capacity must be a positive number.';
-        }
         if (!binForm.address?.trim() || binForm.address === 'Fetching address...') {
             newErrors.address = 'Location / Address is required.';
         }
@@ -115,7 +111,7 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
         const [lat, lng] = toLeafletCoords(binForm.location?.coordinates);
         const payload = {
             ...binForm,
-            capacityKg: Number(binForm.capacityKg),
+            capacityKg: Number(binForm.capacityKg) || initialBin?.capacityKg || 500,
             currentFillKg: initialBin?.currentFillKg || 0,
             location: {
                 type: 'Point',
@@ -165,21 +161,6 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
             </div>
             <div className={sharedStyles.formRow}>
                 <div className={sharedStyles.formGroup}>
-                    <label>Capacity (kg) <span style={{ color: '#ef4444' }}>*</span></label>
-                    <div className={sharedStyles.inputWrapper}>
-                        <Weight size={16} className={sharedStyles.inputIcon} />
-                        <input
-                            name="capacityKg"
-                            className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.capacityKg ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`}
-                            type="number"
-                            min="1"
-                            value={binForm.capacityKg}
-                            onChange={handleChange}
-                        />
-                    </div>
-                    {errors.capacityKg && <span className={styles.fieldError}>{errors.capacityKg}</span>}
-                </div>
-                <div className={sharedStyles.formGroup}>
                     <label>Status</label>
                     <div className={sharedStyles.inputWrapper}>
                         <Activity size={16} className={sharedStyles.inputIcon} />
@@ -201,10 +182,7 @@ const BinForm = ({ initialBin, onSubmit, onCancel, submitting, userGeolocation, 
                         </p>
                     )}
                 </div>
-            </div>
-
-            <div className={sharedStyles.formRow}>
-                <div className={sharedStyles.formGroup} style={{ width: '100%' }}>
+                <div className={sharedStyles.formGroup}>
                     <label>Assigned Partner Organization</label>
                     <div className={sharedStyles.inputWrapper}>
                         <Building2 size={16} className={sharedStyles.inputIcon} />
