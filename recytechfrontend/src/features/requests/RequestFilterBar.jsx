@@ -17,7 +17,7 @@ const RequestFilterBar = ({
         <Search className={styles.searchIcon} size={18} />
         <input
           type="text"
-          placeholder="Search by Bin ID, Address, or Notes..."
+          placeholder="Search by Bin Name, Address, or Notes..."
           className={styles.searchInput}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
