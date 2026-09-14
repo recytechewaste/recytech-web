@@ -8,6 +8,7 @@ const { LguAccount } = require('../models/PartnerOrganization');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { calculatePointsAwarded } = require('../utils/calculatePoints');
 const { linearRegression, seasonalDecomposition, statisticalSummary, detectOutliers, holtExponentialSmoothing } = require('../utils/predictiveAnalytics');
+const { getEstimatedWeight, getMongoCategoryWeightExpr } = require('../utils/categoryWeights');
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -18,7 +19,7 @@ const getCombinedWasteTypeBreakdown = async (matchQueryBin = {}, matchQueryReque
     const [binBreakdown, reqBreakdown] = await Promise.all([
         BinDropoff.aggregate([
             ...(Object.keys(matchQueryBin).length > 0 ? [{ $match: matchQueryBin }] : []),
-            { $group: { _id: '$wasteType', count: { $sum: 1 }, totalKg: { $sum: '$kilograms' }, totalPoints: { $sum: '$pointsAwarded' } } }
+            { $group: { _id: '$wasteType', count: { $sum: 1 }, totalKg: { $sum: getMongoCategoryWeightExpr('$wasteType', '$kilograms') }, totalPoints: { $sum: '$pointsAwarded' } } }
         ]),
         Request.aggregate([
             { $match: { status: { $in: ['completed', 'Completed'] }, ...matchQueryRequest } },
@@ -27,7 +28,7 @@ const getCombinedWasteTypeBreakdown = async (matchQueryBin = {}, matchQueryReque
                 $group: {
                     _id: '$collectedWaste.category',
                     count: { $sum: 1 },
-                    totalKg: { $sum: '$collectedWaste.quantity' },
+                    totalKg: { $sum: getMongoCategoryWeightExpr('$collectedWaste.category', '$collectedWaste.quantity') },
                     totalPoints: { $sum: 0 }
                 }
             }
@@ -65,7 +66,7 @@ const getDropoffSummary = async () => {
                 $group: {
                     _id: null,
                     totalDropoffs: { $sum: 1 },
-                    totalKilograms: { $sum: '$kilograms' },
+                    totalKilograms: { $sum: getMongoCategoryWeightExpr('$wasteType', '$kilograms') },
                     totalPoints: { $sum: '$pointsAwarded' }
                 }
             }
@@ -76,7 +77,7 @@ const getDropoffSummary = async () => {
             {
                 $group: {
                     _id: null,
-                    totalKg: { $sum: '$collectedWaste.quantity' }
+                    totalKg: { $sum: getMongoCategoryWeightExpr('$collectedWaste.category', '$collectedWaste.quantity') }
                 }
             }
         ]),
@@ -151,7 +152,7 @@ const getMonthlyDropoffTrends = async () => {
                 $group: {
                     _id: { month: { $month: '$createdAt' } },
                     dropoffs: { $sum: 1 },
-                    kilograms: { $sum: '$kilograms' },
+                    kilograms: { $sum: getMongoCategoryWeightExpr('$wasteType', '$kilograms') },
                     points: { $sum: '$pointsAwarded' }
                 }
             }
@@ -166,17 +167,12 @@ const getMonthlyDropoffTrends = async () => {
                     ]
                 }
             },
-            {
-                $project: {
-                    month: { $month: { $ifNull: ['$completionDate', '$createdAt'] } },
-                    totalWasteKg: { $sum: '$collectedWaste.quantity' }
-                }
-            },
+            { $unwind: { path: '$collectedWaste', preserveNullAndEmptyArrays: false } },
             {
                 $group: {
-                    _id: { month: '$month' },
+                    _id: { month: { $month: { $ifNull: ['$completionDate', '$createdAt'] } } },
                     collections: { $sum: 1 },
-                    kilograms: { $sum: '$totalWasteKg' }
+                    kilograms: { $sum: getMongoCategoryWeightExpr('$collectedWaste.category', '$collectedWaste.quantity') }
                 }
             }
         ])
@@ -223,7 +219,7 @@ const getDropoffPredictiveAnalytics = async () => {
                 $group: {
                     _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
                     dropoffs: { $sum: 1 },
-                    kilograms: { $sum: '$kilograms' },
+                    kilograms: { $sum: getMongoCategoryWeightExpr('$wasteType', '$kilograms') },
                     points: { $sum: '$pointsAwarded' }
                 }
             }
@@ -238,18 +234,15 @@ const getDropoffPredictiveAnalytics = async () => {
                     ]
                 }
             },
-            {
-                $project: {
-                    year: { $year: { $ifNull: ['$completionDate', '$createdAt'] } },
-                    month: { $month: { $ifNull: ['$completionDate', '$createdAt'] } },
-                    totalWasteKg: { $sum: '$collectedWaste.quantity' }
-                }
-            },
+            { $unwind: { path: '$collectedWaste', preserveNullAndEmptyArrays: false } },
             {
                 $group: {
-                    _id: { year: '$year', month: '$month' },
+                    _id: {
+                        year: { $year: { $ifNull: ['$completionDate', '$createdAt'] } },
+                        month: { $month: { $ifNull: ['$completionDate', '$createdAt'] } }
+                    },
                     collections: { $sum: 1 },
-                    kilograms: { $sum: '$totalWasteKg' }
+                    kilograms: { $sum: getMongoCategoryWeightExpr('$collectedWaste.category', '$collectedWaste.quantity') }
                 }
             }
         ])
@@ -366,7 +359,7 @@ const getRecentDropoffs = async () => {
             const calc = await calculatePointsAwarded(w.category, w.quantity || 1);
             if (calc.success) pts += calc.points;
         }
-        const totalKg = (r.collectedWaste || []).reduce((sum, w) => sum + (w.quantity || 0), 0);
+        const totalKg = (r.collectedWaste || []).reduce((sum, w) => sum + getEstimatedWeight(w.category, w.quantity || 1), 0);
         const wasteType = (r.collectedWaste || []).map(w => w.category).join(', ') || 'General E-Waste';
         const partnerName = r.lgu?.name || 'Partner Org';
         const collectorName = r.assignedCollector ? `${r.assignedCollector.firstName} ${r.assignedCollector.lastName}` : '';
@@ -507,7 +500,7 @@ const getReportData = asyncHandler(async (req, res) => {
                 $group: {
                     _id: null,
                     totalDropoffs: { $sum: 1 },
-                    totalKilograms: { $sum: '$kilograms' },
+                    totalKilograms: { $sum: getMongoCategoryWeightExpr('$wasteType', '$kilograms') },
                     totalPoints: { $sum: '$pointsAwarded' },
                     completedDropoffs: { $sum: { $cond: [{ $eq: ['$status', 'Completed'] }, 1, 0] } }
                 }
@@ -551,7 +544,7 @@ const getReportData = asyncHandler(async (req, res) => {
             {
                 $group: {
                     _id: null,
-                    totalKilograms: { $sum: '$collectedWaste.quantity' }
+                    totalKilograms: { $sum: getMongoCategoryWeightExpr('$collectedWaste.category', '$collectedWaste.quantity') }
                 }
             }
         ])
@@ -576,7 +569,7 @@ const getReportData = asyncHandler(async (req, res) => {
                 $group: {
                     _id: '$wasteType',
                     count: { $sum: 1 },
-                    totalKg: { $sum: '$kilograms' },
+                    totalKg: { $sum: getMongoCategoryWeightExpr('$wasteType', '$kilograms') },
                     totalPoints: { $sum: '$pointsAwarded' }
                 }
             },
@@ -590,7 +583,7 @@ const getReportData = asyncHandler(async (req, res) => {
                 $group: {
                     _id: '$collectedWaste.category',
                     count: { $sum: 1 },
-                    totalKg: { $sum: '$collectedWaste.quantity' },
+                    totalKg: { $sum: getMongoCategoryWeightExpr('$collectedWaste.category', '$collectedWaste.quantity') },
                     totalPoints: { $sum: 0 }
                 }
             },

@@ -24,11 +24,11 @@ const ReportMetrics = ({ summary = {}, loading }) => {
         <div className={styles.kpiGrid}>
             <div className={styles.kpiCard}>
                 <div className={styles.kpiHeader}>
-                    <span className={styles.kpiLabel}>Total E-Waste Volume</span>
+                    <span className={styles.kpiLabel}>Estimated E-Waste Volume</span>
                     <Weight size={20} className={styles.kpiIcon} style={{ color: '#10b981' }} />
                 </div>
                 <h3 className={styles.kpiValue}>{totalKg} <span style={{ fontSize: '15px', fontWeight: 500, color: '#64748b' }}>kg</span></h3>
-                <p className={styles.kpiSub}>E-waste weight recycled</p>
+                <p className={styles.kpiSub}>Est. weight from category benchmarks</p>
             </div>
 
             <div className={styles.kpiCard}>
