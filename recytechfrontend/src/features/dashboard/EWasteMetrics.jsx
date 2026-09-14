@@ -20,11 +20,11 @@ const EWasteMetrics = ({ stats = {}, monthlyData }) => {
         <div className={styles.kpiGrid}>
             <div className={styles.kpiCard}>
                 <div className={styles.kpiHeader}>
-                    <span className={styles.kpiLabel}>Total E-Waste Recycled</span>
+                    <span className={styles.kpiLabel}>Est. E-Waste Recycled</span>
                     <Weight size={20} style={{ color: '#10b981' }} />
                 </div>
                 <span className={styles.kpiValue}>{totalKg} <span style={{ fontSize: '15px', fontWeight: 500, color: '#64748b' }}>kg</span></span>
-                <p className={styles.kpiSub}>All-time weight collected</p>
+                <p className={styles.kpiSub}>Est. weight from category benchmarks</p>
             </div>
 
             <div className={`${styles.kpiCard} ${nearCapacity > 0 ? styles.kpiWarning : ''}`}>
@@ -65,7 +65,7 @@ const EWasteMetrics = ({ stats = {}, monthlyData }) => {
                 >
                     <Info size={18} />
                     {showVolumeTooltip && (
-                        <div className={styles.tooltip}>Shows the number of collection requests and total kilograms collected per month.</div>
+                        <div className={styles.tooltip}>Shows the number of collection requests and estimated kilograms collected per month.</div>
                     )}
                 </div>
             </div>
