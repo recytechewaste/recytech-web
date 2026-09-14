@@ -76,6 +76,50 @@ const getMyPartnerOrgProfile = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get canonical QR codes of smart bins assigned to logged-in Partner Organization
+// @route   GET /api/partner-organizations/me/qr
+// @access  Private/Partner Org
+const getMyPartnerOrgQr = asyncHandler(async (req, res) => {
+  const { profileId, profile } = await getProfileForUser(req.user._id, req.user.role);
+
+  if (!profileId || !profile) {
+    res.status(404);
+    throw new Error('Partner Organization profile not found for this user account.');
+  }
+
+  const assignedBins = await RecyclingCenter.find({ assignedLgu: profileId })
+    .select('_id name address qrCode status capacityKg currentFillKg')
+    .lean();
+
+  const validQrBins = (assignedBins || [])
+    .filter(b => typeof b.qrCode === 'string' && b.qrCode.trim().length > 0)
+    .map(b => ({
+      binId: b._id.toString(),
+      name: b.name,
+      address: b.address,
+      qrCode: b.qrCode.trim(),
+      status: b.status,
+      capacityKg: b.capacityKg,
+      currentFillKg: b.currentFillKg
+    }));
+
+  const organization = {
+    id: profile._id.toString(),
+    name: profile.name
+  };
+
+  if (profile.jurisdiction) {
+    organization.jurisdiction = profile.jurisdiction;
+  }
+
+  res.json({
+    success: true,
+    organization,
+    hasQr: validQrBins.length > 0,
+    bins: validQrBins
+  });
+});
+
 // @desc    Get bins assigned to logged-in Partner Organization
 // @route   GET /api/partner-organizations/my-bins
 // @access  Private/Partner Org
@@ -374,6 +418,7 @@ const deletePartnerOrg = asyncHandler(async (req, res) => {
 
 module.exports = {
   getMyPartnerOrgProfile,
+  getMyPartnerOrgQr,
   getMyBins,
   updateMyBinStatus,
   getPartnerOrgStats,
