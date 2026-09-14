@@ -126,7 +126,7 @@ const SensorReportTable = ({ reports, loading, onSelectReport }) => {
                                 <td>{getSeverityBadge(report.severity)}</td>
                                 <td>{getStatusBadge(report.status)}</td>
                                 <td>
-                                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
+                                    <div className={styles.reportedDateText}>
                                         {new Date(report.createdAt).toLocaleDateString()}
                                     </div>
                                     <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>

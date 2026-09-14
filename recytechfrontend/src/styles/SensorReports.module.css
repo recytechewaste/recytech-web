@@ -303,6 +303,12 @@
     margin-top: 2px;
 }
 
+.reportedDateText {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
 .maintenanceTag {
     display: inline-block;
     font-size: 10px;
