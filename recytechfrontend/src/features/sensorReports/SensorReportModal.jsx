@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, AlertTriangle, Wrench, Clock, ShieldAlert, Cpu, Building, MapPin, Check } from 'lucide-react';
+import { X, CheckCircle, AlertTriangle, Wrench, Clock, ShieldAlert, Cpu, Building, MapPin, Check, ShieldCheck } from 'lucide-react';
 import styles from '../../styles/SensorReports.module.css';
 
 const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
@@ -17,8 +17,13 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
 
     if (!report) return null;
 
+    const isResolved = report.status === 'Resolved';
+    const isCritical = report.severity === 'Critical';
+    const isHigh = report.severity === 'High';
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (isResolved) return; // Guard against submitting if resolved
         setSubmitting(true);
         try {
             const res = await onUpdateStatus(report._id, selectedStatus, resolutionNotes, restoreBinStatus);
@@ -29,9 +34,6 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
             setSubmitting(false);
         }
     };
-
-    const isCritical = report.severity === 'Critical';
-    const isHigh = report.severity === 'High';
 
     return (
         <div className={styles.modalOverlay} onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -45,18 +47,18 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
                         <div 
                             className={styles.modalIconWrapper}
                             style={{
-                                backgroundColor: isCritical ? '#fee2e2' : isHigh ? '#ffedd5' : '#eff6ff',
-                                color: isCritical ? '#dc2626' : isHigh ? '#ea580c' : '#2563eb'
+                                backgroundColor: isResolved ? '#ecfdf5' : isCritical ? '#fee2e2' : isHigh ? '#ffedd5' : '#eff6ff',
+                                color: isResolved ? '#059669' : isCritical ? '#dc2626' : isHigh ? '#ea580c' : '#2563eb'
                             }}
                         >
-                            <Cpu size={22} />
+                            {isResolved ? <CheckCircle size={22} /> : <Cpu size={22} />}
                         </div>
                         <div>
                             <h2 id="modal-title" className={styles.modalTitle}>
-                                Sensor Incident Review
+                                {isResolved ? 'Resolved Incident Details' : 'Sensor Incident Review'}
                             </h2>
                             <p className={styles.modalSubtitle}>
-                                Incident Ref: #{report._id?.substring(0, 10)}...
+                                Incident Ref: #{report._id?.substring(0, 10)}... {isResolved ? '• Resolved & Closed' : ''}
                             </p>
                         </div>
                     </div>
@@ -72,6 +74,19 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
 
                 {/* ── Modal Body ── */}
                 <div className={styles.modalBody}>
+                    {/* Resolved Notice Banner (Locked & Read-Only) */}
+                    {isResolved && (
+                        <div className={styles.resolvedNoticeBanner}>
+                            <CheckCircle size={20} style={{ color: '#059669', flexShrink: 0, marginTop: '2px' }} />
+                            <div>
+                                <div className={styles.resolvedNoticeTitle}>Incident Resolved and Closed</div>
+                                <div>
+                                    This report has been officially resolved. All inspection findings and actions taken are locked for permanent audit and historical compliance.
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Location & Reporting Partner Details */}
                     <div className={styles.infoGrid}>
                         <div className={styles.infoCard}>
@@ -139,77 +154,117 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
                         </p>
                     </div>
 
-                    {/* Resolution & Status Form */}
-                    <form onSubmit={handleSubmit} className={styles.formSection}>
-                        <div className={styles.formGroup}>
-                            <label htmlFor="update-incident-status" className={styles.formLabel}>
-                                Update Incident Status
-                            </label>
-                            <select
-                                id="update-incident-status"
-                                value={selectedStatus}
-                                onChange={(e) => setSelectedStatus(e.target.value)}
-                                className={styles.formSelect}
-                            >
-                                <option value="Pending">⏳ Pending Investigation</option>
-                                <option value="In Progress">🔧 In Progress (Technician Dispatched)</option>
-                                <option value="Resolved">✅ Resolved (Repaired / Replaced)</option>
-                                <option value="Dismissed">❌ Dismissed (False Alarm)</option>
-                            </select>
-                        </div>
-
-                        <div className={styles.formGroup}>
-                            <label htmlFor="resolution-notes" className={styles.formLabel}>
-                                Staff Resolution Notes & Actions Taken
-                            </label>
-                            <textarea
-                                id="resolution-notes"
-                                rows={3}
-                                placeholder="Describe inspection findings, replaced hardware/ultrasonic sensor modules, calibration results, or technician actions..."
-                                value={resolutionNotes}
-                                onChange={(e) => setResolutionNotes(e.target.value)}
-                                className={styles.formTextarea}
-                            />
-                        </div>
-
-                        {selectedStatus === 'Resolved' && (
-                            <label htmlFor="restore-bin-status" className={styles.checkboxLabel}>
-                                <input
-                                    id="restore-bin-status"
-                                    type="checkbox"
-                                    checked={restoreBinStatus}
-                                    onChange={(e) => setRestoreBinStatus(e.target.checked)}
-                                    className={styles.checkboxInput}
-                                />
-                                <span>
-                                    Automatically restore smart bin status to <strong>Operational</strong>
-                                </span>
-                            </label>
-                        )}
-
-                        {report.resolvedBy && (
-                            <div className={styles.auditBox}>
-                                Last updated by <strong>{report.resolvedBy?.name || 'Staff'}</strong> on {new Date(report.resolvedAt || report.updatedAt).toLocaleString()}
+                    {/* ── IF RESOLVED: Read-Only Resolution Summary Card ── */}
+                    {isResolved ? (
+                        <>
+                            <div className={styles.resolutionCard}>
+                                <div className={styles.resolutionCardHeader}>
+                                    <CheckCircle size={15} color="#059669" />
+                                    <span>Staff Resolution Notes & Actions Taken</span>
+                                </div>
+                                <p className={styles.resolutionCardText}>
+                                    {report.resolutionNotes || 'No specific technician notes recorded for this resolution.'}
+                                </p>
+                                <div className={styles.resolutionMetaGrid}>
+                                    <div className={styles.resolutionMetaItem}>
+                                        Resolved By: <strong>{report.resolvedBy?.name || 'Staff Member'}</strong> {report.resolvedBy?.email ? `(${report.resolvedBy.email})` : ''}
+                                    </div>
+                                    <div className={styles.resolutionMetaItem}>
+                                        Date Resolved: <strong>{new Date(report.resolvedAt || report.updatedAt).toLocaleString()}</strong>
+                                    </div>
+                                </div>
                             </div>
-                        )}
 
-                        <div className={styles.modalFooter}>
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className={styles.modalCancelBtn}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={submitting}
-                                className={styles.modalSubmitBtn}
-                            >
-                                {submitting ? 'Saving...' : 'Save & Update Status'}
-                            </button>
-                        </div>
-                    </form>
+                            <div className={styles.modalFooter}>
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className={styles.modalCancelBtn}
+                                    style={{
+                                        backgroundColor: '#0f766e',
+                                        color: '#ffffff',
+                                        borderColor: '#0f766e',
+                                        fontWeight: 600,
+                                        padding: '9px 24px'
+                                    }}
+                                >
+                                    Close Details
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        /* ── IF NOT RESOLVED: Active Resolution & Status Form ── */
+                        <form onSubmit={handleSubmit} className={styles.formSection}>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="update-incident-status" className={styles.formLabel}>
+                                    Update Incident Status
+                                </label>
+                                <select
+                                    id="update-incident-status"
+                                    value={selectedStatus}
+                                    onChange={(e) => setSelectedStatus(e.target.value)}
+                                    className={styles.formSelect}
+                                >
+                                    <option value="Pending">⏳ Pending Investigation</option>
+                                    <option value="In Progress">🔧 In Progress (Technician Dispatched)</option>
+                                    <option value="Resolved">✅ Resolved (Repaired / Replaced)</option>
+                                    <option value="Dismissed">❌ Dismissed (False Alarm)</option>
+                                </select>
+                            </div>
+
+                            <div className={styles.formGroup}>
+                                <label htmlFor="resolution-notes" className={styles.formLabel}>
+                                    Staff Resolution Notes & Actions Taken
+                                </label>
+                                <textarea
+                                    id="resolution-notes"
+                                    rows={3}
+                                    placeholder="Describe inspection findings, replaced hardware/ultrasonic sensor modules, calibration results, or technician actions..."
+                                    value={resolutionNotes}
+                                    onChange={(e) => setResolutionNotes(e.target.value)}
+                                    className={styles.formTextarea}
+                                />
+                            </div>
+
+                            {selectedStatus === 'Resolved' && (
+                                <label htmlFor="restore-bin-status" className={styles.checkboxLabel}>
+                                    <input
+                                        id="restore-bin-status"
+                                        type="checkbox"
+                                        checked={restoreBinStatus}
+                                        onChange={(e) => setRestoreBinStatus(e.target.checked)}
+                                        className={styles.checkboxInput}
+                                    />
+                                    <span>
+                                        Automatically restore smart bin status to <strong>Operational</strong>
+                                    </span>
+                                </label>
+                            )}
+
+                            {report.resolvedBy && (
+                                <div className={styles.auditBox}>
+                                    Last updated by <strong>{report.resolvedBy?.name || 'Staff'}</strong> on {new Date(report.resolvedAt || report.updatedAt).toLocaleString()}
+                                </div>
+                            )}
+
+                            <div className={styles.modalFooter}>
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className={styles.modalCancelBtn}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className={styles.modalSubmitBtn}
+                                >
+                                    {submitting ? 'Saving...' : 'Save & Update Status'}
+                                </button>
+                            </div>
+                        </form>
+                    )}
                 </div>
             </div>
         </div>

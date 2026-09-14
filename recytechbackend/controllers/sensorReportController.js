@@ -315,6 +315,14 @@ const updateReportStatus = async (req, res) => {
             });
         }
 
+        // Prevent modification if already resolved
+        if (report.status === 'Resolved') {
+            return res.status(400).json({
+                success: false,
+                message: 'This incident report has already been marked as Resolved and cannot be modified.'
+            });
+        }
+
         if (status) report.status = status;
         if (resolutionNotes !== undefined) report.resolutionNotes = resolutionNotes;
 
