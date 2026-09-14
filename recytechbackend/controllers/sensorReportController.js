@@ -127,7 +127,7 @@ const getMyReports = async (req, res) => {
 
         const reports = await SensorReport.find({ partnerOrgId })
             .populate('binId', 'name address status capacityKg currentFillKg')
-            .populate('resolvedBy', 'name email')
+            .populate('resolvedBy', 'firstName lastName email')
             .sort({ createdAt: -1 });
 
         return res.status(200).json({
@@ -175,7 +175,7 @@ const getAllReports = async (req, res) => {
         let reportsQuery = SensorReport.find(query)
             .populate('binId', 'name address status capacityKg currentFillKg qrCode')
             .populate('partnerOrgId', 'name contactPerson email phone jurisdiction')
-            .populate('resolvedBy', 'name email role')
+            .populate('resolvedBy', 'firstName lastName email role')
             .sort({ createdAt: -1 });
 
         const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -267,7 +267,7 @@ const getReportById = async (req, res) => {
         const report = await SensorReport.findById(req.params.id)
             .populate('binId', 'name address status capacityKg currentFillKg qrCode')
             .populate('partnerOrgId', 'name contactPerson email phone jurisdiction')
-            .populate('resolvedBy', 'name email role');
+            .populate('resolvedBy', 'firstName lastName email role');
 
         if (!report) {
             return res.status(404).json({
@@ -344,7 +344,7 @@ const updateReportStatus = async (req, res) => {
         const updatedReport = await SensorReport.findById(report._id)
             .populate('binId', 'name address status capacityKg currentFillKg qrCode')
             .populate('partnerOrgId', 'name contactPerson email phone jurisdiction')
-            .populate('resolvedBy', 'name email role');
+            .populate('resolvedBy', 'firstName lastName email role');
 
         return res.status(200).json({
             success: true,

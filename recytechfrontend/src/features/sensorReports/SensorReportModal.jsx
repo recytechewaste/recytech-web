@@ -21,6 +21,17 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
     const isCritical = report.severity === 'Critical';
     const isHigh = report.severity === 'High';
 
+    const getStaffName = () => {
+        if (!report?.resolvedBy) return 'Staff Member';
+        const { firstName, lastName, name, email } = report.resolvedBy;
+        if (firstName || lastName) {
+            return `${firstName || ''} ${lastName || ''}`.trim();
+        }
+        if (name) return name;
+        if (email) return email.split('@')[0];
+        return 'Staff Member';
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (isResolved) return; // Guard against submitting if resolved
@@ -102,7 +113,7 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
                             <div className={styles.infoCardMeta}>
                                 Status: <strong style={{ color: report.binId?.status === 'Maintenance' ? '#dc2626' : '#059669' }}>
                                     {report.binId?.status || 'Operational'}
-                                </strong> | Fill: {report.binId?.currentFillKg || 0} / {report.binId?.capacityKg || 500} kg
+                                </strong>
                             </div>
                         </div>
 
@@ -167,7 +178,7 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
                                 </p>
                                 <div className={styles.resolutionMetaGrid}>
                                     <div className={styles.resolutionMetaItem}>
-                                        Resolved By: <strong>{report.resolvedBy?.name || 'Staff Member'}</strong> {report.resolvedBy?.email ? `(${report.resolvedBy.email})` : ''}
+                                        Resolved By: <strong>{getStaffName()}</strong> {report.resolvedBy?.email ? `(${report.resolvedBy.email})` : ''}
                                     </div>
                                     <div className={styles.resolutionMetaItem}>
                                         Date Resolved: <strong>{new Date(report.resolvedAt || report.updatedAt).toLocaleString()}</strong>
@@ -243,7 +254,7 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
 
                             {report.resolvedBy && (
                                 <div className={styles.auditBox}>
-                                    Last updated by <strong>{report.resolvedBy?.name || 'Staff'}</strong> on {new Date(report.resolvedAt || report.updatedAt).toLocaleString()}
+                                    Last updated by <strong>{getStaffName()}</strong> on {new Date(report.resolvedAt || report.updatedAt).toLocaleString()}
                                 </div>
                             )}
 
