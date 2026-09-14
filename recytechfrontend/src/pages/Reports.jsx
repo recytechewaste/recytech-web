@@ -129,11 +129,11 @@ const Reports = () => {
                                 />
                             </div>
 
-                            {/* Recent Activity Table Section */}
+                            {/* Recent Collection & Dispatch Operations Table Section */}
                             <div className={styles.sectionContainer}>
                                 <div className={styles.sectionHeader}>
-                                    <h2 className={styles.sectionTitle}>Recent Activity</h2>
-                                    <p className={styles.sectionSubtext}>A log of the most recent collection events.</p>
+                                    <h2 className={styles.sectionTitle}>Recent Collection & Dispatch Operations</h2>
+                                    <p className={styles.sectionSubtext}>A log of the most recent bin collection events and hauling dispatches.</p>
                                 </div>
                                 <ReportTable data={reportData.recentActivity} />
                             </div>

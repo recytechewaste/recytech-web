@@ -653,42 +653,41 @@ const getReportData = asyncHandler(async (req, res) => {
         .sort()
         .map(dateKey => ({ _id: dateKey, count: trendDateMap[dateKey] }));
 
-    // Recent Activity
-    const [binRecent, reqRecent] = await Promise.all([
-        BinDropoff.find(matchQuery)
-            .sort({ createdAt: -1 })
-            .limit(10)
-            .lean(),
-        Request.find(completedRequestMatch)
-            .populate('lgu', 'name')
-            .populate('assignedCollector', 'firstName lastName')
-            .sort({ completionDate: -1, createdAt: -1 })
-            .limit(10)
-            .lean()
-    ]);
-
+    // Calculate points from completed requests for summary metrics
+    const completedReqs = await Request.find(completedRequestMatch).select('collectedWaste').lean();
     let reqPointsSum = 0;
-    const formattedReqRecent = await Promise.all(reqRecent.map(async (r) => {
-        let pts = 0;
+    for (const r of completedReqs) {
         for (const w of (r.collectedWaste || [])) {
             const calc = await calculatePointsAwarded(w.category, w.quantity || 1);
-            if (calc.success) pts += calc.points;
+            if (calc.success) reqPointsSum += calc.points;
         }
-        reqPointsSum += pts;
-        const totalKg = (r.collectedWaste || []).reduce((acc, w) => acc + (w.quantity || 0), 0);
-        const categories = (r.collectedWaste || []).map(w => w.category).join(', ') || 'General E-Waste';
-        return {
-            _id: r._id,
-            createdAt: r.completionDate || r.createdAt,
-            wasteType: categories,
-            kilograms: Math.round(totalKg * 100) / 100,
-            pointsAwarded: pts,
-            status: 'Completed'
-        };
-    }));
+    }
 
-    const recentActivity = [...binRecent, ...formattedReqRecent];
-    recentActivity.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    // Recent Collection & Dispatch Operations Activity
+    const recentRequests = await Request.find({
+        ...requestDateFilter,
+        ...requestLguFilter
+    })
+        .populate({ path: 'bin', select: 'name address' })
+        .populate('lgu', 'name')
+        .populate('assignedCollector', 'firstName lastName vehiclePlate phone')
+        .sort({ completionDate: -1, scheduledDate: -1, createdAt: -1 })
+        .limit(10)
+        .lean();
+
+    const recentActivity = recentRequests.map(r => ({
+        _id: r._id,
+        date: r.completionDate || r.scheduledDate || r.createdAt,
+        createdAt: r.completionDate || r.scheduledDate || r.createdAt,
+        binName: r.bin?.name || 'Bin',
+        binAddress: r.bin?.address || '',
+        partnerOrg: r.lgu?.name || 'Partner Org',
+        collectorName: r.assignedCollector 
+            ? `${r.assignedCollector.firstName} ${r.assignedCollector.lastName}`
+            : 'Unassigned',
+        vehiclePlate: r.assignedCollector?.vehiclePlate || '',
+        status: r.status || 'Pending'
+    }));
 
     res.json({
         summary: {
