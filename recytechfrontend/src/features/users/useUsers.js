@@ -10,6 +10,7 @@ export const useUsers = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
+    const [nameSort, setNameSort] = useState('');
     const [error, setError] = useState(null);
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
     const { showToast } = useToast();
@@ -73,6 +74,7 @@ export const useUsers = () => {
         setSearchTerm('');
         setRoleFilter('');
         setStatusFilter('');
+        setNameSort('');
     };
 
     const filteredUsers = users.filter(user => {
@@ -85,13 +87,22 @@ export const useUsers = () => {
         return matchesSearch && matchesRole && matchesStatus;
     });
 
-    const { currentData: paginatedUsers, currentPage, totalPages, setPage } = usePagination(filteredUsers, 10);
+    const sortedUsers = [...filteredUsers].sort((a, b) => {
+        if (!nameSort) return 0;
+        const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase();
+        const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim().toLowerCase();
+        if (nameSort === 'asc') return nameA.localeCompare(nameB);
+        if (nameSort === 'desc') return nameB.localeCompare(nameA);
+        return 0;
+    });
 
+    const { currentData: paginatedUsers, currentPage, totalPages, setPage } = usePagination(sortedUsers, 10);
 
     return {
         loading, paginatedUsers, error,
         addUser, updateUser, deleteUser,
         searchTerm, setSearchTerm, roleFilter, setRoleFilter, statusFilter, setStatusFilter,
+        nameSort, setNameSort,
         handleClearFilters,
         currentPage, totalPages, setPage
     };

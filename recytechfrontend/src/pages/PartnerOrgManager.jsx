@@ -16,6 +16,7 @@ const PartnerOrgManager = () => {
     addPartnerOrg, updatePartnerOrg, deletePartnerOrg,
     searchTerm, setSearchTerm, 
     statusFilter, setStatusFilter,
+    nameSort, setNameSort,
     handleClearFilters,
     currentPage, totalPages, setPage
   } = usePartnerOrgs();
@@ -92,6 +93,7 @@ const PartnerOrgManager = () => {
         <PartnerOrgFilterBar
             searchTerm={searchTerm} setSearchTerm={setSearchTerm}
             statusFilter={statusFilter} setStatusFilter={setStatusFilter}
+            nameSort={nameSort} setNameSort={setNameSort}
             handleClearFilters={handleClearFilters}
         />
 

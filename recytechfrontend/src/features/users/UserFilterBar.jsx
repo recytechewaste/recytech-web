@@ -1,11 +1,12 @@
 import React from 'react';
-import { Search, Filter, Shield } from 'lucide-react';
+import { Search, Filter, Shield, ArrowUpDown } from 'lucide-react';
 import styles from '../../styles/Collectors.module.css'; // Using collector styles for consistency
 
 const UserFilterBar = ({ 
     searchTerm, setSearchTerm, 
     roleFilter, setRoleFilter,
     statusFilter, setStatusFilter, 
+    nameSort, setNameSort,
     handleClearFilters 
 }) => {
     return (
@@ -20,6 +21,21 @@ const UserFilterBar = ({
                     onChange={(e) => setSearchTerm(e.target.value)}
                     aria-label="Search users by name or email"
                 />
+            </div>
+            <div className={styles.filterGroup}>
+                <ArrowUpDown size={18} className={styles.filterIcon} />
+                <label htmlFor="userNameSort" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Sort by name</label>
+                <select
+                    id="userNameSort"
+                    className={styles.selectInput}
+                    value={nameSort}
+                    onChange={(e) => setNameSort(e.target.value)}
+                    aria-label="Sort users by name"
+                >
+                    <option value="">Sort by Name</option>
+                    <option value="asc">Name: A to Z</option>
+                    <option value="desc">Name: Z to A</option>
+                </select>
             </div>
             <div className={styles.filterGroup}>
                 <Shield size={18} className={styles.filterIcon} />

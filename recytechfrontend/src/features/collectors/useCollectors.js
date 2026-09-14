@@ -8,6 +8,7 @@ export const useCollectors = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [vehicleTypeFilter, setVehicleTypeFilter] = useState('');
+    const [nameSort, setNameSort] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -35,6 +36,7 @@ export const useCollectors = () => {
         setSearchTerm('');
         setStatusFilter('');
         setVehicleTypeFilter('');
+        setNameSort('');
     };
 
     const filteredCollectors = collectors.filter(c => {
@@ -46,7 +48,16 @@ export const useCollectors = () => {
         return matchesSearch && matchesStatus && matchesVehicleType;
     });
 
-    const { currentData: paginatedCollectors, currentPage, totalPages, setPage } = usePagination(filteredCollectors, 10);
+    const sortedCollectors = [...filteredCollectors].sort((a, b) => {
+        if (!nameSort) return 0;
+        const nameA = `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase();
+        const nameB = `${b.firstName || ''} ${b.lastName || ''}`.trim().toLowerCase();
+        if (nameSort === 'asc') return nameA.localeCompare(nameB);
+        if (nameSort === 'desc') return nameB.localeCompare(nameA);
+        return 0;
+    });
+
+    const { currentData: paginatedCollectors, currentPage, totalPages, setPage } = usePagination(sortedCollectors, 10);
 
     return {
         collectors, 
@@ -61,6 +72,8 @@ export const useCollectors = () => {
         setStatusFilter,
         vehicleTypeFilter, 
         setVehicleTypeFilter,
+        nameSort,
+        setNameSort,
         handleClearFilters,
         currentPage, 
         totalPages, 
