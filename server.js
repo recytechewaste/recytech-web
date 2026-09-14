@@ -72,7 +72,7 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Device-ID']
 }));
 
-app.use(express.json({ limit: '50mb' })); 
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Parse cookies attached to the client request
@@ -125,6 +125,7 @@ app.use('/api/scheduling', require('./recytechbackend/routes/schedulingRoutes'))
 app.use('/api/sensor-reports', require('./recytechbackend/routes/sensorReportRoutes'));
 app.use('/api/sensor-incidents', require('./recytechbackend/routes/sensorReportRoutes'));
 app.use('/api/iot', require('./recytechbackend/routes/iotRoutes'));
+app.use('/api/notifications', require('./recytechbackend/routes/notificationRoutes'));
 
 // Global Error Handler MUST be the last piece of middleware
 app.use(require('./recytechbackend/middleware/errorHandler').errorHandler);

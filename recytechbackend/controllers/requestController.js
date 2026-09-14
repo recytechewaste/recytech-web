@@ -3,6 +3,7 @@ const Bin = require('../models/Bin');
 const RecyclingCenter = require('../models/RecyclingCenter');
 const asyncHandler = require('express-async-handler');
 const { getProfileForUser, normalizeRole, CANONICAL_ROLES } = require('../utils/roleHelper');
+const { createPartnerNotification } = require('../services/notificationService');
 
 // @desc    Get all collection requests (Role-scoped, Paginated, Filterable)
 // @route   GET /api/requests
@@ -255,6 +256,9 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
     const userRole = normalizeRole(req.user.role);
     const { status, assignedCollector, scheduledDate, notes } = req.body;
 
+    const previousStatus = request.status ? request.status.toLowerCase() : null;
+    const previousCollector = request.assignedCollector ? request.assignedCollector.toString() : null;
+
     if (userRole === CANONICAL_ROLES.COLLECTOR) {
         const { profileId } = await getProfileForUser(req.user._id, req.user.role);
         if (!profileId || request.assignedCollector?.toString() !== profileId.toString()) {
@@ -281,6 +285,92 @@ const updateRequestStatus = asyncHandler(async (req, res) => {
     }
 
     const updatedRequest = await request.save();
+
+    // Trigger scoped notifications for Partner Organization on genuine state transitions
+    const newStatus = updatedRequest.status ? updatedRequest.status.toLowerCase() : null;
+    const newCollector = updatedRequest.assignedCollector ? updatedRequest.assignedCollector.toString() : null;
+    const partnerOrgId = updatedRequest.lgu;
+
+    if (partnerOrgId) {
+        // 1. Collection request approved
+        if (newStatus === 'approved' && previousStatus !== 'approved') {
+            await createPartnerNotification({
+                partnerOrganizationId: partnerOrgId,
+                title: 'Collection Request Approved',
+                message: 'Your collection request has been approved.',
+                type: 'request_approved',
+                relatedEntityId: updatedRequest._id.toString(),
+                destinationKind: 'lguRequest',
+                destinationEntityId: updatedRequest._id.toString()
+            });
+        }
+
+        // 2. Collection request rejected
+        if ((newStatus === 'rejected' || newStatus === 'cancelled') && previousStatus !== 'rejected' && previousStatus !== 'cancelled') {
+            await createPartnerNotification({
+                partnerOrganizationId: partnerOrgId,
+                title: 'Collection Request Rejected',
+                message: 'Your collection request has been rejected.',
+                type: 'request_rejected',
+                relatedEntityId: updatedRequest._id.toString(),
+                destinationKind: 'lguRequest',
+                destinationEntityId: updatedRequest._id.toString()
+            });
+        }
+
+        // 3. Collector assigned
+        if (newCollector && newCollector !== previousCollector) {
+            await createPartnerNotification({
+                partnerOrganizationId: partnerOrgId,
+                title: 'Collector Assigned',
+                message: 'A collector has been assigned to your collection request.',
+                type: 'collector_assigned',
+                relatedEntityId: updatedRequest._id.toString(),
+                destinationKind: 'lguRequest',
+                destinationEntityId: updatedRequest._id.toString()
+            });
+        }
+
+        // 4. Collection scheduled
+        if (newStatus === 'scheduled' && previousStatus !== 'scheduled') {
+            await createPartnerNotification({
+                partnerOrganizationId: partnerOrgId,
+                title: 'Collection Scheduled',
+                message: 'Your collection request has been scheduled.',
+                type: 'collection_scheduled',
+                relatedEntityId: updatedRequest._id.toString(),
+                destinationKind: 'lguRequest',
+                destinationEntityId: updatedRequest._id.toString()
+            });
+        }
+
+        // 5. Collection started / in progress
+        const startedStatuses = ['in_progress', 'in-progress', 'in_transit', 'in-transit', 'arrived'];
+        if (startedStatuses.includes(newStatus) && !startedStatuses.includes(previousStatus)) {
+            await createPartnerNotification({
+                partnerOrganizationId: partnerOrgId,
+                title: 'Collection Started',
+                message: 'Collection for your request has started.',
+                type: 'collection_started',
+                relatedEntityId: updatedRequest._id.toString(),
+                destinationKind: 'lguRequest',
+                destinationEntityId: updatedRequest._id.toString()
+            });
+        }
+
+        // 6. Collection completed (if updated via updateRequestStatus)
+        if (newStatus === 'completed' && previousStatus !== 'completed') {
+            await createPartnerNotification({
+                partnerOrganizationId: partnerOrgId,
+                title: 'Collection Completed',
+                message: 'Your collection request has been completed.',
+                type: 'collection_completed',
+                relatedEntityId: updatedRequest._id.toString(),
+                destinationKind: 'lguRequest',
+                destinationEntityId: updatedRequest._id.toString()
+            });
+        }
+    }
 
     const populated = await Request.findById(updatedRequest._id)
         .populate({ path: 'bin', select: 'name binId binCode qrCode address status location assignedLgu fillLevel capacityKg currentFillKg' })
@@ -328,11 +418,25 @@ const completeRequest = asyncHandler(async (req, res) => {
         request.collectedWaste = collectedWaste;
     }
 
+    const previousStatus = request.status ? request.status.toLowerCase() : null;
     request.status = 'completed';
     request.completionDate = new Date();
     if (notes) request.notes = notes;
 
     const saved = await request.save();
+
+    // Notify Partner Organization of completion
+    if (saved.lgu && previousStatus !== 'completed') {
+        await createPartnerNotification({
+            partnerOrganizationId: saved.lgu,
+            title: 'Collection Completed',
+            message: 'Your collection request has been completed.',
+            type: 'collection_completed',
+            relatedEntityId: saved._id.toString(),
+            destinationKind: 'lguRequest',
+            destinationEntityId: saved._id.toString()
+        });
+    }
 
     // Reset the bin fill level and status so it is ready for new drop-offs
     if (request.bin) {
@@ -386,4 +490,4 @@ module.exports = {
     updateRequestStatus,
     completeRequest,
     deleteRequest
-};
+};
