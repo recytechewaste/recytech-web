@@ -134,13 +134,23 @@ const SensorReportTable = ({ reports, loading, onSelectReport }) => {
                                     </div>
                                 </td>
                                 <td style={{ textAlign: 'right' }}>
-                                    <button
-                                        onClick={() => onSelectReport(report)}
-                                        className={styles.reviewBtn}
-                                        title="View report details and take staff action"
-                                    >
-                                        <Eye size={14} /> Review & Action
-                                    </button>
+                                    {report.status === 'Resolved' ? (
+                                        <button
+                                            onClick={() => onSelectReport(report)}
+                                            className={`${styles.reviewBtn} ${styles.resolvedReviewBtn}`}
+                                            title="View resolved incident details (Read-only)"
+                                        >
+                                            <Eye size={14} /> View Details
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => onSelectReport(report)}
+                                            className={styles.reviewBtn}
+                                            title="View report details and take staff action"
+                                        >
+                                            <Eye size={14} /> Review & Action
+                                        </button>
+                                    )}
                                 </td>
                             </tr>
                         ))}
