@@ -57,7 +57,6 @@ const Settings = () => {
 
     // Preferences state
     const [preferences, setPreferences] = useState({
-        darkMode: false,
         autoCenterMap: true,
         defaultTimeframe: 'month',
         defaultPageSize: 10
@@ -74,22 +73,19 @@ const Settings = () => {
         setSavedUser(initialProfile);
         setFormData(initialProfile);
 
+        document.documentElement.removeAttribute('data-theme');
         const savedPrefs = localStorage.getItem('recytech_preferences');
         if (savedPrefs) {
             try {
                 const parsed = JSON.parse(savedPrefs);
+                delete parsed.darkMode;
                 setPreferences({
-                    darkMode: false,
                     autoCenterMap: true,
                     defaultTimeframe: 'month',
                     defaultPageSize: 10,
                     ...parsed
                 });
-                if (parsed.darkMode) {
-                    document.documentElement.setAttribute('data-theme', 'dark');
-                } else {
-                    document.documentElement.removeAttribute('data-theme');
-                }
+                localStorage.setItem('recytech_preferences', JSON.stringify(parsed));
             } catch (e) {
                 console.error('Failed to parse preferences', e);
             }
@@ -227,13 +223,6 @@ const Settings = () => {
         const updated = { ...preferences, [key]: !preferences[key] };
         setPreferences(updated);
         localStorage.setItem('recytech_preferences', JSON.stringify(updated));
-        if (key === 'darkMode') {
-            if (updated.darkMode) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-            } else {
-                document.documentElement.removeAttribute('data-theme');
-            }
-        }
         notify('Preferences updated successfully.', 'info');
     };
 
@@ -482,29 +471,13 @@ const Settings = () => {
                                     </div>
                                     <div>
                                         <h3 className={styles.cardTitle}>System & Interface Preferences</h3>
-                                        <p className={styles.cardSubtext}>Customize interface appearance, map behavior, and default views.</p>
+                                        <p className={styles.cardSubtext}>Customize map behavior and default analytics views.</p>
                                     </div>
                                 </div>
 
                                 <div style={{ marginBottom: '24px' }}>
-                                    <h4 style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>Interface & Map Preferences</h4>
+                                    <h4 style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>Map Preferences</h4>
                                     
-                                    <div className={styles.preferenceCard}>
-                                        <div>
-                                            <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Dark Mode</h4>
-                                            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Switch to a sleek dark interface for lower eye strain in low-light environments.</p>
-                                        </div>
-                                        <label className={styles.toggleSwitch}>
-                                            <input
-                                                type="checkbox"
-                                                className={styles.toggleInput}
-                                                checked={preferences.darkMode}
-                                                onChange={() => handlePreferenceToggle('darkMode')}
-                                            />
-                                            <span className={styles.toggleSlider} />
-                                        </label>
-                                    </div>
-
                                     <div className={styles.preferenceCard}>
                                         <div>
                                             <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Bin Map Auto-Center</h4>
