@@ -1,5 +1,5 @@
 import React from 'react';
-import { Truck, MapPin, User, Calendar, AlertTriangle, UserCheck, Edit3, CheckCircle, Clock, Wrench } from 'lucide-react';
+import { Trash2, Building2, Truck, MapPin, User, Calendar, AlertTriangle, UserCheck, Edit3, CheckCircle, Clock, Wrench } from 'lucide-react';
 import styles from '../../styles/BinCollectionRequests.module.css';
 import Skeleton from '../../components/Skeleton';
 
@@ -56,31 +56,31 @@ const RequestTable = ({ requests, loading, limit, onSelectRequest }) => {
           </span>
         );
       case 'cancelled':
+      case 'canceled':
+      case 'rejected':
         return (
           <span className={`${styles.statusBadge} ${styles.cancelled}`}>
-            <AlertTriangle size={12} /> Cancelled
+            Cancelled
           </span>
         );
-      default: {
-        const formatted = (status || 'N/A').replace(/[_-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      default:
         return (
-          <span className={`${styles.statusBadge} ${styles.defaultStatus}`}>
-            {formatted}
+          <span className={`${styles.statusBadge} ${styles.pending}`}>
+            {status || 'Unknown'}
           </span>
         );
-      }
     }
   };
 
   const SkeletonRow = () => (
     <tr>
-      <td className={styles.td}><Skeleton width="120px" height="24px" /></td>
-      <td className={styles.td}><Skeleton width="150px" height="24px" /></td>
-      <td className={styles.td}><Skeleton width="90%" height="24px" /></td>
-      <td className={styles.td}><Skeleton width="100px" height="24px" borderRadius="12px" /></td>
-      <td className={styles.td}><Skeleton width="180px" height="24px" /></td>
-      <td className={styles.td}><Skeleton width="100px" height="24px" /></td>
-      <td className={styles.td}><Skeleton width="110px" height="24px" /></td>
+      <td className={styles.td}><Skeleton width="90px" height="24px" borderRadius="4px" /></td>
+      <td className={styles.td}><Skeleton width="130px" height="18px" /></td>
+      <td className={styles.td}><Skeleton width="180px" height="18px" /></td>
+      <td className={styles.td}><Skeleton width="80px" height="24px" borderRadius="12px" /></td>
+      <td className={styles.td}><Skeleton width="110px" height="18px" /></td>
+      <td className={styles.td}><Skeleton width="90px" height="18px" /></td>
+      <td className={styles.td} style={{ textAlign: 'right' }}><Skeleton width="70px" height="30px" borderRadius="6px" /></td>
     </tr>
   );
 
@@ -89,7 +89,7 @@ const RequestTable = ({ requests, loading, limit, onSelectRequest }) => {
       <table className={styles.table}>
         <thead>
           <tr>
-            <th className={styles.th}>Bin ID</th>
+            <th className={styles.th}>Bin Name</th>
             <th className={styles.th}>Partner Organization</th>
             <th className={styles.th}>Location</th>
             <th className={styles.th}>Status</th>
@@ -105,17 +105,22 @@ const RequestTable = ({ requests, loading, limit, onSelectRequest }) => {
             requests.map((request) => {
               const statusLower = request.status?.toLowerCase();
               const isCompleted = statusLower === 'completed';
-              const isCancelled = statusLower === 'cancelled';
+              const isCancelled = statusLower === 'cancelled' || statusLower === 'canceled' || statusLower === 'rejected';
 
               return (
                 <tr key={request._id}>
                   <td className={styles.td}>
                     <span className={styles.plateBadge}>
-                      <Truck size={14}/>
+                      <Trash2 size={14}/>
                       {request.bin?.name || request.bin?.binId || 'N/A'}
                     </span>
                   </td>
-                  <td className={styles.td}>{request.lgu?.name || request.bin?.assignedLgu?.name || 'N/A'}</td>
+                  <td className={styles.td}>
+                    <div className={styles.iconText}>
+                      <Building2 size={14} style={{ color: '#64748b', flexShrink: 0 }} />
+                      <span>{request.lgu?.name || request.bin?.assignedLgu?.name || 'N/A'}</span>
+                    </div>
+                  </td>
                   <td className={styles.td}>
                       <div className={styles.iconText}>
                           <MapPin size={14}/>

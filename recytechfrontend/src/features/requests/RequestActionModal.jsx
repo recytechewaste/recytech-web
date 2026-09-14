@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, Truck, User, Calendar, MapPin, Building, AlertCircle, Ban } from 'lucide-react';
+import { X, CheckCircle, Trash2, Truck, User, Calendar, MapPin, Building, AlertCircle, Ban } from 'lucide-react';
 import api from '../../api/client';
 import styles from '../../styles/BinCollectionRequests.module.css';
 
@@ -173,7 +173,7 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Truck size={16} color="#059669" />
+                            <Trash2 size={16} color="#059669" />
                             <span style={{ fontWeight: '700', fontSize: '15px', color: '#0f172a' }}>
                                 {request.bin?.name || request.bin?.binId || 'Smart Bin'}
                             </span>
