@@ -31,7 +31,11 @@ const loginUser = asyncHandler(async (req, res) => {
     const user = await User.findOne({ email: normalizedEmail });
 
     if (user && (await bcrypt.compare(password, user.password))) {
-        if (['Inactive', 'Disabled', 'Rejected', 'inactive', 'disabled', 'rejected'].includes(user.status)) {
+        if (['Inactive', 'inactive', 'Pending', 'pending'].includes(user.status)) {
+            res.status(403);
+            throw new Error('Your account is pending administrator approval. You will receive an email once activated.');
+        }
+        if (['Disabled', 'Rejected', 'disabled', 'rejected'].includes(user.status)) {
             res.status(403);
             throw new Error('Account is deactivated. Please contact your Super Admin.');
         }
@@ -161,6 +165,9 @@ const registerUser = asyncHandler(async (req, res) => {
         if (!userLastName) userLastName = canonicalRole === 'collector' ? 'Collector' : 'Resident';
     }
 
+    // Web public registrations for Staff require Admin approval/activation for security
+    const initialStatus = canonicalRole === 'Staff' ? 'Inactive' : 'Active';
+
     // Create User record as the canonical authentication identity
     const user = await User.create({
         firstName: userFirstName,
@@ -168,7 +175,7 @@ const registerUser = asyncHandler(async (req, res) => {
         email: normalizedEmail,
         password: hashedPassword,
         role: canonicalRole,
-        status: 'Active'
+        status: initialStatus
     });
 
     let profile = null;
