@@ -158,9 +158,9 @@ const RequestTable = ({ requests, loading, limit, onSelectRequest }) => {
                       <button 
                         onClick={() => onSelectRequest && onSelectRequest(request)}
                         className={styles.manageBtn}
-                        title="Update status or change assigned collector"
+                        title="Edit dispatch or change assigned collector"
                       >
-                        <Edit3 size={14} /> Manage
+                        <Edit3 size={14} /> Edit
                       </button>
                     )}
                   </td>

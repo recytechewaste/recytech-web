@@ -11,6 +11,7 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
     const [loadingCollectors, setLoadingCollectors] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [showConfirmCancel, setShowConfirmCancel] = useState(false);
 
     useEffect(() => {
         if (request) {
@@ -63,17 +64,18 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
         }
 
         try {
-            // AUTOMATIC STATUS: Once a collector is assigned, status becomes 'assigned' (or 'approved')
-            // This immediately dispatches the job to the collector's mobile app and notifies the partner org.
-            await onUpdateRequest(request._id, {
-                status: 'assigned',
+            const updatePayload = {
                 assignedCollector,
                 scheduledDate: scheduledDate || undefined,
                 notes
-            });
+            };
+            if (isPending) {
+                updatePayload.status = 'assigned';
+            }
+            await onUpdateRequest(request._id, updatePayload);
             onClose();
         } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Failed to assign and approve request.');
+            setError(err.response?.data?.message || err.message || (isPending ? 'Failed to assign and approve request.' : 'Failed to update request.'));
         } finally {
             setSubmitting(false);
         }
@@ -98,9 +100,8 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
         }
     };
 
-    // Cancel/Decline request
-    const handleCancelRequest = async () => {
-        if (!window.confirm('Are you sure you want to decline / cancel this collection request?')) return;
+    // Cancel/Decline request after in-app modal confirmation
+    const handleConfirmCancel = async () => {
         setSubmitting(true);
         setError(null);
         try {
@@ -108,9 +109,11 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                 status: 'cancelled',
                 notes: notes ? `${notes} (Cancelled by Admin)` : 'Cancelled by Admin'
             });
+            setShowConfirmCancel(false);
             onClose();
         } catch (err) {
             setError(err.response?.data?.message || err.message || 'Failed to cancel request.');
+            setShowConfirmCancel(false);
         } finally {
             setSubmitting(false);
         }
@@ -141,7 +144,7 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                         </div>
                         <div>
                             <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#111827', margin: 0 }}>
-                                {isPending ? 'Approve & Assign Collector' : 'Manage Collection Dispatch'}
+                                {isPending ? 'Approve & Assign Collector' : 'Edit Collection Dispatch'}
                             </h2>
                             <p style={{ fontSize: '12px', color: '#6b7280', margin: '2px 0 0 0' }}>
                                 Request ID: <span style={{ fontFamily: 'monospace', fontWeight: '600' }}>{request._id}</span>
@@ -207,24 +210,45 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                 </div>
 
                 {/* ── Workflow Automation Banner ── */}
-                <div style={{
-                    backgroundColor: '#ecfdf5',
-                    border: '1px solid #a7f3d0',
-                    borderRadius: '8px',
-                    padding: '12px 14px',
-                    marginBottom: '18px',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '10px',
-                    fontSize: '12.5px',
-                    color: '#065f46',
-                    lineHeight: 1.45
-                }}>
-                    <CheckCircle size={18} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
-                    <div>
-                        <strong>Automatic Workflow:</strong> Once you assign a collector and confirm, this request will automatically be <strong>Approved & Assigned</strong>. The collector will see the job in their Mobile App, and subsequent status transitions (In-Transit, Completed) are handled directly by the collector on-site.
+                {isPending ? (
+                    <div style={{
+                        backgroundColor: '#ecfdf5',
+                        border: '1px solid #a7f3d0',
+                        borderRadius: '8px',
+                        padding: '12px 14px',
+                        marginBottom: '18px',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10px',
+                        fontSize: '12.5px',
+                        color: '#065f46',
+                        lineHeight: 1.45
+                    }}>
+                        <CheckCircle size={18} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div>
+                            <strong>Automatic Workflow:</strong> Once you assign a collector and confirm, this request will automatically be <strong>Approved & Assigned</strong>. The collector will see the job in their Mobile App, and subsequent status transitions (In-Transit, Completed) are handled directly by the collector on-site.
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div style={{
+                        backgroundColor: '#eff6ff',
+                        border: '1px solid #bfdbfe',
+                        borderRadius: '8px',
+                        padding: '12px 14px',
+                        marginBottom: '18px',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10px',
+                        fontSize: '12.5px',
+                        color: '#1e40af',
+                        lineHeight: 1.45
+                    }}>
+                        <Truck size={18} color="#2563eb" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div>
+                            <strong>Dispatch Management:</strong> You can edit the assigned collector, scheduled date, or dispatch instructions. Any changes will immediately sync with the collector's mobile application.
+                        </div>
+                    </div>
+                )}
 
                 {/* ── Error Banner ── */}
                 {error && (
@@ -310,7 +334,7 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                             {request.status?.toLowerCase() !== 'cancelled' && (
                                 <button
                                     type="button"
-                                    onClick={handleCancelRequest}
+                                    onClick={() => setShowConfirmCancel(true)}
                                     disabled={submitting}
                                     style={{
                                         background: 'none',
@@ -344,11 +368,104 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                                 disabled={submitting}
                                 className={styles.submitBtn}
                             >
-                                {submitting ? 'Dispatching...' : 'Assign & Approve'}
+                                {submitting
+                                    ? (isPending ? 'Dispatching...' : 'Saving Changes...')
+                                    : (isPending ? 'Assign & Approve' : 'Save Changes')}
                             </button>
                         </div>
                     </div>
                 </form>
+
+                {/* ── In-App Confirmation Dialog for Declining/Cancelling Request ── */}
+                {showConfirmCancel && (
+                    <div style={{
+                        position: 'fixed',
+                        inset: 0,
+                        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+                        backdropFilter: 'blur(4px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10000,
+                        padding: '16px'
+                    }} onClick={() => setShowConfirmCancel(false)}>
+                        <div style={{
+                            background: '#ffffff',
+                            borderRadius: '14px',
+                            width: '100%',
+                            maxWidth: '440px',
+                            padding: '24px',
+                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.08)',
+                            border: '1px solid #e2e8f0'
+                        }} onClick={(e) => e.stopPropagation()}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+                                <div style={{
+                                    width: '44px',
+                                    height: '44px',
+                                    borderRadius: '10px',
+                                    backgroundColor: '#fef2f2',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#dc2626',
+                                    flexShrink: 0
+                                }}>
+                                    <AlertCircle size={24} />
+                                </div>
+                                <div>
+                                    <h3 style={{ margin: 0, fontSize: '17px', fontWeight: '700', color: '#111827' }}>
+                                        Decline Collection Request?
+                                    </h3>
+                                    <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#6b7280' }}>
+                                        This action will mark the request as cancelled.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <p style={{ fontSize: '14px', color: '#374151', lineHeight: '1.5', margin: '0 0 20px 0' }}>
+                                Are you sure you want to decline / cancel this collection request for <strong>{request.bin?.name || request.bin?.binId || 'this smart bin'}</strong>? The partner organization will be notified.
+                            </p>
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmCancel(false)}
+                                    disabled={submitting}
+                                    style={{
+                                        padding: '9px 16px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #d1d5db',
+                                        background: '#ffffff',
+                                        color: '#374151',
+                                        fontSize: '13px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Keep Request
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmCancel}
+                                    disabled={submitting}
+                                    style={{
+                                        padding: '9px 18px',
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                        color: '#ffffff',
+                                        fontSize: '13px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        boxShadow: '0 2px 6px rgba(220, 38, 38, 0.25)'
+                                    }}
+                                >
+                                    {submitting ? 'Cancelling...' : 'Yes, Decline Request'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
