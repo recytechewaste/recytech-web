@@ -16,7 +16,9 @@ import {
     KeyRound, 
     Loader2,
     Sparkles,
-    CheckCircle2
+    CheckCircle2,
+    Sliders,
+    Moon
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import api from '../api/client';
@@ -55,8 +57,7 @@ const Settings = () => {
 
     // Preferences state
     const [preferences, setPreferences] = useState({
-        liveAlerts: true,
-        soundAlerts: true,
+        darkMode: false,
         autoCenterMap: true,
         defaultTimeframe: 'month',
         defaultPageSize: 10
@@ -76,14 +77,19 @@ const Settings = () => {
         const savedPrefs = localStorage.getItem('recytech_preferences');
         if (savedPrefs) {
             try {
+                const parsed = JSON.parse(savedPrefs);
                 setPreferences({
-                    liveAlerts: true,
-                    soundAlerts: true,
+                    darkMode: false,
                     autoCenterMap: true,
                     defaultTimeframe: 'month',
                     defaultPageSize: 10,
-                    ...JSON.parse(savedPrefs)
+                    ...parsed
                 });
+                if (parsed.darkMode) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                }
             } catch (e) {
                 console.error('Failed to parse preferences', e);
             }
@@ -221,6 +227,13 @@ const Settings = () => {
         const updated = { ...preferences, [key]: !preferences[key] };
         setPreferences(updated);
         localStorage.setItem('recytech_preferences', JSON.stringify(updated));
+        if (key === 'darkMode') {
+            if (updated.darkMode) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+        }
         notify('Preferences updated successfully.', 'info');
     };
 
@@ -261,7 +274,7 @@ const Settings = () => {
                             className={activeTab === 'preferences' ? styles.navItemActive : styles.navItem}
                             onClick={() => setActiveTab('preferences')}
                         >
-                            <Bell size={18} />
+                            <Sliders size={18} />
                             <span>Preferences</span>
                         </button>
                     </div>
@@ -465,28 +478,28 @@ const Settings = () => {
                             <div className={styles.contentCard}>
                                 <div className={styles.cardHeader}>
                                     <div className={styles.iconCircle} style={{ background: '#f3e8ff', color: '#8b5cf6' }}>
-                                        <Bell size={20} />
+                                        <Sliders size={20} />
                                     </div>
                                     <div>
                                         <h3 className={styles.cardTitle}>System & Interface Preferences</h3>
-                                        <p className={styles.cardSubtext}>Customize live web alerts, map behavior, and default views.</p>
+                                        <p className={styles.cardSubtext}>Customize interface appearance, map behavior, and default views.</p>
                                     </div>
                                 </div>
 
                                 <div style={{ marginBottom: '24px' }}>
-                                    <h4 style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>Real-Time Web Alerts</h4>
+                                    <h4 style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '12px' }}>Interface & Map Preferences</h4>
                                     
                                     <div className={styles.preferenceCard}>
                                         <div>
-                                            <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Live In-App Request Alerts</h4>
-                                            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Displays an immediate pop-up banner when a partner organization submits a new bin request.</p>
+                                            <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Dark Mode</h4>
+                                            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Switch to a sleek dark interface for lower eye strain in low-light environments.</p>
                                         </div>
                                         <label className={styles.toggleSwitch}>
                                             <input
                                                 type="checkbox"
                                                 className={styles.toggleInput}
-                                                checked={preferences.liveAlerts}
-                                                onChange={() => handlePreferenceToggle('liveAlerts')}
+                                                checked={preferences.darkMode}
+                                                onChange={() => handlePreferenceToggle('darkMode')}
                                             />
                                             <span className={styles.toggleSlider} />
                                         </label>
@@ -494,24 +507,8 @@ const Settings = () => {
 
                                     <div className={styles.preferenceCard}>
                                         <div>
-                                            <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Notification Sound Chime</h4>
-                                            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Play an audio chime when new requests or urgent bin capacity alerts occur.</p>
-                                        </div>
-                                        <label className={styles.toggleSwitch}>
-                                            <input
-                                                type="checkbox"
-                                                className={styles.toggleInput}
-                                                checked={preferences.soundAlerts}
-                                                onChange={() => handlePreferenceToggle('soundAlerts')}
-                                            />
-                                            <span className={styles.toggleSlider} />
-                                        </label>
-                                    </div>
-
-                                    <div className={styles.preferenceCard}>
-                                        <div>
-                                            <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Smart Bin Map Auto-Center</h4>
-                                            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Automatically zoom and center map boundaries around registered smart bins.</p>
+                                            <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Bin Map Auto-Center</h4>
+                                            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Automatically zoom and center map boundaries around registered bins.</p>
                                         </div>
                                         <label className={styles.toggleSwitch}>
                                             <input
