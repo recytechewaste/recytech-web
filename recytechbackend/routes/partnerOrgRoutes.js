@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   getMyPartnerOrgProfile,
+  getMyPartnerOrgQr,
   getMyBins,
   updateMyBinStatus,
   getPartnerOrgStats,
@@ -11,10 +12,11 @@ const {
   updatePartnerOrg,
   deletePartnerOrg,
 } = require('../controllers/partnerOrgController');
-const { protect, staffOrAdmin } = require('../middleware/authMiddleware');
+const { protect, staffOrAdmin, lgu } = require('../middleware/authMiddleware');
 
 // Partner Organization mobile self workflows
 router.get('/me', protect, getMyPartnerOrgProfile);
+router.get('/me/qr', protect, lgu, getMyPartnerOrgQr);
 router.get('/my-bins', protect, getMyBins);
 router.get('/bins', protect, getMyBins);
 router.patch('/bins/:binId/status', protect, updateMyBinStatus);
