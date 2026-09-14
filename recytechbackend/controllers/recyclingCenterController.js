@@ -1,5 +1,6 @@
 const RecyclingCenter = require('../models/RecyclingCenter');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { createPartnerNotification } = require('../services/notificationService');
 const QRCode = require('qrcode');
 
 const generateQrImage = async (qrCode) => {
@@ -120,7 +121,7 @@ const ensureGeoJsonLocation = (loc) => {
 
 const createCenter = asyncHandler(async (req, res) => {
     const { name, location, address, qrCode, capacityKg, currentFillKg, status, description, assignedCollector, assignedLgu } = req.body;
-    
+
     const formattedLocation = ensureGeoJsonLocation(location);
     const qrCodeImage = await generateQrImage(qrCode);
 
@@ -141,12 +142,15 @@ const createCenter = asyncHandler(async (req, res) => {
     const populatedCenter = await RecyclingCenter.findById(center._id)
         .populate('assignedCollector', 'firstName lastName phone vehiclePlate status')
         .populate('assignedLgu', 'name contactPerson phone email jurisdiction status');
-    
+
     res.status(201).json(populatedCenter);
 });
 
 const updateCenter = asyncHandler(async (req, res) => {
     const { name, location, address, qrCode, capacityKg, currentFillKg, status, description, assignedCollector, assignedLgu } = req.body;
+
+    const existingCenter = await RecyclingCenter.findById(req.params.id);
+    const previousStatus = existingCenter?.status;
 
     const formattedLocation = ensureGeoJsonLocation(location);
     const qrCodeImage = await generateQrImage(qrCode);
@@ -157,8 +161,24 @@ const updateCenter = asyncHandler(async (req, res) => {
         { new: true }
     ).populate('assignedCollector', 'firstName lastName phone vehiclePlate status')
      .populate('assignedLgu', 'name contactPerson phone email jurisdiction status');
-    
+
     if (updatedCenter) {
+        // Trigger notification if bin transitions into Maintenance status
+        if (updatedCenter.status === 'Maintenance' && previousStatus !== 'Maintenance') {
+            const partnerOrgId = updatedCenter.assignedLgu?._id || updatedCenter.assignedLgu;
+            if (partnerOrgId) {
+                await createPartnerNotification({
+                    partnerOrganizationId: partnerOrgId,
+                    title: 'Bin Requires Inspection',
+                    message: 'One of your assigned bins has been placed under maintenance.',
+                    type: 'bin_maintenance',
+                    relatedEntityId: updatedCenter._id.toString(),
+                    destinationKind: 'lguBin',
+                    destinationEntityId: updatedCenter._id.toString()
+                });
+            }
+        }
+
         res.json(updatedCenter);
     } else {
         res.status(404);
@@ -168,7 +188,7 @@ const updateCenter = asyncHandler(async (req, res) => {
 
 const deleteCenter = asyncHandler(async (req, res) => {
     const center = await RecyclingCenter.findByIdAndDelete(req.params.id);
-    
+
     if (center) {
         res.json({ message: 'Center removed' });
     } else {
