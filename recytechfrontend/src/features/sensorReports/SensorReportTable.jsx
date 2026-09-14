@@ -69,7 +69,7 @@ const SensorReportTable = ({ reports, loading, onSelectReport }) => {
                         No Sensor Incident Reports Found
                     </p>
                     <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
-                        All smart bins and Time-of-Flight (ToF) fullness sensors are currently running in optimal condition.
+                        All bins and Time-of-Flight (ToF) fullness sensors are currently running in optimal condition.
                     </p>
                 </div>
             </div>
@@ -82,7 +82,7 @@ const SensorReportTable = ({ reports, loading, onSelectReport }) => {
                 <table className={styles.table}>
                     <thead>
                         <tr>
-                            <th>Smart Bin / Location</th>
+                            <th>Bin & Location</th>
                             <th>Partner Organization</th>
                             <th>Issue Description</th>
                             <th>Severity</th>
@@ -96,7 +96,7 @@ const SensorReportTable = ({ reports, loading, onSelectReport }) => {
                             <tr key={report._id}>
                                 <td>
                                     <div className={styles.binName}>
-                                        {report.binId?.name || 'Unknown Smart Bin'}
+                                        {report.binId?.name || 'Unknown Bin'}
                                     </div>
                                     <div className={styles.binAddress}>
                                         {report.binId?.address || 'No address specified'}

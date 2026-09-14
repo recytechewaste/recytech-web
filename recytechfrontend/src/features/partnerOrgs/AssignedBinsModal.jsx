@@ -19,12 +19,12 @@ const AssignedBinsModal = ({ isOpen, onClose, lguName, bins = [] }) => {
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={`Assigned Smart Bins — ${lguName || 'Partner Organization'}`}
+            title={`Assigned Bins — ${lguName || 'Partner Organization'}`}
             maxWidth="600px"
         >
             <div style={{ padding: '4px 0 12px 0' }}>
                 <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '16px' }}>
-                    Showing all smart bins currently assigned to <strong>{lguName}</strong>.
+                    Showing all bins currently assigned to <strong>{lguName}</strong>.
                 </p>
 
                 {bins.length === 0 ? (

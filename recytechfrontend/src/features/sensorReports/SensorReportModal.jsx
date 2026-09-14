@@ -102,10 +102,10 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
                     <div className={styles.infoGrid}>
                         <div className={styles.infoCard}>
                             <div className={styles.infoCardLabel}>
-                                <MapPin size={13} color="#059669" /> Smart Bin Location
+                                <MapPin size={13} color="#059669" /> Bin & Location
                             </div>
                             <div className={styles.infoCardTitle}>
-                                {report.binId?.name || 'Smart Bin'}
+                                {report.binId?.name || 'Bin'}
                             </div>
                             <div className={styles.infoCardDesc}>
                                 {report.binId?.address || 'No address specified'}
@@ -247,7 +247,7 @@ const SensorReportModal = ({ report, onClose, onUpdateStatus }) => {
                                         className={styles.checkboxInput}
                                     />
                                     <span>
-                                        Automatically restore smart bin status to <strong>Operational</strong>
+                                        Automatically restore bin status to <strong>Operational</strong>
                                     </span>
                                 </label>
                             )}
