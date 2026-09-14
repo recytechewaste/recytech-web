@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './pages/ProtectedRoute';
 import { ToastProvider } from './context/ToastContext';
@@ -46,6 +46,22 @@ const PageLoader = () => (
 );
 
 function App() {
+  useEffect(() => {
+    try {
+      const savedPrefs = localStorage.getItem('recytech_preferences');
+      if (savedPrefs) {
+        const parsed = JSON.parse(savedPrefs);
+        if (parsed.darkMode) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load theme preference:', e);
+    }
+  }, []);
+
   return (
     <ToastProvider>
       <Router>
