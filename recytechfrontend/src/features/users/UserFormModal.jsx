@@ -132,7 +132,9 @@ setShowConfirmPassword(true);
                         <select id="userRole" name="role" value={formData.role} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}>
                             <option value="Staff">Staff</option>
                             <option value="Admin">Admin</option>
-                            <option value="Super Admin">Super Admin</option>
+                            {isEditing && formData.role === 'Super Admin' && (
+                                <option value="Super Admin" disabled>Super Admin (Protected)</option>
+                            )}
                         </select>
                     </div>
                 </div>

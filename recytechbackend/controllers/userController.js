@@ -41,6 +41,11 @@ const createUser = asyncHandler(async (req, res) => {
         throw new Error('Please enter all required fields: First Name, Last Name, Email, Password, and Role');
     }
 
+    if (role === 'Super Admin' && req.user && req.user.role !== 'Super Admin') {
+        res.status(403);
+        throw new Error('Unauthorized: Only Super Admins can create Super Admin accounts.');
+    }
+
     const userExists = await User.findOne({ email });
     if (userExists) {
         res.status(400);
@@ -88,6 +93,11 @@ const updateUser = asyncHandler(async (req, res) => {
     if (user) {
         const wasInactive = !user.status || ['inactive', 'pending'].includes(user.status.toLowerCase());
         const isNowActive = Boolean(status && status.toLowerCase() === 'active');
+
+        if (role === 'Super Admin' && user.role !== 'Super Admin' && req.user && req.user.role !== 'Super Admin') {
+            res.status(403);
+            throw new Error('Unauthorized: Only Super Admins can promote an account to Super Admin.');
+        }
 
         user.firstName = firstName || user.firstName;
         user.lastName = lastName || user.lastName;
