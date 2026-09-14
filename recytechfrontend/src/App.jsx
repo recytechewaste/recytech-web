@@ -47,18 +47,18 @@ const PageLoader = () => (
 
 function App() {
   useEffect(() => {
+    document.documentElement.removeAttribute('data-theme');
     try {
       const savedPrefs = localStorage.getItem('recytech_preferences');
       if (savedPrefs) {
         const parsed = JSON.parse(savedPrefs);
-        if (parsed.darkMode) {
-          document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
-          document.documentElement.removeAttribute('data-theme');
+        if ('darkMode' in parsed) {
+          delete parsed.darkMode;
+          localStorage.setItem('recytech_preferences', JSON.stringify(parsed));
         }
       }
     } catch (e) {
-      console.error('Failed to load theme preference:', e);
+      console.error('Failed to cleanup theme preference:', e);
     }
   }, []);
 
