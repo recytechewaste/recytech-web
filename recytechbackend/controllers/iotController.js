@@ -13,8 +13,8 @@
  * Fullness vocabulary (mobile-compatible — do NOT change these strings):
  *   0–5%    → empty
  *   6–69%   → partially_filled
- *   70–84%  → nearly_full
- *   85–100% → full
+ *   70–94%  → nearly_full
+ *   95–100% → full
  *
  * Stale-reading protection:
  *   A reading whose measuredAt is OLDER than the bin's lastSensorUpdatedAt
@@ -45,7 +45,7 @@ const RecyclingCenter = require('../models/RecyclingCenter');
 const toFullnessStatus = (pct) => {
     if (pct <= 5)  return 'empty';
     if (pct <= 69) return 'partially_filled';
-    if (pct <= 84) return 'nearly_full';
+    if (pct <= 94) return 'nearly_full';
     return 'full';
 };
 
