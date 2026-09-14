@@ -28,6 +28,7 @@ const UserManagement = () => {
         searchTerm, setSearchTerm, 
         roleFilter, setRoleFilter, 
         statusFilter, setStatusFilter,
+        nameSort, setNameSort,
         handleClearFilters,
         currentPage, totalPages, setPage
     } = useUsers();
@@ -82,6 +83,7 @@ const UserManagement = () => {
                     searchTerm={searchTerm} setSearchTerm={setSearchTerm}
                     roleFilter={roleFilter} setRoleFilter={setRoleFilter}
                     statusFilter={statusFilter} setStatusFilter={setStatusFilter}
+                    nameSort={nameSort} setNameSort={setNameSort}
                     handleClearFilters={handleClearFilters}
                 />
 

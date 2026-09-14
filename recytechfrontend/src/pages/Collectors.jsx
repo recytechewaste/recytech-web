@@ -2,7 +2,7 @@ import { useState } from 'react';
 import api from '../api/client';
 import Sidebar from '../components/Sidebar';
 import styles from '../styles/Collectors.module.css';
-import { Plus, Search, Truck, Phone, Edit2, Trash2, X, Filter, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, Truck, Phone, Edit2, Trash2, X, Filter, ArrowUpDown, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCollectors } from '../features/collectors/useCollectors';
 import CollectorFormModal from '../features/collectors/CollectorFormModal';
 import Modal from '../components/Modal';
@@ -18,6 +18,7 @@ const Collectors = () => {
         searchTerm, setSearchTerm,
         statusFilter, setStatusFilter,
         vehicleTypeFilter, setVehicleTypeFilter,
+        nameSort, setNameSort,
         handleClearFilters,
         currentPage, totalPages, setPage
     } = useCollectors();
@@ -139,6 +140,21 @@ const Collectors = () => {
                             <option value="Motorcycle">Motorcycle</option>
                             <option value="Van">Van</option>
                             <option value="Truck">Truck</option>
+                        </select>
+                    </div>
+                    <div className={styles.filterGroup}>
+                        <ArrowUpDown size={18} className={styles.filterIcon} />
+                        <label htmlFor="collectorNameSort" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Sort by name</label>
+                        <select 
+                            id="collectorNameSort"
+                            className={styles.selectInput}
+                            value={nameSort}
+                            onChange={(e) => setNameSort(e.target.value)}
+                            aria-label="Sort collectors by name"
+                        >
+                            <option value="">Sort by Name</option>
+                            <option value="asc">Name: A to Z</option>
+                            <option value="desc">Name: Z to A</option>
                         </select>
                     </div>
                     <button className={styles.clearBtn} onClick={handleClearFilters} aria-label="Clear all collector filters">Clear All</button>

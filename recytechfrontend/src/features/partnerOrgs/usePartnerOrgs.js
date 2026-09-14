@@ -12,6 +12,7 @@ const usePartnerOrgs = (enabled = true) => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [nameSort, setNameSort] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const requestWithFallback = async (method, path, data = null) => {
@@ -98,6 +99,7 @@ const usePartnerOrgs = (enabled = true) => {
   const handleClearFilters = () => {
     setSearchTerm('');
     setStatusFilter('');
+    setNameSort('');
   };
 
   const filteredOrgs = partnerOrgs.filter(org => {
@@ -109,12 +111,21 @@ const usePartnerOrgs = (enabled = true) => {
     return matchesSearch && matchesStatus;
   });
 
+  const sortedOrgs = [...filteredOrgs].sort((a, b) => {
+    if (!nameSort) return 0;
+    const nameA = (a.name || '').trim().toLowerCase();
+    const nameB = (b.name || '').trim().toLowerCase();
+    if (nameSort === 'asc') return nameA.localeCompare(nameB);
+    if (nameSort === 'desc') return nameB.localeCompare(nameA);
+    return 0;
+  });
+
   const { 
     currentData: paginatedPartnerOrgs, 
     currentPage, 
     totalPages, 
     setPage 
-  } = usePagination(filteredOrgs, 10);
+  } = usePagination(sortedOrgs, 10);
 
   return { 
     partnerOrgs,
@@ -126,6 +137,7 @@ const usePartnerOrgs = (enabled = true) => {
     addLgu: addPartnerOrg, updateLgu: updatePartnerOrg, deleteLgu: deletePartnerOrg,
     searchTerm, setSearchTerm,
     statusFilter, setStatusFilter,
+    nameSort, setNameSort,
     handleClearFilters,
     currentPage, totalPages, setPage
   };

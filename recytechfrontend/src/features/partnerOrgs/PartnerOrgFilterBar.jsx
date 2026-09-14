@@ -1,10 +1,11 @@
 import React from 'react';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, ArrowUpDown } from 'lucide-react';
 import styles from '../../styles/Collectors.module.css';
 
 const PartnerOrgFilterBar = ({ 
     searchTerm, setSearchTerm, 
-    statusFilter, setStatusFilter, 
+    statusFilter, setStatusFilter,
+    nameSort, setNameSort,
     handleClearFilters 
 }) => {
     return (
@@ -22,7 +23,9 @@ const PartnerOrgFilterBar = ({
             </div>
             <div className={styles.filterGroup}>
                 <Filter size={18} className={styles.filterIcon} />
+                <label htmlFor="partnerOrgStatusFilter" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Filter by status</label>
                 <select 
+                    id="partnerOrgStatusFilter"
                     className={styles.selectInput}
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
@@ -33,7 +36,22 @@ const PartnerOrgFilterBar = ({
                     <option value="Inactive">Inactive</option>
                 </select>
             </div>
-            <button className={styles.clearBtn} onClick={handleClearFilters}>Clear All</button>
+            <div className={styles.filterGroup}>
+                <ArrowUpDown size={18} className={styles.filterIcon} />
+                <label htmlFor="partnerOrgNameSort" style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>Sort by name</label>
+                <select 
+                    id="partnerOrgNameSort"
+                    className={styles.selectInput}
+                    value={nameSort}
+                    onChange={(e) => setNameSort(e.target.value)}
+                    aria-label="Sort partner organizations by name"
+                >
+                    <option value="">Sort by Name</option>
+                    <option value="asc">Name: A to Z</option>
+                    <option value="desc">Name: Z to A</option>
+                </select>
+            </div>
+            <button className={styles.clearBtn} onClick={handleClearFilters} aria-label="Clear all partner organization filters">Clear All</button>
         </div>
     );
 };
