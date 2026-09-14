@@ -175,7 +175,7 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Trash2 size={16} color="#059669" />
                             <span style={{ fontWeight: '700', fontSize: '15px', color: '#0f172a' }}>
-                                {request.bin?.name || request.bin?.binId || 'Smart Bin'}
+                                {request.bin?.name || request.bin?.binId || 'Bin'}
                             </span>
                         </div>
                         <span className={`${styles.statusBadge} ${styles[request.status?.toLowerCase()] || styles.pending}`}>
@@ -423,7 +423,7 @@ const RequestActionModal = ({ request, onClose, onUpdateRequest }) => {
                             </div>
 
                             <p style={{ fontSize: '14px', color: '#374151', lineHeight: '1.5', margin: '0 0 20px 0' }}>
-                                Are you sure you want to decline / cancel this collection request for <strong>{request.bin?.name || request.bin?.binId || 'this smart bin'}</strong>? The partner organization will be notified.
+                                Are you sure you want to decline / cancel this collection request for <strong>{request.bin?.name || request.bin?.binId || 'this bin'}</strong>? The partner organization will be notified.
                             </p>
 
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
