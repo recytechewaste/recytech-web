@@ -126,6 +126,7 @@ app.use('/api/sensor-reports', require('./recytechbackend/routes/sensorReportRou
 app.use('/api/sensor-incidents', require('./recytechbackend/routes/sensorReportRoutes'));
 app.use('/api/iot', require('./recytechbackend/routes/iotRoutes'));
 app.use('/api/notifications', require('./recytechbackend/routes/notificationRoutes'));
+app.use('/api/audit-logs', require('./recytechbackend/routes/auditLogRoutes'));
 
 // Global Error Handler MUST be the last piece of middleware
 app.use(require('./recytechbackend/middleware/errorHandler').errorHandler);

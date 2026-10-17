@@ -11,6 +11,14 @@ const UserFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmit }) =>
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [copied, setCopied] = useState(false);
 
+    let isRequesterSuperAdmin = false;
+    try {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        isRequesterSuperAdmin = ['Super Admin', 'super_admin', 'superadmin'].includes(userInfo.role);
+    } catch {
+        // Fallback
+    }
+
     useEffect(() => {
         setFormData(initialData);
         setErrors({});
@@ -129,14 +137,33 @@ setShowConfirmPassword(true);
                     <label htmlFor="userRole">Role</label>
                     <div className={sharedStyles.inputWrapper}>
                         <UserCog size={16} className={sharedStyles.inputIcon} />
-                        <select id="userRole" name="role" value={formData.role} onChange={handleInputChange} className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}>
+                        <select 
+                            id="userRole" 
+                            name="role" 
+                            value={formData.role} 
+                            onChange={handleInputChange} 
+                            disabled={isEditing && !isRequesterSuperAdmin && ['Super Admin', 'Admin'].includes(formData.role)}
+                            className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`}
+                        >
                             <option value="Staff">Staff</option>
-                            <option value="Admin">Admin</option>
-                            {isEditing && formData.role === 'Super Admin' && (
+                            {isRequesterSuperAdmin ? (
+                                <>
+                                    <option value="Admin">Admin</option>
+                                    <option value="Super Admin">Super Admin</option>
+                                </>
+                            ) : (
+                                <option value="Admin" disabled>Admin (Requires Super Admin)</option>
+                            )}
+                            {isEditing && formData.role === 'Super Admin' && !isRequesterSuperAdmin && (
                                 <option value="Super Admin" disabled>Super Admin (Protected)</option>
                             )}
                         </select>
                     </div>
+                    {!isRequesterSuperAdmin && (
+                        <span style={{ fontSize: '11px', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                            Creating or promoting Administrator accounts requires Super Administrator authorization.
+                        </span>
+                    )}
                 </div>
                 <div className={sharedStyles.formGroup}>
                     <label htmlFor="userStatus">Status</label>

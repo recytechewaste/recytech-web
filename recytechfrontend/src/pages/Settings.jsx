@@ -49,9 +49,11 @@ const Settings = () => {
 
     // Password state
     const [passwordData, setPasswordData] = useState({
+        currentPassword: '',
         newPassword: '',
         confirmPassword: ''
     });
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -187,8 +189,18 @@ const Settings = () => {
     // Handle Password Change
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
+        if (!passwordData.currentPassword) {
+            notify('Please enter your current password.', 'error');
+            return;
+        }
+
         if (!passwordData.newPassword) {
             notify('Please enter a new password.', 'error');
+            return;
+        }
+
+        if (passwordData.newPassword === passwordData.currentPassword) {
+            notify('New password must be different from your current password.', 'error');
             return;
         }
 
@@ -204,11 +216,14 @@ const Settings = () => {
 
         setSavingPassword(true);
         try {
-            await api.put('/users/profile', {
-                password: passwordData.newPassword
+            // Dedicated endpoint verifies the current password server-side before updating
+            await api.put('/users/change-password', {
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword,
+                confirmPassword: passwordData.confirmPassword
             });
 
-            setPasswordData({ newPassword: '', confirmPassword: '' });
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
             notify('Password changed successfully!', 'success');
         } catch (err) {
             const msg = err.response?.data?.message || 'Failed to update password';
@@ -377,6 +392,30 @@ const Settings = () => {
                                 </div>
 
                                 <form onSubmit={handlePasswordSubmit}>
+                                    <div className={styles.formGroup}>
+                                        <label htmlFor="settingsCurrentPassword" className={styles.label}>Current Password</label>
+                                        <div className={styles.inputWrapper}>
+                                            <KeyRound size={16} className={styles.inputIcon} />
+                                            <input
+                                                id="settingsCurrentPassword"
+                                                type={showCurrentPassword ? 'text' : 'password'}
+                                                value={passwordData.currentPassword}
+                                                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                                                placeholder="Enter your current password"
+                                                autoComplete="current-password"
+                                                className={styles.input}
+                                            />
+                                            <button
+                                                type="button"
+                                                className={styles.passwordToggle}
+                                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                                aria-label={showCurrentPassword ? 'Hide current password' : 'Show current password'}
+                                            >
+                                                {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                            </button>
+                                        </div>
+                                    </div>
+
                                     <div className={styles.formGroup}>
                                         <label htmlFor="settingsNewPassword" className={styles.label}>New Password</label>
                                         <div className={styles.inputWrapper}>

@@ -11,6 +11,7 @@ import ReportCharts from '../features/reports/ReportCharts';
 import ReportTable from '../features/reports/ReportTable';
 import { MetricSkeleton } from '../components/Skeleton';
 import ErrorBoundary from '../components/ErrorBoundary';
+import FilterScope from '../features/reports/FilterScope';
 
 
 const Reports = () => {
@@ -96,6 +97,11 @@ const Reports = () => {
                     </div>
                     <button onClick={handleClearFilters} className={styles.clearBtn} aria-label="Clear all report filters">Clear Filters</button>
                 </div>
+                <div className={styles.filterLegend}>
+                    <span>Each section shows which filters affect it:</span>
+                    <span className={styles.scopeChipOn}>applies</span>
+                    <span className={styles.scopeChipOff}>not affected</span>
+                </div>
                 
                 <div ref={reportRef}>
                     {loading || !reportData ? (
@@ -134,6 +140,7 @@ const Reports = () => {
                                 <div className={styles.sectionHeader}>
                                     <h2 className={styles.sectionTitle}>Recent Collection & Dispatch Operations</h2>
                                     <p className={styles.sectionSubtext}>A log of the most recent bin collection events and hauling dispatches.</p>
+                                    <FilterScope scope="activity" />
                                 </div>
                                 <ReportTable data={reportData.recentActivity} />
                             </div>

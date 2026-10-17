@@ -5,6 +5,8 @@ const bcrypt = require('bcryptjs');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { sendWelcomeEmail } = require('../services/emailService');
 const { getProfileForUser, normalizeRole, CANONICAL_ROLES } = require('../utils/roleHelper');
+const { assertUniqueCollectorFields, formatPlateForStorage } = require('../utils/collectorUniqueness');
+const { logAuditEvent } = require('../utils/auditLogger');
 
 // @desc    Get all collectors (Admin/Staff view)
 // @route   GET /api/collectors
@@ -230,6 +232,9 @@ const createCollector = asyncHandler(async (req, res) => {
         throw new Error('User with this email already exists');
     }
 
+    // 1b. Enforce unique phone number and vehicle plate (before any record is created)
+    await assertUniqueCollectorFields({ phone, vehiclePlate }, res);
+
     // 2. Create the User account for the collector
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -251,7 +256,7 @@ const createCollector = asyncHandler(async (req, res) => {
         firstName,
         lastName,
         phone,
-        vehiclePlate: vehiclePlate || 'Not Assigned',
+        vehiclePlate: formatPlateForStorage(vehiclePlate),
         vehicleType: vehicleType || 'Not Assigned',
         status: normalizedStatus
     });
@@ -261,6 +266,14 @@ const createCollector = asyncHandler(async (req, res) => {
     } catch (err) {
         console.error('Failed to send welcome email to collector:', err);
     }
+
+    await logAuditEvent({
+        req,
+        action: 'COLLECTOR_CREATED',
+        actionCategory: 'COLLECTOR_MANAGEMENT',
+        targetEntity: { entityType: 'Collector', entityId: newCollector._id.toString(), name: `${newCollector.firstName} ${newCollector.lastName}` },
+        details: { phone: newCollector.phone, vehiclePlate: newCollector.vehiclePlate, vehicleType: newCollector.vehicleType }
+    });
 
     res.status(201).json(newCollector);
 });
@@ -273,6 +286,13 @@ const updateCollector = asyncHandler(async (req, res) => {
 
     const normalizedStatus = status ? (status.toLowerCase() === 'inactive' ? 'Inactive' : 'Active') : undefined;
 
+    // Enforce unique phone number and vehicle plate, ignoring this collector's own record
+    await assertUniqueCollectorFields({
+        phone: phone || undefined,
+        vehiclePlate: vehiclePlate || undefined,
+        excludeId: req.params.id
+    }, res);
+
     const updatedCollector = await Collector.findByIdAndUpdate(
         req.params.id,
         {
@@ -280,7 +300,7 @@ const updateCollector = asyncHandler(async (req, res) => {
             ...(lastName && { lastName }),
             ...(normalizedStatus && { status: normalizedStatus }),
             ...(phone && { phone }),
-            ...(vehiclePlate && { vehiclePlate }),
+            ...(vehiclePlate && { vehiclePlate: formatPlateForStorage(vehiclePlate) }),
             ...(vehicleType && { vehicleType })
         },
         { new: true }
@@ -291,6 +311,14 @@ const updateCollector = asyncHandler(async (req, res) => {
             ...(firstName && { firstName }),
             ...(lastName && { lastName }),
             ...(normalizedStatus && { status: normalizedStatus })
+        });
+
+        await logAuditEvent({
+            req,
+            action: 'COLLECTOR_UPDATED',
+            actionCategory: 'COLLECTOR_MANAGEMENT',
+            targetEntity: { entityType: 'Collector', entityId: updatedCollector._id.toString(), name: `${updatedCollector.firstName} ${updatedCollector.lastName}` },
+            details: { phone: updatedCollector.phone, vehiclePlate: updatedCollector.vehiclePlate, status: updatedCollector.status }
         });
 
         res.json(updatedCollector);
@@ -309,6 +337,15 @@ const deleteCollector = asyncHandler(async (req, res) => {
         await User.findByIdAndUpdate(collector.user, { status: 'Inactive' });
         collector.status = 'Inactive';
         await collector.save();
+
+        await logAuditEvent({
+            req,
+            action: 'COLLECTOR_DEACTIVATED',
+            actionCategory: 'COLLECTOR_MANAGEMENT',
+            targetEntity: { entityType: 'Collector', entityId: collector._id.toString(), name: `${collector.firstName} ${collector.lastName}` },
+            details: { vehiclePlate: collector.vehiclePlate }
+        });
+
         res.json({ message: 'Collector disabled successfully. Historical records have been preserved.' });
     } else {
         res.status(404);

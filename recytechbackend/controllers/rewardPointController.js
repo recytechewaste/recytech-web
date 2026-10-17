@@ -1,5 +1,6 @@
 const RewardPoint = require('../models/RewardPoint');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { logAuditEvent } = require('../utils/auditLogger');
 
 const normalizePoint = (point) => {
     const obj = point.toObject ? point.toObject() : { ...point };
@@ -75,6 +76,14 @@ const createRewardPoint = asyncHandler(async (req, res) => {
         isActive: isActive !== undefined ? isActive : true
     });
 
+    await logAuditEvent({
+        req,
+        action: 'REWARD_RULE_CREATED',
+        actionCategory: 'SYSTEM_CONFIG',
+        targetEntity: { entityType: 'RewardPoint', entityId: newPoint._id.toString(), name: newPoint.wasteType },
+        details: { pointsPerItem: newPoint.pointsPerItem, isActive: newPoint.isActive }
+    });
+
     res.status(201).json({
         message: 'Reward point rule created successfully',
         point: newPoint
@@ -123,6 +132,14 @@ const updateRewardPoint = asyncHandler(async (req, res) => {
 
     const updatedPoint = await point.save();
 
+    await logAuditEvent({
+        req,
+        action: 'REWARD_POINTS_UPDATED',
+        actionCategory: 'SYSTEM_CONFIG',
+        targetEntity: { entityType: 'RewardPoint', entityId: updatedPoint._id.toString(), name: updatedPoint.wasteType },
+        details: { pointsPerItem: updatedPoint.pointsPerItem, isActive: updatedPoint.isActive }
+    });
+
     res.json({
         message: 'Reward point rule updated successfully',
         point: updatedPoint
@@ -136,6 +153,14 @@ const deleteRewardPoint = asyncHandler(async (req, res) => {
         res.status(404);
         throw new Error('Reward point rule not found');
     }
+
+    await logAuditEvent({
+        req,
+        action: 'REWARD_RULE_DELETED',
+        actionCategory: 'SYSTEM_CONFIG',
+        targetEntity: { entityType: 'RewardPoint', entityId: req.params.id, name: point.wasteType },
+        details: { deletedWasteType: point.wasteType }
+    });
 
     res.json({
         message: 'Reward point rule deleted',
