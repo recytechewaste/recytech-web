@@ -270,7 +270,7 @@ const PredictiveInsights = ({ predictiveInsights = {} }) => {
                             onMouseLeave={(e) => { e.currentTarget.style.background = '#ecfdf5'; }}
                         >
                             <Calculator size={14} />
-                            <span>Model Evidence & Defense Proof ({insights.predictionConfidence || 83}%)</span>
+                            <span>Model Performance & Evaluation ({insights.predictionConfidence || 0}%)</span>
                         </button>
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CheckCircle2, Calculator, TrendingUp, HelpCircle, FileSpreadsheet, ShieldCheck } from 'lucide-react';
+import { X, Calculator, FileSpreadsheet } from 'lucide-react';
 
 export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictionConfidence }) => {
     if (!isOpen) return null;
@@ -68,7 +68,7 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#0f172a' }}>
-                                    Prediction Confidence & Model Evidence
+                                    Forecast Model Performance & Diagnostics
                                 </h2>
                                 <span style={{
                                     fontSize: '11px',
@@ -79,11 +79,11 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                                     borderRadius: '9999px',
                                     border: '1px solid #86efac'
                                 }}>
-                                    Capstone Defense Proof
+                                    Walk-Forward Validated
                                 </span>
                             </div>
                             <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#64748b' }}>
-                                Formal statistical justification for the {accuracy}% forecast confidence score
+                                Statistical validation metrics and diagnostics for the {accuracy}% forecast confidence score
                             </p>
                         </div>
                     </div>
@@ -228,27 +228,6 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                         </div>
                     </div>
 
-                    {/* Defense Talking Points Section */}
-                    <div style={{
-                        background: '#fdf4ff',
-                        border: '1px solid #f0abfc',
-                        borderRadius: '12px',
-                        padding: '16px 18px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '8px'
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <ShieldCheck size={18} style={{ color: '#a21caf' }} />
-                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#86198f' }}>
-                                Defense Panel Explanation Script
-                            </span>
-                        </div>
-                        <p style={{ margin: 0, fontSize: '12.5px', color: '#701a75', lineHeight: '1.6' }}>
-                            <em>"Our <strong>{accuracy}% Prediction Confidence</strong> is not a static constant. It is derived through <strong>Expanding-Window Walk-Forward Validation</strong> on Holt's Double Exponential Smoothing. For every historical month, the algorithm trains only on preceding months to forecast one step ahead. Across all test points, the Mean Absolute Percentage Error (MAPE) is <strong>{mape}%</strong>, confirming a quantitative empirical accuracy of <strong>100% − {mape}% = {accuracy}%</strong>."</em>
-                        </p>
-                    </div>
-
                     {/* Walk-forward backtest table */}
                     <div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -358,7 +337,7 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                         onMouseEnter={(e) => { e.currentTarget.style.background = '#0d9488'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = '#0f766e'; }}
                     >
-                        Close Evidence
+                        Close
                     </button>
                 </div>
             </div>
