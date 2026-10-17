@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { normalizeRole, CANONICAL_ROLES } = require('../utils/roleHelper');
 
 const protect = async (req, res, next) => {
     let token;
@@ -38,77 +39,92 @@ const protect = async (req, res, next) => {
     return res.status(401).json({ message: 'Not authorized, no token provided' });
 };
 
-const admin = (req, res, next) => {
-    if (req.user && ['Admin', 'Super Admin', 'admin', 'super_admin'].includes(req.user.role)) {
-        next();
-    } else {
-        res.status(403).json({ message: 'Not authorized as an admin' });
-    }
-};
-
-const staffOnlyOrSuperAdmin = (req, res, next) => {
-    if (req.user && ['Staff', 'Super Admin', 'staff', 'super_admin'].includes(req.user.role)) {
-        next();
-    } else {
-        res.status(403).json({ message: 'Not authorized as staff or super admin' });
-    }
-};
-
-const staffOrAdmin = (req, res, next) => {
-    if (req.user && ['Staff', 'Admin', 'Super Admin', 'staff', 'admin', 'super_admin'].includes(req.user.role)) {
-        next();
-    } else {
-        res.status(403).json({ message: 'Not authorized as staff or admin' });
-    }
-};
-
+/**
+ * Super Administrator Only:
+ * Highest privilege level — manages other Admins, system configurations, and reward rules.
+ */
 const superAdmin = (req, res, next) => {
-    if (req.user && ['Super Admin', 'super_admin'].includes(req.user.role)) {
-        next();
-    } else {
-        res.status(403).json({ message: 'Not authorized as a super admin' });
+    if (req.user && normalizeRole(req.user.role) === CANONICAL_ROLES.SUPER_ADMIN) {
+        return next();
     }
+    return res.status(403).json({ message: 'Forbidden: Super Administrator access required.' });
 };
 
-const staffOnly = (req, res, next) => {
-    if (req.user && ['Staff', 'staff'].includes(req.user.role)) {
-        next();
-    } else {
-        res.status(403).json({ message: 'Forbidden: Access is restricted to Staff personnel only.' });
+/**
+ * Administrator or Super Administrator:
+ * Operations management — collectors, partner orgs, households, and bins.
+ */
+const admin = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Not authenticated' });
     }
+    const role = normalizeRole(req.user.role);
+    if (role === CANONICAL_ROLES.ADMIN || role === CANONICAL_ROLES.SUPER_ADMIN) {
+        return next();
+    }
+    return res.status(403).json({ message: 'Forbidden: Administrator or Super Administrator access required.' });
+};
+
+/**
+ * Staff, Admin, or Super Administrator:
+ * Operational monitoring and dispatching.
+ */
+const staffOrAdmin = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ message: 'Not authenticated' });
+    }
+    const role = normalizeRole(req.user.role);
+    if ([CANONICAL_ROLES.STAFF, CANONICAL_ROLES.ADMIN, CANONICAL_ROLES.SUPER_ADMIN].includes(role)) {
+        return next();
+    }
+    return res.status(403).json({ message: 'Forbidden: Staff, Admin, or Super Admin access required.' });
+};
+
+/**
+ * Frontline Staff Only
+ */
+const staffOnly = (req, res, next) => {
+    if (req.user && normalizeRole(req.user.role) === CANONICAL_ROLES.STAFF) {
+        return next();
+    }
+    return res.status(403).json({ message: 'Forbidden: Access is restricted to Staff personnel only.' });
+};
+
+/**
+ * Staff or Super Admin (legacy alias mapped to staffOrAdmin for safety)
+ */
+const staffOnlyOrSuperAdmin = (req, res, next) => {
+    return staffOrAdmin(req, res, next);
 };
 
 const lgu = (req, res, next) => {
-    if (req.user && ['partner_org', 'partner_organization', 'LGU', 'Partner Organization', 'PartnerOrganization'].includes(req.user.role)) {
-        next();
-    } else {
-        res.status(403).json({ message: 'Not authorized as a Partner Organization' });
+    if (req.user && normalizeRole(req.user.role) === CANONICAL_ROLES.PARTNER_ORG) {
+        return next();
     }
+    return res.status(403).json({ message: 'Not authorized as a Partner Organization' });
 };
 
 const collector = (req, res, next) => {
-    if (req.user && ['collector', 'Collector'].includes(req.user.role)) {
-        next();
-    } else {
-        res.status(403).json({ message: 'Not authorized as a Collector' });
+    if (req.user && normalizeRole(req.user.role) === CANONICAL_ROLES.COLLECTOR) {
+        return next();
     }
+    return res.status(403).json({ message: 'Not authorized as a Collector' });
 };
 
 const household = (req, res, next) => {
-    if (req.user && ['household', 'resident', 'Resident', 'User'].includes(req.user.role)) {
-        next();
-    } else {
-        res.status(403).json({ message: 'Not authorized as a Registered User / Household' });
+    if (req.user && normalizeRole(req.user.role) === CANONICAL_ROLES.HOUSEHOLD) {
+        return next();
     }
+    return res.status(403).json({ message: 'Not authorized as a Registered User / Household' });
 };
 
 module.exports = { 
     protect, 
     admin, 
+    superAdmin,
     staffOnly,
-    staffOnlyOrSuperAdmin, 
     staffOrAdmin, 
-    superAdmin, 
+    staffOnlyOrSuperAdmin, 
     lgu, 
     partnerOrg: lgu, 
     collector,

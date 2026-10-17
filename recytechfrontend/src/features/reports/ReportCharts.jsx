@@ -2,6 +2,7 @@
 import React from 'react';
 import styles from '../../styles/Reports.module.css';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import FilterScope from './FilterScope';
 
 const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#14B8A6'];
 const RADIAN = Math.PI / 180;
@@ -26,6 +27,7 @@ const ReportCharts = ({ weeklyTrend, summaryByWasteType }) => {
                 <div className={styles.sectionHeader}>
                     <h3 className={styles.sectionTitle}>Weekly Collection Trends</h3>
                     <p className={styles.sectionSubtext}>Total requests completed per day.</p>
+                    <FilterScope scope="trend" />
                 </div>
                 <div style={{ height: '300px' }}>
                     {weeklyTrend && weeklyTrend.length > 0 ? (
@@ -58,6 +60,7 @@ const ReportCharts = ({ weeklyTrend, summaryByWasteType }) => {
                 <div className={styles.sectionHeader}>
                     <h3 className={styles.sectionTitle}>Material Distribution</h3>
                     <p className={styles.sectionSubtext}>Breakdown by waste category.</p>
+                    <FilterScope scope="distribution" />
                 </div>
                 <div style={{ height: '300px' }}>
                     {summaryByWasteType && summaryByWasteType.length > 0 ? (

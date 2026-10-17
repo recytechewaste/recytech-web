@@ -3,6 +3,7 @@ import React from 'react';
 import styles from '../../styles/Reports.module.css';
 import { MetricSkeleton } from '../../components/Skeleton';
 import { Weight, Truck, Box, Award } from 'lucide-react';
+import FilterScope from './FilterScope';
 
 const ReportMetrics = ({ summary = {}, loading }) => {
     if (loading) {
@@ -29,6 +30,7 @@ const ReportMetrics = ({ summary = {}, loading }) => {
                 </div>
                 <h3 className={styles.kpiValue}>{totalKg} <span style={{ fontSize: '15px', fontWeight: 500, color: '#64748b' }}>kg</span></h3>
                 <p className={styles.kpiSub}>Est. weight from category benchmarks</p>
+                <FilterScope scope="volume" compact />
             </div>
 
             <div className={styles.kpiCard}>
@@ -38,6 +40,7 @@ const ReportMetrics = ({ summary = {}, loading }) => {
                 </div>
                 <h3 className={styles.kpiValue}>{completedReqs} <span style={{ fontSize: '15px', fontWeight: 400, color: '#64748b' }}>/ {totalReqs} Completed</span></h3>
                 <p className={styles.kpiSub}>{totalReqs > 0 ? `${Math.round((completedReqs / totalReqs) * 100)}% fulfillment rate` : 'No requests in period'}</p>
+                <FilterScope scope="requests" compact />
             </div>
 
             <div className={styles.kpiCard}>
@@ -46,7 +49,8 @@ const ReportMetrics = ({ summary = {}, loading }) => {
                     <Box size={20} className={styles.kpiIcon} style={{ color: '#8b5cf6' }} />
                 </div>
                 <h3 className={styles.kpiValue}>{activeBins} <span style={{ fontSize: '15px', fontWeight: 400, color: '#64748b' }}>/ {totalBins} Operational</span></h3>
-                <p className={styles.kpiSub}>Operational in network</p>
+                <p className={styles.kpiSub}>Current network status (not time-based)</p>
+                <FilterScope scope="bins" compact />
             </div>
 
             <div className={styles.kpiCard}>
@@ -56,6 +60,7 @@ const ReportMetrics = ({ summary = {}, loading }) => {
                 </div>
                 <h3 className={styles.kpiValue}>{totalPoints} <span style={{ fontSize: '15px', fontWeight: 400, color: '#64748b' }}>Pts</span></h3>
                 <p className={styles.kpiSub}>Issued for recycling</p>
+                <FilterScope scope="points" compact />
             </div>
         </div>
     );

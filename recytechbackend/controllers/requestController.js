@@ -4,6 +4,7 @@ const RecyclingCenter = require('../models/RecyclingCenter');
 const asyncHandler = require('express-async-handler');
 const { getProfileForUser, normalizeRole, CANONICAL_ROLES } = require('../utils/roleHelper');
 const { createPartnerNotification } = require('../services/notificationService');
+const { normalizeWasteCategory } = require('../utils/categoryWeights');
 
 // @desc    Get all collection requests (Role-scoped, Paginated, Filterable)
 // @route   GET /api/requests
@@ -414,6 +415,7 @@ const completeRequest = asyncHandler(async (req, res) => {
                 res.status(400);
                 throw new Error('Each item in collected waste must have category, quantity, and unit.');
             }
+            item.category = normalizeWasteCategory(item.category);
         }
         request.collectedWaste = collectedWaste;
     }

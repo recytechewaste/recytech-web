@@ -21,6 +21,7 @@ const PointHistory = lazy(() => import('./pages/PointHistory'));
 const BinNetwork = lazy(() => import('./pages/BinNetwork'));
 const BinCollectionRequests = lazy(() => import('./pages/BinCollectionRequests'));
 const SensorReports = lazy(() => import('./pages/SensorReports'));
+const AuditLogs = lazy(() => import('./pages/AuditLogs'));
 const Unauthorized = lazy(() => import('./pages/Unauthorized'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -95,7 +96,7 @@ function App() {
           <Route 
             path="/reward-points" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Super Admin']}>
                 <RewardPointManager />
               </ProtectedRoute>
             } 
@@ -112,7 +113,7 @@ function App() {
           <Route 
             path="/transactions" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
                 <PointHistory />
               </ProtectedRoute>
             } 
@@ -120,7 +121,7 @@ function App() {
           <Route 
             path="/bin-network" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
                 <BinNetwork />
               </ProtectedRoute>
             } 
@@ -128,7 +129,7 @@ function App() {
           <Route 
             path="/bin-collection-requests" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
                 <BinCollectionRequests />
               </ProtectedRoute>
             } 
@@ -136,7 +137,7 @@ function App() {
           <Route 
             path="/sensor-issues" 
             element={
-              <ProtectedRoute allowedRoles={['Staff']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
                 <SensorReports />
               </ProtectedRoute>
             } 
@@ -169,6 +170,10 @@ function App() {
             element={<ProtectedRoute allowedRoles={['Admin', 'Super Admin']}><ResidentManagement /></ProtectedRoute>} 
           />
           <Route path="/registered-users" element={<Navigate to="/residents" replace />} />
+          <Route 
+            path="/audit-logs" 
+            element={<ProtectedRoute allowedRoles={['Admin', 'Super Admin']}><AuditLogs /></ProtectedRoute>} 
+          />
 
           {/* Catch-all 404 Route */}
           <Route path="*" element={<NotFound />} />

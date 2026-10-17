@@ -7,6 +7,8 @@ const bcrypt = require('bcryptjs');
 const { AUTH_CONSTANTS } = require('../config/constants');
 const { sendPinEmail } = require('../services/emailService');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { assertUniqueCollectorFields, formatPlateForStorage } = require('../utils/collectorUniqueness');
+const { logAuditEvent } = require('../utils/auditLogger');
 
 const generateToken = (res, id) => {
     const token = jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: AUTH_CONSTANTS.JWT_EXPIRES_IN });
@@ -43,6 +45,17 @@ const loginUser = asyncHandler(async (req, res) => {
         user.lastLogin = new Date();
         await user.save();
         const token = generateToken(res, user._id);
+
+        if (['Admin', 'Super Admin', 'Staff'].includes(user.role)) {
+            await logAuditEvent({
+                req,
+                action: 'USER_LOGIN',
+                actionCategory: 'SECURITY',
+                actor: user,
+                targetEntity: { entityType: 'User', entityId: user._id.toString(), name: `${user.firstName} ${user.lastName}` },
+                details: { role: user.role }
+            });
+        }
 
         // Lookup linked domain profile ID
         let profileId = null;
@@ -140,6 +153,11 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new Error('User with this email already exists');
     }
 
+    // Collectors must have a unique phone number and vehicle plate
+    if (canonicalRole === 'collector') {
+        await assertUniqueCollectorFields({ phone: phone || contactNumber, vehiclePlate }, res);
+    }
+
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -210,7 +228,7 @@ const registerUser = asyncHandler(async (req, res) => {
                 lastName: userLastName,
                 phone: contactPhone || 'Not Provided',
                 vehicleType: vehicleType || 'Not Assigned',
-                vehiclePlate: vehiclePlate || 'Not Assigned',
+                vehiclePlate: formatPlateForStorage(vehiclePlate),
                 status: 'Active'
             });
         }

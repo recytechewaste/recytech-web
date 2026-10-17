@@ -7,8 +7,8 @@ const Request = require('../models/Request');
 const { LguAccount } = require('../models/PartnerOrganization');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { calculatePointsAwarded } = require('../utils/calculatePoints');
-const { linearRegression, seasonalDecomposition, statisticalSummary, detectOutliers, holtExponentialSmoothing } = require('../utils/predictiveAnalytics');
-const { getEstimatedWeight, getMongoCategoryWeightExpr } = require('../utils/categoryWeights');
+const { linearRegression, seasonalDecomposition, statisticalSummary, detectOutliers, holtExponentialSmoothing, calculateModelAccuracy } = require('../utils/predictiveAnalytics');
+const { getEstimatedWeight, getMongoCategoryWeightExpr, getMongoCanonicalCategoryExpr, normalizeWasteCategory, CANONICAL_CATEGORIES } = require('../utils/categoryWeights');
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -19,14 +19,21 @@ const getCombinedWasteTypeBreakdown = async (matchQueryBin = {}, matchQueryReque
     const [binBreakdown, reqBreakdown] = await Promise.all([
         BinDropoff.aggregate([
             ...(Object.keys(matchQueryBin).length > 0 ? [{ $match: matchQueryBin }] : []),
-            { $group: { _id: '$wasteType', count: { $sum: 1 }, totalKg: { $sum: getMongoCategoryWeightExpr('$wasteType', '$kilograms') }, totalPoints: { $sum: '$pointsAwarded' } } }
+            {
+                $group: {
+                    _id: getMongoCanonicalCategoryExpr('$wasteType'),
+                    count: { $sum: 1 },
+                    totalKg: { $sum: getMongoCategoryWeightExpr('$wasteType', '$kilograms') },
+                    totalPoints: { $sum: '$pointsAwarded' }
+                }
+            }
         ]),
         Request.aggregate([
             { $match: { status: { $in: ['completed', 'Completed'] }, ...matchQueryRequest } },
             { $unwind: { path: '$collectedWaste', preserveNullAndEmptyArrays: false } },
             {
                 $group: {
-                    _id: '$collectedWaste.category',
+                    _id: getMongoCanonicalCategoryExpr('$collectedWaste.category'),
                     count: { $sum: 1 },
                     totalKg: { $sum: getMongoCategoryWeightExpr('$collectedWaste.category', '$collectedWaste.quantity') },
                     totalPoints: { $sum: 0 }
@@ -143,7 +150,8 @@ const getDropoffSummary = async () => {
 const getMonthlyDropoffTrends = async () => {
     const targetYear = new Date().getFullYear();
     const start = new Date(targetYear, 0, 1);
-    const end = new Date(targetYear + 1, 0, 1);
+    // Upper bound is "now" (not next Jan 1) so future-dated records are never counted
+    const end = new Date();
 
     const [dropoffTrends, requestTrends] = await Promise.all([
         BinDropoff.aggregate([
@@ -210,7 +218,8 @@ const getMonthlyDropoffTrends = async () => {
 
 const getDropoffPredictiveAnalytics = async () => {
     const start = new Date(new Date().getFullYear() - 1, 0, 1);
-    const end = new Date(new Date().getFullYear() + 1, 0, 1);
+    // Upper bound is "now" so future-dated records cannot distort the forecast
+    const end = new Date();
 
     const [monthlyDropoffs, monthlyRequests] = await Promise.all([
         BinDropoff.aggregate([
@@ -285,6 +294,17 @@ const getDropoffPredictiveAnalytics = async () => {
             statisticalSummary: { mean: 0, median: 0, mode: 0, min: 0, max: 0, stdDev: 0 },
             outliers: [],
             predictions: [],
+            modelEvaluation: {
+                accuracyPercentage: 0,
+                mape: 0,
+                rmse: 0,
+                mae: 0,
+                rSquared: 0,
+                evalMethod: 'No historical data available for backtesting',
+                modelName: "Holt's Double Exponential Smoothing",
+                testPoints: 0,
+                backtestDetails: []
+            },
             insights: { trendDirection: 'Stable', seasonalityDetected: false, outlierCount: 0, predictionConfidence: 0 }
         };
     }
@@ -292,11 +312,13 @@ const getDropoffPredictiveAnalytics = async () => {
     const dropoffData = monthlyData.map((item, index) => ({ x: index, y: item.dropoffs }));
     const dropoffRegression = linearRegression(dropoffData);
     const dropoffValues = monthlyData.map(item => item.dropoffs);
+    const monthLabels = monthlyData.map(item => `${MONTHS[item._id.month - 1] || item._id.month} ${item._id.year}`);
     const seasonalAnalysis = seasonalDecomposition(dropoffValues, 12);
     const stats = statisticalSummary(dropoffValues);
     const outliers = detectOutliers(dropoffValues);
 
     const holt = holtExponentialSmoothing(dropoffValues, 0.3, 0.2);
+    const modelEvaluation = calculateModelAccuracy(dropoffValues, monthLabels, 0.3, 0.2);
 
     const predictions = [];
     for (let i = 1; i <= 3; i++) {
@@ -306,7 +328,7 @@ const getDropoffPredictiveAnalytics = async () => {
             predictedDropoffs: ci.point,
             lowerBound: ci.lower,
             upperBound: ci.upper,
-            confidence: Math.round(dropoffRegression.rSquared * 100)
+            confidence: modelEvaluation.accuracyPercentage
         });
     }
 
@@ -329,11 +351,12 @@ const getDropoffPredictiveAnalytics = async () => {
             deviation: Math.abs(dropoffValues[index] - stats.mean)
         })),
         predictions,
+        modelEvaluation,
         insights: {
             trendDirection,
             seasonalityDetected: seasonalAnalysis.seasonal.some(index => Math.abs(index) > stats.stdDev * 0.5),
             outlierCount: outliers.length,
-            predictionConfidence: Math.min(95, Math.max(30, Math.round(dropoffRegression.rSquared * 100 || (dropoffValues.length >= 3 ? 75 : 40))))
+            predictionConfidence: modelEvaluation.accuracyPercentage
         }
     };
 };
@@ -360,7 +383,7 @@ const getRecentDropoffs = async () => {
             if (calc.success) pts += calc.points;
         }
         const totalKg = (r.collectedWaste || []).reduce((sum, w) => sum + getEstimatedWeight(w.category, w.quantity || 1), 0);
-        const wasteType = (r.collectedWaste || []).map(w => w.category).join(', ') || 'General E-Waste';
+        const wasteType = (r.collectedWaste || []).map(w => normalizeWasteCategory(w.category)).join(', ') || 'General E-Waste';
         const partnerName = r.lgu?.name || 'Partner Org';
         const collectorName = r.assignedCollector ? `${r.assignedCollector.firstName} ${r.assignedCollector.lastName}` : '';
         const participantName = collectorName ? `${partnerName} (${collectorName})` : partnerName;
@@ -375,7 +398,12 @@ const getRecentDropoffs = async () => {
         };
     }));
 
-    const combined = [...binDropoffs, ...normalizedRequests];
+    const normalizedBinDropoffs = binDropoffs.map(b => ({
+        ...b,
+        wasteType: normalizeWasteCategory(b.wasteType)
+    }));
+
+    const combined = [...normalizedBinDropoffs, ...normalizedRequests];
     combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     return combined.slice(0, 10);
 };
@@ -439,20 +467,22 @@ const getPredictiveAnalyticsData = asyncHandler(async (req, res) => {
 const getReportData = asyncHandler(async (req, res) => {
     const { timeframe = 'month', wasteType, lguId } = req.query;
 
-    let dateFilter = {};
     const now = new Date();
+    // Every range is capped at "now" ($lte) so future-dated records are excluded
+    let dateFilter = { $lte: now };
 
     if (timeframe === 'week') {
-        dateFilter = { $gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) };
+        dateFilter = { $gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), $lte: now };
     } else if (timeframe === 'month') {
-        dateFilter = { $gte: new Date(now.getFullYear(), now.getMonth(), 1) };
+        dateFilter = { $gte: new Date(now.getFullYear(), now.getMonth(), 1), $lte: now };
     } else if (timeframe === 'year') {
-        dateFilter = { $gte: new Date(now.getFullYear(), 0, 1) };
+        dateFilter = { $gte: new Date(now.getFullYear(), 0, 1), $lte: now };
     }
 
     let matchQuery = { createdAt: dateFilter };
-    if (wasteType && wasteType !== 'All') {
-        matchQuery.wasteType = wasteType;
+    const canonicalFilter = (wasteType && wasteType !== 'All') ? normalizeWasteCategory(wasteType) : null;
+    if (canonicalFilter) {
+        matchQuery.$expr = { $eq: [getMongoCanonicalCategoryExpr('$wasteType'), canonicalFilter] };
     }
 
     // LGU-specific filtering: restrict to bins belonging to the selected LGU
@@ -561,13 +591,13 @@ const getReportData = asyncHandler(async (req, res) => {
     const totalCompletedEvents = (report.completedDropoffs || 0) + totalCompletedReq;
     const successRate = totalDropoffs > 0 ? Math.round((totalCompletedEvents / totalDropoffs) * 100) : 0;
 
-    // Summary by Waste Type
+    // Summary by Waste Type (collapses any duplicate labels into canonical categories)
     const [binWasteBreakdown, reqWasteBreakdown] = await Promise.all([
         BinDropoff.aggregate([
             { $match: matchQuery },
             {
                 $group: {
-                    _id: '$wasteType',
+                    _id: getMongoCanonicalCategoryExpr('$wasteType'),
                     count: { $sum: 1 },
                     totalKg: { $sum: getMongoCategoryWeightExpr('$wasteType', '$kilograms') },
                     totalPoints: { $sum: '$pointsAwarded' }
@@ -578,10 +608,10 @@ const getReportData = asyncHandler(async (req, res) => {
         Request.aggregate([
             { $match: completedRequestMatch },
             { $unwind: { path: '$collectedWaste', preserveNullAndEmptyArrays: false } },
-            ...(wasteType && wasteType !== 'All' ? [{ $match: { 'collectedWaste.category': wasteType } }] : []),
+            ...(canonicalFilter ? [{ $match: { $expr: { $eq: [getMongoCanonicalCategoryExpr('$collectedWaste.category'), canonicalFilter] } } }] : []),
             {
                 $group: {
-                    _id: '$collectedWaste.category',
+                    _id: getMongoCanonicalCategoryExpr('$collectedWaste.category'),
                     count: { $sum: 1 },
                     totalKg: { $sum: getMongoCategoryWeightExpr('$collectedWaste.category', '$collectedWaste.quantity') },
                     totalPoints: { $sum: 0 }
@@ -619,7 +649,12 @@ const getReportData = asyncHandler(async (req, res) => {
             { $sort: { _id: 1 } }
         ]),
         Request.aggregate([
-            { $match: completedRequestMatch },
+            {
+                $match: {
+                    ...completedRequestMatch,
+                    ...(canonicalFilter ? { $expr: { $eq: [getMongoCanonicalCategoryExpr('$collectedWaste.category'), canonicalFilter] } } : {})
+                }
+            },
             {
                 $group: {
                     _id: {
@@ -651,6 +686,7 @@ const getReportData = asyncHandler(async (req, res) => {
     let reqPointsSum = 0;
     for (const r of completedReqs) {
         for (const w of (r.collectedWaste || [])) {
+            if (canonicalFilter && normalizeWasteCategory(w.category) !== canonicalFilter) continue;
             const calc = await calculatePointsAwarded(w.category, w.quantity || 1);
             if (calc.success) reqPointsSum += calc.points;
         }

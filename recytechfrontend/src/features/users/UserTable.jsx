@@ -1,61 +1,126 @@
 import Skeleton from '../../components/Skeleton';
 import EmptyState from '../../components/EmptyState';
-import { Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, Shield, ShieldCheck, User as UserIcon } from 'lucide-react';
 import styles from '../../styles/UserManagement.module.css';
 
-const UserTableRow = ({ user, index, page, limit, onEdit, onDelete }) => (
-    <tr>
-        <td className={styles.td}>{(page - 1) * limit + index + 1}</td>
-        <td className={styles.td}>
-            <div className={styles.userCell}>
-                <div className={styles.avatar}>
-                    {user.firstName ? user.firstName.charAt(0).toUpperCase() : '?'}
-                </div>
-                <div className={styles.userInfo}>
-                    <span className={styles.userName}>{`${user.firstName} ${user.lastName}`.trim() || "Unknown"}</span>
-                    <span className={styles.userId}>ID: {user._id ? `USR-${user._id.substring(user._id.length - 4)}` : 'N/A'}</span>
-                </div>
-            </div>
-        </td>
-        <td className={styles.td}>{user.email}</td>
-        <td className={styles.td}>{user.role || 'Staff'}</td>
-        <td className={styles.td}>
-            <span className={user.status === 'Active' ? styles.statusActive : styles.statusInactive}>
-                {user.status || 'Active'}
+const renderRoleBadge = (role) => {
+    const r = (role || 'Staff').toString().trim();
+    if (['Super Admin', 'super_admin', 'superadmin'].includes(r)) {
+        return (
+            <span className={styles.roleBadgeSuperAdmin} title="System Super Administrator">
+                <Shield size={12} /> Super Admin
             </span>
-        </td>
-        <td className={styles.td}>
-            {user.lastLogin ? (
-                <div style={{display: 'flex', flexDirection: 'column'}}>
-                    <span>{new Date(user.lastLogin).toLocaleDateString()}</span>
-                    <span style={{fontSize: '11px', color: '#6b7280'}}>{new Date(user.lastLogin).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+        );
+    }
+    if (['Admin', 'admin'].includes(r)) {
+        return (
+            <span className={styles.roleBadgeAdmin} title="Operations Administrator">
+                <ShieldCheck size={12} /> Admin
+            </span>
+        );
+    }
+    if (['Staff', 'staff'].includes(r)) {
+        return (
+            <span className={styles.roleBadgeStaff} title="Frontline Staff">
+                <UserIcon size={12} /> Staff
+            </span>
+        );
+    }
+    return (
+        <span className={styles.roleBadgeOther}>
+            {r}
+        </span>
+    );
+};
+
+const UserTableRow = ({ user, index, page, limit, onEdit, onDelete, currentUserRole, currentUserId }) => {
+    const isSuperAdminUser = ['Super Admin', 'super_admin', 'superadmin'].includes(user.role);
+    const isAdminUser = ['Admin', 'admin'].includes(user.role);
+    const isSelf = currentUserId && user._id && currentUserId.toString() === user._id.toString();
+
+    // Permission enforcement:
+    // Standard Admins cannot edit/delete Super Admins or other Admins
+    const isRequesterSuperAdmin = ['Super Admin', 'super_admin', 'superadmin'].includes(currentUserRole);
+    const canEdit = isRequesterSuperAdmin || (!isSuperAdminUser && (!isAdminUser || isSelf));
+    const canDelete = !isSelf && (isRequesterSuperAdmin ? true : (!isSuperAdminUser && !isAdminUser));
+
+    return (
+        <tr>
+            <td className={styles.td}>{(page - 1) * limit + index + 1}</td>
+            <td className={styles.td}>
+                <div className={styles.userCell}>
+                    <div className={styles.avatar}>
+                        {user.firstName ? user.firstName.charAt(0).toUpperCase() : '?'}
+                    </div>
+                    <div className={styles.userInfo}>
+                        <span className={styles.userName}>{`${user.firstName} ${user.lastName}`.trim() || "Unknown"}</span>
+                        <span className={styles.userId}>ID: {user._id ? `USR-${user._id.substring(user._id.length - 4)}` : 'N/A'}</span>
+                    </div>
                 </div>
-            ) : (
-                <span style={{color: '#9ca3af', fontStyle: 'italic'}}>Never</span>
-            )}
-        </td>
-        <td className={styles.td}>
-            <div className={styles.actionIcons}>
-                <button
-                    title="Edit user"
-                    aria-label={`Edit user ${user.firstName} ${user.lastName}`}
-                    className={styles.iconBtn}
-                    onClick={() => onEdit(user)}
-                >
-                    <Edit2 size={16}/>
-                </button>
-                <button
-                    title="Delete user"
-                    aria-label={`Delete user ${user.firstName} ${user.lastName}`}
-                    className={styles.iconBtnDanger}
-                    onClick={() => onDelete(user._id)}
-                >
-                    <Trash2 size={16}/>
-                </button>
-            </div>
-        </td>
-    </tr>
-);
+            </td>
+            <td className={styles.td}>{user.email}</td>
+            <td className={styles.td}>{renderRoleBadge(user.role)}</td>
+            <td className={styles.td}>
+                <span className={user.status === 'Active' ? styles.statusActive : styles.statusInactive}>
+                    {user.status || 'Active'}
+                </span>
+            </td>
+            <td className={styles.td}>
+                {user.lastLogin ? (
+                    <div style={{display: 'flex', flexDirection: 'column'}}>
+                        <span>{new Date(user.lastLogin).toLocaleDateString()}</span>
+                        <span style={{fontSize: '11px', color: '#6b7280'}}>{new Date(user.lastLogin).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    </div>
+                ) : (
+                    <span style={{color: '#9ca3af', fontStyle: 'italic'}}>Never</span>
+                )}
+            </td>
+            <td className={styles.td}>
+                <div className={styles.actionIcons}>
+                    {canEdit ? (
+                        <button
+                            title="Edit user"
+                            aria-label={`Edit user ${user.firstName} ${user.lastName}`}
+                            className={styles.iconBtn}
+                            onClick={() => onEdit(user)}
+                        >
+                            <Edit2 size={16}/>
+                        </button>
+                    ) : (
+                        <button
+                            disabled
+                            title="Protected account: requires Super Administrator access"
+                            aria-label="Cannot edit this account"
+                            className={styles.disabledIconBtn}
+                        >
+                            <Edit2 size={16}/>
+                        </button>
+                    )}
+
+                    {canDelete ? (
+                        <button
+                            title="Deactivate user"
+                            aria-label={`Deactivate user ${user.firstName} ${user.lastName}`}
+                            className={styles.iconBtnDanger}
+                            onClick={() => onDelete(user._id)}
+                        >
+                            <Trash2 size={16}/>
+                        </button>
+                    ) : (
+                        <button
+                            disabled
+                            title={isSelf ? "You cannot deactivate your own account" : "Protected account: requires Super Administrator access"}
+                            aria-label="Cannot deactivate this account"
+                            className={styles.disabledIconBtn}
+                        >
+                            <Trash2 size={16}/>
+                        </button>
+                    )}
+                </div>
+            </td>
+        </tr>
+    );
+};
 
 const SkeletonRow = () => (
     <tr>
@@ -78,17 +143,21 @@ const SkeletonRow = () => (
                 <Skeleton width="50px" height="12px" />
             </div>
         </td>
-        <td className={styles.td}>
-            <div className={styles.actionIcons}>
-                <Skeleton width="28px" height="28px" borderRadius="4px" />
-                <Skeleton width="28px" height="28px" borderRadius="4px" />
-            </div>
-        </td>
+        <td className={styles.td}><Skeleton width="70px" height="32px" /></td>
     </tr>
 );
 
-
 const UserTable = ({ users, loading, page, limit, onEdit, onDelete }) => {
+    let currentUserRole = '';
+    let currentUserId = '';
+    try {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        currentUserRole = userInfo.role || '';
+        currentUserId = userInfo._id || userInfo.id || '';
+    } catch {
+        // Fallback
+    }
+
     return (
         <div className={styles.card}>
             <table className={styles.table}>
@@ -126,6 +195,8 @@ const UserTable = ({ users, loading, page, limit, onEdit, onDelete }) => {
                                 limit={limit}
                                 onEdit={onEdit}
                                 onDelete={onDelete}
+                                currentUserRole={currentUserRole}
+                                currentUserId={currentUserId}
                             />
                         ))
                     )}

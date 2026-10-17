@@ -5,6 +5,7 @@ const Transaction = require('../models/Transaction');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { calculatePointsAwarded } = require('../utils/calculatePoints');
 const { getProfileForUser, normalizeRole, CANONICAL_ROLES } = require('../utils/roleHelper');
+const { normalizeWasteCategory } = require('../utils/categoryWeights');
 const mongoose = require('mongoose');
 
 // Helper to resolve bin by ObjectId, qrCode, or name
@@ -45,6 +46,7 @@ const createDropoff = asyncHandler(async (req, res) => {
         throw new Error('wasteType (e-waste category) is required');
     }
 
+    const canonicalWasteType = normalizeWasteCategory(wasteType);
     const count = Number(quantity || kilograms || 1);
 
     const { resolvedBinId, matchedBin } = await resolveBinFromInput(binId, qrCode);
@@ -81,7 +83,7 @@ const createDropoff = asyncHandler(async (req, res) => {
         binId: resolvedBinId,
         participantEmail: email,
         participantName: name,
-        wasteType: wasteType.trim(),
+        wasteType: canonicalWasteType,
         kilograms: count,
         quantity: count,
         image: image || '',
@@ -118,6 +120,7 @@ const createPublicDropoff = asyncHandler(async (req, res) => {
         throw new Error('wasteType is required');
     }
 
+    const canonicalWasteType = normalizeWasteCategory(wasteType);
     const count = Number(quantity || kilograms || 1);
     const { resolvedBinId, matchedBin } = await resolveBinFromInput(binId, qrCode);
 
@@ -140,7 +143,7 @@ const createPublicDropoff = asyncHandler(async (req, res) => {
         binId: resolvedBinId,
         participantEmail: participantEmail || '',
         participantName: participantName || '',
-        wasteType: wasteType.trim(),
+        wasteType: canonicalWasteType,
         kilograms: count,
         quantity: count,
         image: image || '',
