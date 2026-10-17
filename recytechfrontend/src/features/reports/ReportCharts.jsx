@@ -3,6 +3,7 @@ import React from 'react';
 import styles from '../../styles/Reports.module.css';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import FilterScope from './FilterScope';
+import InfoTooltip from '../../components/InfoTooltip';
 
 const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#14B8A6'];
 const RADIAN = Math.PI / 180;
@@ -25,7 +26,15 @@ const ReportCharts = ({ weeklyTrend, summaryByWasteType }) => {
             {/* Weekly Trends Chart */}
             <div className={styles.chartCard}>
                 <div className={styles.sectionHeader}>
-                    <h3 className={styles.sectionTitle}>Weekly Collection Trends</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h3 className={styles.sectionTitle}>Weekly Collection Trends</h3>
+                        <InfoTooltip
+                            title="Daily Pickup Velocity"
+                            content="Tracks completed collection requests per day to monitor collector throughput and identify peak disposal days."
+                            position="bottom"
+                            width={260}
+                        />
+                    </div>
                     <p className={styles.sectionSubtext}>Total requests completed per day.</p>
                     <FilterScope scope="trend" />
                 </div>
@@ -58,7 +67,15 @@ const ReportCharts = ({ weeklyTrend, summaryByWasteType }) => {
             {/* Material Distribution Chart */}
             <div className={styles.chartCard}>
                 <div className={styles.sectionHeader}>
-                    <h3 className={styles.sectionTitle}>Material Distribution</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h3 className={styles.sectionTitle}>Material Distribution</h3>
+                        <InfoTooltip
+                            title="Waste Composition"
+                            content="Percentage share of each canonical e-waste category within the selected period to inform specialized recycling operations."
+                            position="bottom"
+                            width={260}
+                        />
+                    </div>
                     <p className={styles.sectionSubtext}>Breakdown by waste category.</p>
                     <FilterScope scope="distribution" />
                 </div>

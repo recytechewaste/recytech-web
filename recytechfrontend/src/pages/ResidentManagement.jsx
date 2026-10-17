@@ -9,6 +9,7 @@ import Pagination from '../components/Pagination';
 import styles from '../styles/Collectors.module.css';
 import rpStyles from '../styles/RewardPointManager.module.css';
 import { useResidents } from '../features/residents/useResidents';
+import InfoTooltip from '../components/InfoTooltip';
 
 const ResidentManagement = () => {
     const {
@@ -55,7 +56,15 @@ const ResidentManagement = () => {
                 {/* ── Header ── */}
                 <header className={styles.header}>
                     <div className={styles.titleGroup}>
-                        <h1 className={styles.pageTitle}>Registered Users</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <h1 className={styles.pageTitle}>Registered Users</h1>
+                            <InfoTooltip
+                                title="Community Resident Registry"
+                                content="Central directory of registered community members eligible to deposit e-waste, accumulate reward points, and schedule collections."
+                                position="bottom"
+                                width={270}
+                            />
+                        </div>
                         <p className={styles.subTitle}>Manage and monitor registered community residents and account statuses.</p>
                     </div>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -78,7 +87,15 @@ const ResidentManagement = () => {
                         </div>
                         <div>
                             <p className={rpStyles.statValue}>{stats.total}</p>
-                            <p className={rpStyles.statLabel}>Total Residents</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <p className={rpStyles.statLabel}>Total Residents</p>
+                                <InfoTooltip
+                                    title="Total Enrolled Citizens"
+                                    content="Total citizen user accounts registered in the RecyTech ecosystem across web and mobile."
+                                    position="top"
+                                    width={240}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -88,7 +105,15 @@ const ResidentManagement = () => {
                         </div>
                         <div>
                             <p className={rpStyles.statValue}>{stats.active}</p>
-                            <p className={rpStyles.statLabel}>Active Accounts</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <p className={rpStyles.statLabel}>Active Accounts</p>
+                                <InfoTooltip
+                                    title="Verified & Active"
+                                    content="Residents in good standing who can deposit recyclables, receive live points, and request pickups."
+                                    position="top"
+                                    width={250}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -98,7 +123,15 @@ const ResidentManagement = () => {
                         </div>
                         <div>
                             <p className={rpStyles.statValue}>{stats.inactive}</p>
-                            <p className={rpStyles.statLabel}>Inactive Accounts</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <p className={rpStyles.statLabel}>Inactive Accounts</p>
+                                <InfoTooltip
+                                    title="Restricted Accounts"
+                                    content="Deactivated or suspended user profiles restricted from submitting collection tickets or point redemptions."
+                                    position="top"
+                                    width={250}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

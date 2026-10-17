@@ -7,6 +7,7 @@ import SensorReportModal from '../features/sensorReports/SensorReportModal';
 import Pagination from '../components/Pagination';
 import styles from '../styles/SensorReports.module.css';
 import { useSensorReports } from '../features/sensorReports/useSensorReports';
+import InfoTooltip from '../components/InfoTooltip';
 
 const SensorReports = () => {
     const {
@@ -44,7 +45,15 @@ const SensorReports = () => {
                 {/* ── Page Header ── */}
                 <header className={styles.header}>
                     <div className={styles.titleGroup}>
-                        <h1 className={styles.pageTitle}>Sensor Incident Reports</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <h1 className={styles.pageTitle}>Sensor Incident Reports</h1>
+                            <InfoTooltip
+                                title="Hardware Telemetry & Maintenance"
+                                content="Tracks Time-of-Flight (ToF) and ultrasonic distance sensor faults reported by partner facilities or detected via telemetry drift."
+                                position="bottom"
+                                width={280}
+                            />
+                        </div>
                         <p className={styles.subTitle}>
                             Review and resolve Time-of-Flight (ToF) fullness sensor malfunctions and bin hardware damage reported by Partner Organizations.
                         </p>
@@ -69,7 +78,15 @@ const SensorReports = () => {
                         </div>
                         <div>
                             <p className={styles.statValue}>{stats.total}</p>
-                            <p className={styles.statLabel}>Total Incidents</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <p className={styles.statLabel}>Total Incidents</p>
+                                <InfoTooltip
+                                    title="Total Incident Reports"
+                                    content="Cumulative sensor, telemetry, or physical damage incident tickets logged across all connected smart bins."
+                                    position="top"
+                                    width={250}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -79,7 +96,15 @@ const SensorReports = () => {
                         </div>
                         <div>
                             <p className={styles.statValue} style={{ color: '#d97706' }}>{stats.pending}</p>
-                            <p className={styles.statLabel}>Pending Investigation</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <p className={styles.statLabel}>Pending Investigation</p>
+                                <InfoTooltip
+                                    title="Pending Triage"
+                                    content="Newly submitted tickets awaiting inspection by technical operations or automated diagnostic verification."
+                                    position="top"
+                                    width={250}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -89,7 +114,15 @@ const SensorReports = () => {
                         </div>
                         <div>
                             <p className={styles.statValue} style={{ color: '#2563eb' }}>{stats.inProgress}</p>
-                            <p className={styles.statLabel}>In Progress (Dispatched)</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <p className={styles.statLabel}>In Progress (Dispatched)</p>
+                                <InfoTooltip
+                                    title="Active Field Work"
+                                    content="Tickets where field technicians or maintenance contractors have been dispatched for on-site repair or sensor replacement."
+                                    position="top"
+                                    width={260}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -99,7 +132,15 @@ const SensorReports = () => {
                         </div>
                         <div>
                             <p className={styles.statValue} style={{ color: '#059669' }}>{stats.resolved}</p>
-                            <p className={styles.statLabel}>Resolved Incidents</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <p className={styles.statLabel}>Resolved Incidents</p>
+                                <InfoTooltip
+                                    title="Resolved & Verified"
+                                    content="Hardware faults successfully repaired, recalibrated, and verified streaming accurate fullness levels."
+                                    position="top"
+                                    width={250}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

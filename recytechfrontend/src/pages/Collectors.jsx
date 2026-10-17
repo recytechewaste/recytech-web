@@ -11,6 +11,7 @@ import Skeleton from '../components/Skeleton';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import Pagination from '../components/Pagination';
+import InfoTooltip from '../components/InfoTooltip';
 
 const Collectors = () => {
     const { 
@@ -173,8 +174,28 @@ const Collectors = () => {
                                 <th className={styles.th} style={{width:'50px'}}>#</th>
                                 <th className={styles.th}>Driver Name</th>
                                 <th className={styles.th}>Contact Info</th>
-                                <th className={styles.th}>Vehicle Plate</th>
-                                <th className={styles.th}>Status</th>
+                                <th className={styles.th}>
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                        <span>Vehicle Plate</span>
+                                        <InfoTooltip
+                                            title="Authorized Transport Plate"
+                                            content="Standardized vehicle license plate registered for authorized e-waste pickup and route manifest compliance."
+                                            position="top"
+                                            width={250}
+                                        />
+                                    </div>
+                                </th>
+                                <th className={styles.th}>
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                        <span>Status</span>
+                                        <InfoTooltip
+                                            title="Driver Active Status"
+                                            content="Active collectors are eligible to receive automated dispatch alerts and accept pickup jobs."
+                                            position="top"
+                                            width={240}
+                                        />
+                                    </div>
+                                </th>
                                 {canManage && <th className={styles.th}>Actions</th>}
                             </tr>
                         </thead>

@@ -3,6 +3,7 @@ import { Edit2, Trash2, Box, Eye } from 'lucide-react';
 import styles from '../../styles/Collectors.module.css';
 import Skeleton from '../../components/Skeleton';
 import AssignedBinsModal from './AssignedBinsModal';
+import InfoTooltip from '../../components/InfoTooltip';
 
 const PartnerOrgTableRow = ({ lgu, index, page, limit, onEdit, onDelete, onViewBins, canManage }) => {
     const bins = lgu.assignedBins || [];
@@ -106,8 +107,28 @@ const PartnerOrgTable = ({ lgus, loading, page, limit, onEdit, onDelete, canMana
                             <th className={styles.th}>Partner Organization Name</th>
                             <th className={styles.th}>Contact Person</th>
                             <th className={styles.th}>Email</th>
-                            <th className={styles.th}>Assigned Bins</th>
-                            <th className={styles.th}>Status</th>
+                            <th className={styles.th}>
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                    <span>Assigned Bins</span>
+                                    <InfoTooltip
+                                        title="Assigned IoT Bins"
+                                        content="Number of physical IoT smart e-waste drop-off bins deployed on-site at this partner facility."
+                                        position="top"
+                                        width={240}
+                                    />
+                                </div>
+                            </th>
+                            <th className={styles.th}>
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                    <span>Status</span>
+                                    <InfoTooltip
+                                        title="Partner Operational Status"
+                                        content="Active partners have live access to bin fullness dashboards and sensor issue reporting."
+                                        position="top"
+                                        width={240}
+                                    />
+                                </div>
+                            </th>
                             {canManage && <th className={styles.th}>Actions</th>}
                         </tr>
                     </thead>

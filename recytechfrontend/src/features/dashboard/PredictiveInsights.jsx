@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { BarChart3, Info, TrendingUp, TrendingDown, Minus, AlertTriangle, Lightbulb, Database, CalendarClock, Calculator } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Minus, AlertTriangle, Lightbulb, Database, CalendarClock, Calculator } from 'lucide-react';
 import styles from '../../styles/Dashboard.module.css';
 import ModelEvidenceModal from './ModelEvidenceModal';
+import InfoTooltip from '../../components/InfoTooltip';
 
 /**
  * Generates human-readable action prompts from raw predictive analytics data.
@@ -109,7 +110,6 @@ const getDataSufficiency = (predictiveInsights) => {
 };
 
 const PredictiveInsights = ({ predictiveInsights = {} }) => {
-    const [showTooltip, setShowTooltip] = useState(false);
     const [showEvidenceModal, setShowEvidenceModal] = useState(false);
     const insights = predictiveInsights.insights || {};
     const actionInsights = generateActionInsights(predictiveInsights);
@@ -186,18 +186,14 @@ const PredictiveInsights = ({ predictiveInsights = {} }) => {
                 {/* Forecast Snapshot */}
                 <div className={styles.forecastCard}>
                     <div className={styles.chartCardHeader}>
-                        <h3 className={styles.chartTitle}>Forecast Snapshot</h3>
-                        <div
-                            style={{ position: 'relative', cursor: 'help', color: '#9CA3AF', display: 'flex' }}
-                            onMouseEnter={() => setShowTooltip(true)}
-                            onMouseLeave={() => setShowTooltip(false)}
-                        >
-                            <Info size={18} />
-                            {showTooltip && (
-                                <div className={styles.tooltip}>
-                                    Uses historical collection request data to predict future volume trends. High confidence means the data follows a clear pattern.
-                                </div>
-                            )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <h3 className={styles.chartTitle}>Forecast Snapshot</h3>
+                            <InfoTooltip
+                                title="Predictive Forecasting"
+                                content="Uses historical collection request data and Holt's Double Exponential Smoothing to project anticipated pickup demand over the next 3 months."
+                                position="bottom"
+                                width={260}
+                            />
                         </div>
                     </div>
                     <BarChart3 size={40} color="#2563EB" style={{ margin: '12px 0 8px' }} />
