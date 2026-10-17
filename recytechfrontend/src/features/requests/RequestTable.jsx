@@ -99,7 +99,7 @@ const RequestTable = ({ requests, loading, limit, onSelectRequest }) => {
                 <InfoTooltip
                   title="Dispatch Lifecycle"
                   content="Tracks collection lifecycle from dispatch (Pending/Assigned) to route progress (In Transit/Arrived) and resolution (Completed/Cancelled)."
-                  position="top"
+                  position="bottom"
                   width={270}
                 />
               </div>
@@ -110,7 +110,7 @@ const RequestTable = ({ requests, loading, limit, onSelectRequest }) => {
                 <InfoTooltip
                   title="Field Logistics Personnel"
                   content="Designated collector driver or collection personnel responsible for servicing the bin location."
-                  position="top"
+                  position="bottom"
                   width={240}
                 />
               </div>

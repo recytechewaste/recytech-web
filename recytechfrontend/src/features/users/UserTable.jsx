@@ -173,7 +173,7 @@ const UserTable = ({ users, loading, page, limit, onEdit, onDelete }) => {
                                 <InfoTooltip
                                     title="Role-Based Access Control (RBAC)"
                                     content="Super Admin (full security & configuration), Admin (operations management), or Staff (frontline collection support)."
-                                    position="top"
+                                    position="bottom"
                                     width={260}
                                 />
                             </div>
@@ -184,7 +184,7 @@ const UserTable = ({ users, loading, page, limit, onEdit, onDelete }) => {
                                 <InfoTooltip
                                     title="Account Authorization"
                                     content="Active users are authorized to log in. Inactive accounts are immediately revoked from active API sessions."
-                                    position="top"
+                                    position="bottom"
                                     width={240}
                                 />
                             </div>

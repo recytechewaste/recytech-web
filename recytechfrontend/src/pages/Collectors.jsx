@@ -180,7 +180,7 @@ const Collectors = () => {
                                         <InfoTooltip
                                             title="Authorized Transport Plate"
                                             content="Standardized vehicle license plate registered for authorized e-waste pickup and route manifest compliance."
-                                            position="top"
+                                            position="bottom"
                                             width={250}
                                         />
                                     </div>
@@ -191,7 +191,7 @@ const Collectors = () => {
                                         <InfoTooltip
                                             title="Driver Active Status"
                                             content="Active collectors are eligible to receive automated dispatch alerts and accept pickup jobs."
-                                            position="top"
+                                            position="bottom"
                                             width={240}
                                         />
                                     </div>

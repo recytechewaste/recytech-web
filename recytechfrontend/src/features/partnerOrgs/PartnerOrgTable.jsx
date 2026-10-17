@@ -113,7 +113,7 @@ const PartnerOrgTable = ({ lgus, loading, page, limit, onEdit, onDelete, canMana
                                     <InfoTooltip
                                         title="Assigned IoT Bins"
                                         content="Number of physical IoT smart e-waste drop-off bins deployed on-site at this partner facility."
-                                        position="top"
+                                        position="bottom"
                                         width={240}
                                     />
                                 </div>
@@ -124,7 +124,7 @@ const PartnerOrgTable = ({ lgus, loading, page, limit, onEdit, onDelete, canMana
                                     <InfoTooltip
                                         title="Partner Operational Status"
                                         content="Active partners have live access to bin fullness dashboards and sensor issue reporting."
-                                        position="top"
+                                        position="bottom"
                                         width={240}
                                     />
                                 </div>
