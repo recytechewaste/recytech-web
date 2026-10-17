@@ -2,6 +2,7 @@ import React from 'react';
 import { Trash2, Building2, Truck, MapPin, User, Calendar, AlertTriangle, UserCheck, Edit3, CheckCircle, Clock, Wrench } from 'lucide-react';
 import styles from '../../styles/BinCollectionRequests.module.css';
 import Skeleton from '../../components/Skeleton';
+import InfoTooltip from '../../components/InfoTooltip';
 
 const RequestTable = ({ requests, loading, limit, onSelectRequest }) => {
   const getStatusPill = (status) => {
@@ -92,8 +93,28 @@ const RequestTable = ({ requests, loading, limit, onSelectRequest }) => {
             <th className={styles.th}>Bin Name</th>
             <th className={styles.th}>Partner Organization</th>
             <th className={styles.th}>Location</th>
-            <th className={styles.th}>Status</th>
-            <th className={styles.th}>Assigned Collector</th>
+            <th className={styles.th}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <span>Status</span>
+                <InfoTooltip
+                  title="Dispatch Lifecycle"
+                  content="Tracks collection lifecycle from dispatch (Pending/Assigned) to route progress (In Transit/Arrived) and resolution (Completed/Cancelled)."
+                  position="top"
+                  width={270}
+                />
+              </div>
+            </th>
+            <th className={styles.th}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <span>Assigned Collector</span>
+                <InfoTooltip
+                  title="Field Logistics Personnel"
+                  content="Designated collector driver or collection personnel responsible for servicing the bin location."
+                  position="top"
+                  width={240}
+                />
+              </div>
+            </th>
             <th className={styles.th}>Created At</th>
             <th className={styles.th} style={{ textAlign: 'right' }}>Actions</th>
           </tr>

@@ -1,13 +1,10 @@
-import { useState } from 'react';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
-import { Info } from 'lucide-react';
 import styles from '../../styles/Dashboard.module.css';
+import InfoTooltip from '../../components/InfoTooltip';
 
 const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316'];
 
 const DistributionCharts = ({ categoryData }) => {
-    const [showTooltip, setShowTooltip] = useState(false);
-
     return (
         <div className={styles.sectionContainer}>
             <h2 className={styles.sectionTitle}>Waste Type Distribution</h2>
@@ -15,18 +12,14 @@ const DistributionCharts = ({ categoryData }) => {
 
             <div className={styles.chartCard}>
                 <div className={styles.chartCardHeader}>
-                    <h3 className={styles.chartTitle}>By Volume</h3>
-                    <div
-                        style={{ position: 'relative', cursor: 'help', color: '#9CA3AF', display: 'flex' }}
-                        onMouseEnter={() => setShowTooltip(true)}
-                        onMouseLeave={() => setShowTooltip(false)}
-                    >
-                        <Info size={18} />
-                        {showTooltip && (
-                            <div className={styles.tooltip}>
-                                Shows the proportion of different waste categories collected from bins to help identify material trends.
-                            </div>
-                        )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h3 className={styles.chartTitle}>By Volume</h3>
+                        <InfoTooltip
+                            title="Waste Category Mix"
+                            content="Proportion of canonical e-waste categories collected from bins, helping assess material composition and specialized recycling logistics."
+                            position="bottom"
+                            width={260}
+                        />
                     </div>
                 </div>
                 {categoryData && categoryData.length > 0 ? (

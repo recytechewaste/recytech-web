@@ -11,6 +11,7 @@ import { useToast } from '../context/ToastContext';
 import Skeleton from '../components/Skeleton';
 import Pagination from '../components/Pagination';
 import EmptyState from '../components/EmptyState';
+import InfoTooltip from '../components/InfoTooltip';
 
 const WASTE_TYPE_COLORS = {
     'Plastics':     { bg: '#eff6ff', accent: '#3b82f6', text: '#1d4ed8' },
@@ -106,7 +107,15 @@ const RewardPointManager = () => {
                 {/* ── Page Header ── */}
                 <div className={styles.header}>
                     <div className={styles.titleGroup}>
-                        <h1 className={styles.pageTitle}>Reward Point Rules</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <h1 className={styles.pageTitle}>Reward Point Rules</h1>
+                            <InfoTooltip
+                                title="Incentive Point System"
+                                content="Rules configuring points credited to resident accounts upon verified e-waste disposal across all standard waste classifications."
+                                position="bottom"
+                                width={270}
+                            />
+                        </div>
                         <p className={styles.subTitle}>Configure incentive points per item for each material category.</p>
                     </div>
                     <button onClick={openCreateModal} className={styles.addBtn} id="add-reward-rule-btn">
@@ -122,7 +131,15 @@ const RewardPointManager = () => {
                         </div>
                         <div>
                             <p className={rpStyles.statValue}>{allPoints.length}</p>
-                            <p className={rpStyles.statLabel}>Total Rules</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <p className={rpStyles.statLabel}>Total Rules</p>
+                                <InfoTooltip
+                                    title="Total Conversion Rules"
+                                    content="Total registered material classification rules configured in the platform database."
+                                    position="top"
+                                    width={240}
+                                />
+                            </div>
                         </div>
                     </div>
                     <div className={rpStyles.statCard}>
@@ -131,7 +148,15 @@ const RewardPointManager = () => {
                         </div>
                         <div>
                             <p className={rpStyles.statValue}>{totalActive}</p>
-                            <p className={rpStyles.statLabel}>Active Rules</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <p className={rpStyles.statLabel}>Active Rules</p>
+                                <InfoTooltip
+                                    title="Active Earning Rules"
+                                    content="Rules currently active and automatically applied to credit resident wallets upon verified smart bin drops."
+                                    position="top"
+                                    width={250}
+                                />
+                            </div>
                         </div>
                     </div>
                     <div className={rpStyles.statCard}>
@@ -140,7 +165,15 @@ const RewardPointManager = () => {
                         </div>
                         <div>
                             <p className={rpStyles.statValue}>{totalPoints.toLocaleString()}</p>
-                            <p className={rpStyles.statLabel}>Total Pts / Rule</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <p className={rpStyles.statLabel}>Total Pts / Rule</p>
+                                <InfoTooltip
+                                    title="Cumulative Point Density"
+                                    content="Sum of base incentive points awarded across all configured material categories per item."
+                                    position="top"
+                                    width={240}
+                                />
+                            </div>
                         </div>
                     </div>
                     <div className={rpStyles.statCard}>
@@ -149,7 +182,15 @@ const RewardPointManager = () => {
                         </div>
                         <div>
                             <p className={rpStyles.statValue}>{totalInactive}</p>
-                            <p className={rpStyles.statLabel}>Inactive Rules</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <p className={rpStyles.statLabel}>Inactive Rules</p>
+                                <InfoTooltip
+                                    title="Paused Rules"
+                                    content="Deactivated rules preserved for audit logging and historical transaction reconciliation without granting new points."
+                                    position="top"
+                                    width={250}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

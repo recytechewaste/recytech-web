@@ -2,6 +2,7 @@ import Skeleton from '../../components/Skeleton';
 import EmptyState from '../../components/EmptyState';
 import { Edit2, Trash2, Shield, ShieldCheck, User as UserIcon } from 'lucide-react';
 import styles from '../../styles/UserManagement.module.css';
+import InfoTooltip from '../../components/InfoTooltip';
 
 const renderRoleBadge = (role) => {
     const r = (role || 'Staff').toString().trim();
@@ -166,8 +167,28 @@ const UserTable = ({ users, loading, page, limit, onEdit, onDelete }) => {
                         <th className={styles.th} style={{width:'50px'}}>#</th>
                         <th className={styles.th}>User</th>
                         <th className={styles.th}>Email</th>
-                        <th className={styles.th}>Role</th>
-                        <th className={styles.th}>Status</th>
+                        <th className={styles.th}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                <span>Role</span>
+                                <InfoTooltip
+                                    title="Role-Based Access Control (RBAC)"
+                                    content="Super Admin (full security & configuration), Admin (operations management), or Staff (frontline collection support)."
+                                    position="top"
+                                    width={260}
+                                />
+                            </div>
+                        </th>
+                        <th className={styles.th}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                <span>Status</span>
+                                <InfoTooltip
+                                    title="Account Authorization"
+                                    content="Active users are authorized to log in. Inactive accounts are immediately revoked from active API sessions."
+                                    position="top"
+                                    width={240}
+                                />
+                            </div>
+                        </th>
                         <th className={styles.th}>Last Login</th>
                         <th className={styles.th}>Actions</th>
                     </tr>

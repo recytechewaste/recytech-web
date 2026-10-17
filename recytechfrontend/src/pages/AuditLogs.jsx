@@ -20,6 +20,7 @@ import {
     Database
 } from 'lucide-react';
 import styles from '../styles/AuditLogs.module.css';
+import InfoTooltip from '../components/InfoTooltip';
 
 const CATEGORIES = [
     { id: 'ALL', label: 'All Categories' },
@@ -62,7 +63,7 @@ export const AuditLogs = () => {
     // Fetch Summary Metrics
     const fetchSummary = useCallback(async () => {
         try {
-            const res = await api.get('/api/audit-logs/summary');
+            const res = await api.get('/audit-logs/summary');
             if (res.data && res.data.summary) {
                 setSummary(res.data.summary);
             }
@@ -85,7 +86,7 @@ export const AuditLogs = () => {
             if (startDate) params.startDate = startDate;
             if (endDate) params.endDate = endDate;
 
-            const res = await api.get('/api/audit-logs', { params });
+            const res = await api.get('/audit-logs', { params });
             if (res.data) {
                 setLogs(res.data.logs || []);
                 setTotalPages(res.data.totalPages || 1);
@@ -162,13 +163,29 @@ export const AuditLogs = () => {
                     {/* KPI Summary Cards */}
                     <div className={styles.kpiGrid}>
                         <div className={styles.kpiCard}>
-                            <div className={styles.kpiLabel}>Total Audit Records</div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div className={styles.kpiLabel}>Total Audit Records</div>
+                                <InfoTooltip
+                                    title="Audit Trail Ledger"
+                                    content="Total immutable administrative and security events logged in the system since initialization."
+                                    position="bottom"
+                                    width={260}
+                                />
+                            </div>
                             <div className={styles.kpiValue}>{summary?.totalLogs ?? totalLogs}</div>
                             <div className={styles.kpiSub}>Tracked immutable transactions</div>
                         </div>
 
                         <div className={styles.kpiCard}>
-                            <div className={styles.kpiLabel}>Today's Activity</div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div className={styles.kpiLabel}>Today's Activity</div>
+                                <InfoTooltip
+                                    title="Active Session Monitoring"
+                                    content="Administrative operations, logins, and system updates executed during today's operating window."
+                                    position="bottom"
+                                    width={260}
+                                />
+                            </div>
                             <div className={styles.kpiValue} style={{ color: '#059669' }}>
                                 {summary?.todayLogs ?? 0}
                             </div>
@@ -176,7 +193,15 @@ export const AuditLogs = () => {
                         </div>
 
                         <div className={styles.kpiCard}>
-                            <div className={styles.kpiLabel}>Access Control Events</div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div className={styles.kpiLabel}>Access Control Events</div>
+                                <InfoTooltip
+                                    title="Security & Privileges"
+                                    content="Role elevations, permission updates, account deactivations, and password modifications."
+                                    position="bottom"
+                                    width={260}
+                                />
+                            </div>
                             <div className={styles.kpiValue} style={{ color: '#7c3aed' }}>
                                 {summary?.categories?.ACCESS_CONTROL ?? 0}
                             </div>
@@ -184,7 +209,15 @@ export const AuditLogs = () => {
                         </div>
 
                         <div className={styles.kpiCard}>
-                            <div className={styles.kpiLabel}>System Config & Rules</div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div className={styles.kpiLabel}>System Config & Rules</div>
+                                <InfoTooltip
+                                    title="System Configuration"
+                                    content="Adjustments to core operating parameters, including reward point conversion rates and collector assignments."
+                                    position="bottom"
+                                    width={260}
+                                />
+                            </div>
                             <div className={styles.kpiValue} style={{ color: '#0284c7' }}>
                                 {summary?.categories?.SYSTEM_CONFIG ?? 0}
                             </div>
