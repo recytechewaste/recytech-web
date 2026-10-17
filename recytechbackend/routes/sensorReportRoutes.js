@@ -8,7 +8,7 @@ const {
     getReportById,
     updateReportStatus
 } = require('../controllers/sensorReportController');
-const { protect, staffOrAdmin } = require('../middleware/authMiddleware');
+const { protect, staffOnlyOrSuperAdmin } = require('../middleware/authMiddleware');
 
 // Public/Partner org submit route (protected by auth)
 router.post('/', protect, submitSensorReport);
@@ -17,11 +17,11 @@ router.post('/', protect, submitSensorReport);
 router.get('/my-reports', protect, getMyReports);
 router.get('/my-incidents', protect, getMyReports);
 
-// Operations routes: Staff, Admin, and Super Admin
-router.get('/summary', protect, staffOrAdmin, getReportStats);
-router.get('/stats', protect, staffOrAdmin, getReportStats);
-router.get('/', protect, staffOrAdmin, getAllReports);
+// Operations routes: Staff and Super Admin only (Admin receives 403 Forbidden)
+router.get('/summary', protect, staffOnlyOrSuperAdmin, getReportStats);
+router.get('/stats', protect, staffOnlyOrSuperAdmin, getReportStats);
+router.get('/', protect, staffOnlyOrSuperAdmin, getAllReports);
 router.get('/:id', protect, getReportById);
-router.patch('/:id/status', protect, staffOrAdmin, updateReportStatus);
+router.patch('/:id/status', protect, staffOnlyOrSuperAdmin, updateReportStatus);
 
 module.exports = router;
