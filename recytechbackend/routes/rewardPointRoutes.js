@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, superAdmin } = require('../middleware/authMiddleware');
+const { protect, staffOnlyOrSuperAdmin } = require('../middleware/authMiddleware');
 const {
     getRewardPoints,
     getRewardPointById,
@@ -14,24 +14,24 @@ const {
 // @route   GET /api/reward-points
 router.get('/', getRewardPoints);
 
-// @desc    Bulk create/update reward point rules (Super Admin only)
+// @desc    Bulk create/update reward point rules (Staff or Super Admin)
 // @route   POST /api/reward-points/bulk/import
-router.post('/bulk/import', protect, superAdmin, bulkImportRewardPoints);
+router.post('/bulk/import', protect, staffOnlyOrSuperAdmin, bulkImportRewardPoints);
 
 // @desc    Get single reward point rule
 // @route   GET /api/reward-points/:id
 router.get('/:id', getRewardPointById);
 
-// @desc    Create new reward point rule (Super Admin only)
+// @desc    Create new reward point rule (Staff or Super Admin)
 // @route   POST /api/reward-points
-router.post('/', protect, superAdmin, createRewardPoint);
+router.post('/', protect, staffOnlyOrSuperAdmin, createRewardPoint);
 
-// @desc    Update reward point rule (Super Admin only)
+// @desc    Update reward point rule (Staff or Super Admin)
 // @route   PUT /api/reward-points/:id
-router.put('/:id', protect, superAdmin, updateRewardPoint);
+router.put('/:id', protect, staffOnlyOrSuperAdmin, updateRewardPoint);
 
-// @desc    Delete reward point rule (Super Admin only)
+// @desc    Delete reward point rule (Staff or Super Admin)
 // @route   DELETE /api/reward-points/:id
-router.delete('/:id', protect, superAdmin, deleteRewardPoint);
+router.delete('/:id', protect, staffOnlyOrSuperAdmin, deleteRewardPoint);
 
 module.exports = router;

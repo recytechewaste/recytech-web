@@ -33,7 +33,7 @@ const getTypeStyle = (wasteType) => {
 const RewardPointManager = () => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
     const userRole = userInfo.role;
-    const canDelete = userRole === 'Admin' || userRole === 'Super Admin';
+    const canDelete = userRole === 'Staff' || userRole === 'Admin' || userRole === 'Super Admin';
 
     const { 
         points, allPoints, filteredTotal, loading, fetchPoints, 

@@ -63,7 +63,7 @@ const Sidebar = ({ activePage }) => {
         { name: 'Bin Collections', icon: <ScanLine size={20} />, path: '/bin-collection-requests', roles: ['Staff', 'Super Admin'] },
         { name: 'Sensor Issue Reports', icon: <AlertTriangle size={20} />, path: '/sensor-issues', roles: ['Staff', 'Super Admin'] },
         { name: 'Partner Organization Management', icon: <Users2 size={20} />, path: '/partner-organizations', roles: ['Admin', 'Super Admin'] },
-        { name: 'Reward Points', icon: <Coins size={20} />, path: '/reward-points', roles: ['Super Admin'] },
+        { name: 'Reward Points', icon: <Coins size={20} />, path: '/reward-points', roles: ['Staff', 'Super Admin'] },
         { name: 'Reports and Analytics', icon: <BarChart3 size={20} />, path: '/reports', roles: ['Admin', 'Super Admin'] },
         { name: 'Audit Logs', icon: <History size={20} />, path: '/audit-logs', roles: ['Admin', 'Super Admin'] },
         { name: 'Settings', icon: <SettingsIcon size={20} />, path: '/settings', roles: ['Staff', 'Admin', 'Super Admin'] },
