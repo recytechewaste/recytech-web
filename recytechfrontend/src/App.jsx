@@ -96,7 +96,7 @@ function App() {
           <Route 
             path="/reward-points" 
             element={
-              <ProtectedRoute allowedRoles={['Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
                 <RewardPointManager />
               </ProtectedRoute>
             } 
