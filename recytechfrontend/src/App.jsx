@@ -113,7 +113,7 @@ function App() {
           <Route 
             path="/transactions" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
                 <PointHistory />
               </ProtectedRoute>
             } 
@@ -121,7 +121,7 @@ function App() {
           <Route 
             path="/bin-network" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
                 <BinNetwork />
               </ProtectedRoute>
             } 
@@ -129,7 +129,7 @@ function App() {
           <Route 
             path="/bin-collection-requests" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
                 <BinCollectionRequests />
               </ProtectedRoute>
             } 
@@ -137,7 +137,7 @@ function App() {
           <Route 
             path="/sensor-issues" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Staff', 'Super Admin']}>
                 <SensorReports />
               </ProtectedRoute>
             } 
@@ -146,7 +146,7 @@ function App() {
           <Route 
             path="/reports" 
             element={
-              <ProtectedRoute allowedRoles={['Staff', 'Admin', 'Super Admin']}>
+              <ProtectedRoute allowedRoles={['Admin', 'Super Admin']}>
                 <Reports />
               </ProtectedRoute>
             } 

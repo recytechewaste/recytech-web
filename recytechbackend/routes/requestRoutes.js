@@ -8,7 +8,7 @@ const {
     completeRequest,
     deleteRequest
 } = require('../controllers/requestController');
-const { protect, staffOrAdmin } = require('../middleware/authMiddleware');
+const { protect, staffOnlyOrSuperAdmin } = require('../middleware/authMiddleware');
 
 // @route   /api/requests
 
@@ -27,7 +27,7 @@ router.route('/:id')
     .get(protect, getRequestById)
     .put(protect, updateRequestStatus)
     .patch(protect, updateRequestStatus)
-    .delete(protect, staffOrAdmin, deleteRequest);
+    .delete(protect, staffOnlyOrSuperAdmin, deleteRequest);
 
 module.exports = router;
 

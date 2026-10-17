@@ -91,10 +91,17 @@ const staffOnly = (req, res, next) => {
 };
 
 /**
- * Staff or Super Admin (legacy alias mapped to staffOrAdmin for safety)
+ * Staff or Super Admin Only (Admin is strictly excluded)
  */
 const staffOnlyOrSuperAdmin = (req, res, next) => {
-    return staffOrAdmin(req, res, next);
+    if (!req.user) {
+        return res.status(401).json({ message: 'Not authenticated' });
+    }
+    const role = normalizeRole(req.user.role);
+    if ([CANONICAL_ROLES.STAFF, CANONICAL_ROLES.SUPER_ADMIN].includes(role)) {
+        return next();
+    }
+    return res.status(403).json({ message: 'Forbidden: Access is restricted to Staff or Super Admin only.' });
 };
 
 const lgu = (req, res, next) => {

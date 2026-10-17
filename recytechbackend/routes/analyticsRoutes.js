@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, admin, staffOrAdmin } = require('../middleware/authMiddleware');
+const { protect, admin } = require('../middleware/authMiddleware');
 const { 
     getSummaryData, 
     getCategoryDistributionData, 
@@ -15,6 +15,6 @@ router.get('/category-distribution', protect, admin, getCategoryDistributionData
 router.get('/monthly-trends', protect, admin, getMonthlyTrendsData);
 router.get('/predictive-analytics', protect, admin, getPredictiveAnalyticsData);
 router.get('/dashboard', protect, admin, getDashboardData);
-router.get('/reports', protect, staffOrAdmin, getReportData);
+router.get('/reports', protect, admin, getReportData);
 
 module.exports = router;
