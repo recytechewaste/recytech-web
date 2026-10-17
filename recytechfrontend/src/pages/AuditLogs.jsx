@@ -62,7 +62,7 @@ export const AuditLogs = () => {
     // Fetch Summary Metrics
     const fetchSummary = useCallback(async () => {
         try {
-            const res = await api.get('/api/audit-logs/summary');
+            const res = await api.get('/audit-logs/summary');
             if (res.data && res.data.summary) {
                 setSummary(res.data.summary);
             }
@@ -85,7 +85,7 @@ export const AuditLogs = () => {
             if (startDate) params.startDate = startDate;
             if (endDate) params.endDate = endDate;
 
-            const res = await api.get('/api/audit-logs', { params });
+            const res = await api.get('/audit-logs', { params });
             if (res.data) {
                 setLogs(res.data.logs || []);
                 setTotalPages(res.data.totalPages || 1);
