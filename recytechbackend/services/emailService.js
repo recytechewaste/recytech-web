@@ -2,7 +2,7 @@ const axios = require('axios');
 const dns = require('dns');
 const nodemailer = require('nodemailer');
 const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
-const { getPinEmailTemplate } = require('../utils/emailTemplates');
+const { getPinEmailTemplate, getVerificationEmailTemplate } = require('../utils/emailTemplates');
 
 // Force Node.js to prioritize IPv4 addresses across the application
 if (dns.setDefaultResultOrder) {
@@ -81,11 +81,11 @@ const getActiveProvider = () => {
 // ==========================================
 // 1. PIN RESET EMAIL
 // ==========================================
-const sendPinEmail = async (email, firstName, pin) => {
+const sendPinEmail = async (email, firstName, pin, options = {}) => {
     const provider = getActiveProvider();
     const recipientName = firstName || 'User';
-    const subject = 'RecyTech - Password Reset PIN';
-    const html = getPinEmailTemplate(recipientName, pin);
+    const subject = options.subject || 'RecyTech - Password Reset PIN';
+    const html = options.html || getPinEmailTemplate(recipientName, pin);
 
     // --- Provider A: Brevo (Recommended for Render) ---
     if (provider === 'brevo') {
@@ -145,6 +145,16 @@ const sendPinEmail = async (email, firstName, pin) => {
         return { success: false, error: detail };
     }
 };
+
+const sendVerificationEmail = async (email, firstName, code) => sendPinEmail(
+    email,
+    firstName,
+    code,
+    {
+        subject: 'RecyTech - Verify Your Email',
+        html: getVerificationEmailTemplate(firstName || 'User', code)
+    }
+);
 
 // ==========================================
 // 2. WELCOME / ACCOUNT CREATED EMAIL
@@ -277,4 +287,4 @@ const sendAccountApprovedEmail = async (email, firstName) => {
     }
 };
 
-module.exports = { sendPinEmail, sendWelcomeEmail, sendAccountApprovedEmail };
+module.exports = { sendPinEmail, sendVerificationEmail, sendWelcomeEmail, sendAccountApprovedEmail };

@@ -18,6 +18,22 @@ const getPinEmailTemplate = (firstName, pin) => `
     </div>
 `;
 
+const getVerificationEmailTemplate = (firstName, code) => `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #10b981; padding: 20px; text-align: center; color: white; border-radius: 8px 8px 0 0;">
+            <h2 style="margin: 0;">Verify your RecyTech email</h2>
+        </div>
+        <div style="padding: 20px; background-color: #f9fafb; border: 1px solid #e5e7eb;">
+            <p>Hi ${firstName},</p>
+            <p>Use the verification code below to verify your RecyTech email address:</p>
+            <div style="background-color: #dbeafe; padding: 15px; border-radius: 6px; text-align: center; margin: 20px 0;">
+                <p style="margin: 0; font-size: 24px; font-weight: bold; color: #1e40af; letter-spacing: 2px;">${code}</p>
+            </div>
+            <p style="color: #6b7280; font-size: 14px;">This code will expire in 15 minutes.</p>
+        </div>
+    </div>
+`;
+
 const getWelcomeEmailTemplate = (firstName, pin) => `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background-color: #0f766e; padding: 20px; text-align: center; color: white; border-radius: 8px 8px 0 0;">
@@ -37,4 +53,4 @@ const getWelcomeEmailTemplate = (firstName, pin) => `
     </div>
 `;
 
-module.exports = { getPinEmailTemplate, getWelcomeEmailTemplate };
+module.exports = { getPinEmailTemplate, getVerificationEmailTemplate, getWelcomeEmailTemplate };

@@ -27,6 +27,24 @@ const userSchema = mongoose.Schema({
         type: String,
         default: 'Active'
     },
+    // Missing/true is intentionally treated as verified for legacy/admin accounts.
+    emailVerified: {
+        type: Boolean,
+        default: true
+    },
+    emailVerifiedAt: {
+        type: Date,
+        default: null
+    },
+    emailVerification: {
+        codeHash: String,
+        expiresAt: Date,
+        attempts: {
+            type: Number,
+            default: 0
+        },
+        resendAvailableAt: Date
+    },
     lastLogin: {
         type: Date,
         default: null

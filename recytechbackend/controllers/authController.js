@@ -5,7 +5,8 @@ const Collector = require('../models/Collector');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { AUTH_CONSTANTS } = require('../config/constants');
-const { sendPinEmail } = require('../services/emailService');
+const { sendPinEmail, sendVerificationEmail } = require('../services/emailService');
+const { MAX_ATTEMPTS, createVerificationState, compareCode, isExpired } = require('../services/emailVerificationService');
 const { asyncHandler } = require('../utils/asyncHandler');
 const { assertUniqueCollectorFields, formatPlateForStorage } = require('../utils/collectorUniqueness');
 const { logAuditEvent } = require('../utils/auditLogger');
@@ -40,6 +41,14 @@ const loginUser = asyncHandler(async (req, res) => {
         if (['Disabled', 'Rejected', 'disabled', 'rejected'].includes(user.status)) {
             res.status(403);
             throw new Error('Account is deactivated. Please contact your Super Admin.');
+        }
+        if (user.emailVerified === false) {
+            return res.status(403).json({
+                code: 'email_verification_required',
+                message: 'Please verify your email before logging in.',
+                email: user.email,
+                emailVerificationRequired: true
+            });
         }
 
         user.lastLogin = new Date();
@@ -185,6 +194,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Web public registrations for Staff require Admin approval/activation for security
     const initialStatus = canonicalRole === 'Staff' ? 'Inactive' : 'Active';
+    const isHouseholdRegistration = canonicalRole === 'household';
+    const verification = isHouseholdRegistration ? createVerificationState(normalizedEmail) : null;
 
     // Create User record as the canonical authentication identity
     const user = await User.create({
@@ -193,7 +204,8 @@ const registerUser = asyncHandler(async (req, res) => {
         email: normalizedEmail,
         password: hashedPassword,
         role: canonicalRole,
-        status: initialStatus
+        status: initialStatus,
+        ...(isHouseholdRegistration ? { emailVerified: false, emailVerification: verification.state } : {})
     });
 
     let profile = null;
@@ -239,6 +251,22 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new Error(`Profile creation failed: ${profileError.message}`);
     }
 
+    if (isHouseholdRegistration) {
+        let emailSent = false;
+        try {
+            const result = await sendVerificationEmail(normalizedEmail, userFirstName, verification.code);
+            emailSent = Boolean(result && result.success);
+        } catch (emailError) {
+            console.error('[Email verification] Delivery failed:', emailError?.name || 'provider_error');
+        }
+        return res.status(201).json({
+            message: 'Registration successful',
+            email: normalizedEmail,
+            emailVerificationRequired: true,
+            emailSent
+        });
+    }
+
     res.status(201).json({
         message: 'Registration successful',
         user: {
@@ -252,6 +280,105 @@ const registerUser = asyncHandler(async (req, res) => {
         profileId: profile ? profile._id : null,
         accountStatus: (user.status || 'Active').toLowerCase()
     });
+});
+
+const verifyEmail = asyncHandler(async (req, res) => {
+    const email = req.body.email.trim().toLowerCase();
+    const code = req.body.code || req.body.pin;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+    if (user.emailVerified !== false) {
+        return res.json({ message: 'Email is already verified.', email, emailVerificationRequired: false });
+    }
+
+    const state = user.emailVerification;
+    if (!state || isExpired(state)) {
+        res.status(400);
+        throw new Error('Verification code has expired. Please request a new one.');
+    }
+    if ((state.attempts || 0) >= MAX_ATTEMPTS) {
+        res.status(429);
+        throw new Error('Too many incorrect verification attempts. Please request a new code.');
+    }
+    if (!compareCode(email, code, state.codeHash)) {
+        const updatedUser = await User.findOneAndUpdate(
+            {
+                _id: user._id,
+                emailVerified: false,
+                'emailVerification.codeHash': state.codeHash,
+                'emailVerification.attempts': { $lt: MAX_ATTEMPTS }
+            },
+            { $inc: { 'emailVerification.attempts': 1 } },
+            { new: true }
+        );
+        const attempts = updatedUser?.emailVerification?.attempts || (state.attempts || 0) + 1;
+        res.status(attempts >= MAX_ATTEMPTS ? 429 : 400);
+        throw new Error(attempts >= MAX_ATTEMPTS
+            ? 'Too many incorrect verification attempts. Please request a new code.'
+            : 'Invalid verification code');
+    }
+
+    const verifiedUser = await User.findOneAndUpdate(
+        {
+            _id: user._id,
+            emailVerified: false,
+            'emailVerification.codeHash': state.codeHash,
+            'emailVerification.expiresAt': { $gt: new Date() },
+            'emailVerification.attempts': { $lt: MAX_ATTEMPTS }
+        },
+        {
+            $set: { emailVerified: true, emailVerifiedAt: new Date() },
+            $unset: { emailVerification: 1 }
+        },
+        { new: true }
+    );
+    if (!verifiedUser) {
+        res.status(400);
+        throw new Error('Invalid or expired verification code. Please request a new one.');
+    }
+    res.json({ message: 'Email verified successfully.', email, emailVerificationRequired: false });
+});
+
+const resendVerification = asyncHandler(async (req, res) => {
+    const email = req.body.email.trim().toLowerCase();
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+    if (user.emailVerified !== false) {
+        return res.json({ message: 'Email is already verified.', email, emailVerificationRequired: false, emailSent: false });
+    }
+
+    const now = new Date();
+    if (user.emailVerification?.resendAvailableAt && new Date(user.emailVerification.resendAvailableAt) > now) {
+        res.status(429);
+        throw new Error('Please wait before requesting another verification code.');
+    }
+
+    const verification = createVerificationState(email, now);
+    user.emailVerification = verification.state;
+    await user.save();
+
+    try {
+        const result = await sendVerificationEmail(email, user.firstName, verification.code);
+        if (!result || !result.success) {
+            user.emailVerification.resendAvailableAt = now;
+            await user.save();
+            return res.status(502).json({ message: 'Verification email could not be sent. Please try again.', email, emailVerificationRequired: true, emailSent: false });
+        }
+        return res.json({ message: 'Verification email sent.', email, emailVerificationRequired: true, emailSent: true });
+    } catch (emailError) {
+        user.emailVerification.resendAvailableAt = now;
+        await user.save();
+        console.error('[Email verification] Resend failed:', emailError?.name || 'provider_error');
+        return res.status(502).json({ message: 'Verification email could not be sent. Please try again.', email, emailVerificationRequired: true, emailSent: false });
+    }
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
@@ -401,4 +528,4 @@ const getMe = asyncHandler(async (req, res) => {
     });
 });
 
-module.exports = { loginUser, registerUser, logoutUser, forgotPassword, verifyPin, resetPassword, getMe };
+module.exports = { loginUser, registerUser, logoutUser, forgotPassword, verifyPin, resetPassword, verifyEmail, resendVerification, getMe };

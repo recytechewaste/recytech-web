@@ -29,6 +29,15 @@ const protect = async (req, res, next) => {
                 return res.status(403).json({ message: 'Account is deactivated or disabled. Please contact an administrator.' });
             }
 
+            if (req.user.emailVerified === false) {
+                return res.status(403).json({
+                    code: 'email_verification_required',
+                    message: 'Please verify your email before accessing this account.',
+                    email: req.user.email,
+                    emailVerificationRequired: true
+                });
+            }
+
             return next();
         } catch (error) {
             console.error('Auth token verification failed:', error.message);

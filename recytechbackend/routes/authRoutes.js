@@ -11,7 +11,9 @@ const {
     getMe,
     forgotPassword, 
     verifyPin, 
-    resetPassword 
+    resetPassword,
+    verifyEmail,
+    resendVerification
 } = require('../controllers/authController');
 
 // @desc    Authenticate a user
@@ -37,6 +39,22 @@ router.post('/register', [
     body('password').notEmpty().withMessage('Password is required'),
     validateRequest
 ], registerUser);
+
+// @desc    Verify a mobile household registration email
+// @route   POST /api/auth/verify-email
+router.post('/verify-email', [
+    body('email').isEmail().withMessage('Please provide a valid email'),
+    body('code').optional().isLength({ min: 6, max: 6 }).isNumeric().withMessage('Verification code must be exactly 6 digits'),
+    body('pin').optional().isLength({ min: 6, max: 6 }).isNumeric().withMessage('Verification code must be exactly 6 digits'),
+    validateRequest
+], verifyEmail);
+
+// @desc    Resend a mobile household registration email
+// @route   POST /api/auth/resend-verification
+router.post('/resend-verification', [
+    body('email').isEmail().withMessage('Please provide a valid email'),
+    validateRequest
+], resendVerification);
 
 // @desc    Request password reset (sends PIN via email)
 // @route   POST /api/auth/forgot-password
