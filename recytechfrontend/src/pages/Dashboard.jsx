@@ -8,6 +8,8 @@ import styles from '../styles/Dashboard.module.css';
 import { MetricSkeleton } from '../components/Skeleton';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { useDashboardAnalytics } from '../features/dashboard/useDashboardAnalytics';
+import PageHeader from '../components/PageHeader';
+import { LayoutDashboard } from 'lucide-react';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -21,24 +23,27 @@ const Dashboard = () => {
             <Sidebar activePage="Dashboard" />
 
             <main className={styles.main}>
-                <header className={styles.headerRow}>
-                    <div className={styles.dashboardHeader}>
-                        <h1 className={styles.pageTitle}>Operations Dashboard</h1>
-                        <p className={styles.subTitle}>Welcome back, {firstName}. Here is your bin network overview.</p>
-                    </div>
-                    <div
-                        className={styles.userPill}
-                        onClick={() => navigate('/settings')}
-                        style={{ cursor: 'pointer' }}
-                        title="Click to manage account settings"
-                    >
-                        <div className={styles.userAvatar}>{initials}</div>
-                        <div className={styles.userMeta}>
-                            <span className={styles.userName}>{`${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || 'User'}</span>
-                            <span className={styles.userRole}>{userInfo.role || 'Admin'}</span>
+                <PageHeader
+                    icon={<LayoutDashboard size={24} />}
+                    title="Operations Dashboard"
+                    tooltipTitle="Operations Command Center"
+                    tooltipContent="Centralized monitoring of municipality-wide e-waste collection metrics, hardware status, and predictive operational insights."
+                    subtitle={`Welcome back, ${firstName}. Here is your bin network overview.`}
+                    actions={
+                        <div
+                            className={styles.userPill}
+                            onClick={() => navigate('/settings')}
+                            style={{ cursor: 'pointer' }}
+                            title="Click to manage account settings"
+                        >
+                            <div className={styles.userAvatar}>{initials}</div>
+                            <div className={styles.userMeta}>
+                                <span className={styles.userName}>{`${userInfo.firstName || ''} ${userInfo.lastName || ''}`.trim() || 'User'}</span>
+                                <span className={styles.userRole}>{userInfo.role || 'Admin'}</span>
+                            </div>
                         </div>
-                    </div>
-                </header>
+                    }
+                />
 
                 {error && <div className={styles.errorState}>Failed to load dashboard data. Please try again later.</div>}
 

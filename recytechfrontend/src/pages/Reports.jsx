@@ -4,7 +4,8 @@ import { jsPDF } from 'jspdf';
 import Sidebar from '../components/Sidebar';
 import styles from '../styles/Reports.module.css';
 import headerStyles from '../styles/BinCollectionRequests.module.css';
-import { Download, Calendar, Filter, Loader2, Landmark } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import { Download, Calendar, Filter, Loader2, Landmark, BarChart3 } from 'lucide-react';
 import { useReports } from '../features/reports/useReports';
 import ReportMetrics from '../features/reports/ReportMetrics';
 import ReportCharts from '../features/reports/ReportCharts';
@@ -53,16 +54,19 @@ const Reports = () => {
             <Sidebar activePage="Reports and Analytics" />
 
             <main className={styles.main}>
-                <div className={headerStyles.header}>
-                    <div>
-                        <h1 className={headerStyles.pageTitle}>Reports & Analytics</h1>
-                        <p className={headerStyles.subTitle}>Performance metrics and collection request activity.</p>
-                    </div>
-                    <button onClick={handleExportPDF} disabled={isExporting} className={styles.exportBtn}>
-                        {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                        {isExporting ? 'Generating...' : 'Export PDF'}
-                    </button>
-                </div>
+                <PageHeader
+                    icon={<BarChart3 size={24} />}
+                    title="Reports & Analytics"
+                    tooltipTitle="Environmental ESG & Performance Ledger"
+                    tooltipContent="Longitudinal e-waste recovery analytics, monthly weight trends, category breakdowns, and compliance reporting."
+                    subtitle="Performance metrics, sustainability impact, and collection activity."
+                    actions={
+                        <button onClick={handleExportPDF} disabled={isExporting} className={styles.exportBtn}>
+                            {isExporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                            {isExporting ? 'Generating...' : 'Export PDF'}
+                        </button>
+                    }
+                />
 
                 {/* Filter Controls */}
                 <div className={styles.filterCard}>

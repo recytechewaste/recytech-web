@@ -18,10 +18,12 @@ import {
     Sparkles,
     CheckCircle2,
     Sliders,
-    Moon
+    Moon,
+    Settings as SettingsIcon
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import api from '../api/client';
+import PageHeader from '../components/PageHeader';
 
 const Settings = () => {
     const toastContext = useToast();
@@ -248,11 +250,13 @@ const Settings = () => {
             <Sidebar activePage="Settings" />
 
             <main className={styles.main}>
-                {/* Header */}
-                <div className={styles.header}>
-                    <h1 className={styles.pageTitle}>Account Settings</h1>
-                    <p className={styles.subTitle}>Manage your account identity, security credentials, and system preferences.</p>
-                </div>
+                <PageHeader
+                    icon={<SettingsIcon size={24} />}
+                    title="Account Settings"
+                    tooltipTitle="Preferences & Security Center"
+                    tooltipContent="Personal profile management, cryptographic password updates, security credentials, and system UI configurations."
+                    subtitle="Manage your account identity, security credentials, and system preferences."
+                />
 
                 <div className={styles.settingsLayout}>
                     {/* Left Vertical Nav Tabs */}

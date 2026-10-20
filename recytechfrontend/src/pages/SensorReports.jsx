@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { RefreshCw, Cpu, Clock, Wrench, CheckCircle } from 'lucide-react';
+import { RefreshCw, Cpu, Clock, Wrench, CheckCircle, AlertTriangle } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import PageHeader from '../components/PageHeader';
 import SensorReportFilterBar from '../features/sensorReports/SensorReportFilterBar';
 import SensorReportTable from '../features/sensorReports/SensorReportTable';
 import SensorReportModal from '../features/sensorReports/SensorReportModal';
@@ -42,23 +43,13 @@ const SensorReports = () => {
             <Sidebar activePage="Sensor Issue Reports" />
 
             <main className={styles.main}>
-                {/* ── Page Header ── */}
-                <header className={styles.header}>
-                    <div className={styles.titleGroup}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <h1 className={styles.pageTitle}>Sensor Incident Reports</h1>
-                            <InfoTooltip
-                                title="Hardware Telemetry & Maintenance"
-                                content="Tracks Time-of-Flight (ToF) and ultrasonic distance sensor faults reported by partner facilities or detected via telemetry drift."
-                                position="bottom"
-                                width={280}
-                            />
-                        </div>
-                        <p className={styles.subTitle}>
-                            Review and resolve Time-of-Flight (ToF) fullness sensor malfunctions and bin hardware damage reported by Partner Organizations.
-                        </p>
-                    </div>
-                    <div>
+                <PageHeader
+                    icon={<AlertTriangle size={24} />}
+                    title="Sensor Incident Reports"
+                    tooltipTitle="Hardware Telemetry & Maintenance"
+                    tooltipContent="Tracks Time-of-Flight (ToF) and ultrasonic distance sensor faults reported by partner facilities or detected via telemetry drift."
+                    subtitle="Review and resolve Time-of-Flight (ToF) fullness sensor malfunctions and bin hardware damage reported by Partner Organizations."
+                    actions={
                         <button
                             className={styles.refreshBtn}
                             onClick={handleRefresh}
@@ -67,8 +58,8 @@ const SensorReports = () => {
                         >
                             <RefreshCw size={14} /> Refresh Data
                         </button>
-                    </div>
-                </header>
+                    }
+                />
 
                 {/* ── KPI Stats Bar ── */}
                 <div className={styles.statsBar}>

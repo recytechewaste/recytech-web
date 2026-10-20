@@ -1,5 +1,6 @@
 import styles from '../../styles/SmartScheduling.module.css';
 import InfoTooltip from '../../components/InfoTooltip';
+import PageHeader from '../../components/PageHeader';
 import { CalendarClock, Sparkles, TrendingUp, CheckCircle2, Truck, Activity } from 'lucide-react';
 
 const SchedulingHeader = ({ forecastTotal = 0, recommendationCount = 0, resourceSummary = {} }) => {
@@ -8,31 +9,14 @@ const SchedulingHeader = ({ forecastTotal = 0, recommendationCount = 0, resource
 
     return (
         <div style={{ marginBottom: '24px' }}>
-            <header className={styles.header}>
-                <div className={styles.titleArea}>
-                    <div className={styles.headerIcon}>
-                        <CalendarClock size={24} />
-                    </div>
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                            <h1 className={styles.pageTitle}>Smart Scheduling & Dispatch</h1>
-                            <span className={styles.badgeAI}>
-                                <Sparkles size={11} /> Prescriptive AI
-                            </span>
-                            <InfoTooltip
-                                title="Prescriptive Scheduling Engine"
-                                content="Translates demand forecasts and bin sensor data into optimized collector assignments, balancing vehicle payloads and resolving time conflicts before dispatch."
-                                size={15}
-                                position="bottom"
-                                width={280}
-                            />
-                        </div>
-                        <p className={styles.subTitle}>
-                            Automated collector assignment, workload balancing, and demand-driven route dispatching.
-                        </p>
-                    </div>
-                </div>
-            </header>
+            <PageHeader
+                icon={<CalendarClock size={24} />}
+                title="Smart Scheduling & Dispatch"
+                badge="Prescriptive AI"
+                tooltipTitle="Prescriptive Scheduling Engine"
+                tooltipContent="Translates demand forecasts and bin sensor data into optimized collector assignments, balancing vehicle payloads and resolving time conflicts before dispatch."
+                subtitle="Automated collector assignment, workload balancing, and demand-driven route dispatching."
+            />
 
             {/* 4-Card Overview KPI Grid */}
             <div className={styles.kpiGrid}>
