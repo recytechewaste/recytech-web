@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/client';
-import styles from '../../styles/Dashboard.module.css';
+import styles from '../../styles/SmartScheduling.module.css';
 import ActionRecommendations from './ActionRecommendations';
 import AssignmentReview from './AssignmentReview';
 import CollectorRecommendationsTable from './CollectorRecommendationsTable';
@@ -86,6 +86,22 @@ const SchedulingPanel = () => {
         });
     };
 
+    const handleSelectAll = (shouldSelectAll) => {
+        if (!shouldSelectAll) {
+            setSelectedAssignments({});
+            return;
+        }
+
+        const all = {};
+        recommendations.forEach((collector) => {
+            collector.assignedRequests?.forEach((request) => {
+                const key = `${request.requestId}-${collector.collectorId}`;
+                all[key] = { requestId: request.requestId, collectorId: collector.collectorId };
+            });
+        });
+        setSelectedAssignments(all);
+    };
+
     const handleTimeChange = (requestId, value) => {
         setScheduledTimes((previousTimes) => ({
             ...previousTimes,
@@ -137,15 +153,19 @@ const SchedulingPanel = () => {
     const selectedCount = Object.keys(selectedAssignments).length;
 
     return (
-        <div className={styles.sectionContainer}>
-            <SchedulingHeader forecastTotal={forecastTotal} recommendationCount={recommendationCount} />
+        <div>
+            <SchedulingHeader
+                forecastTotal={forecastTotal}
+                recommendationCount={recommendationCount}
+                resourceSummary={resourceSummary}
+            />
 
-            <div className={styles.chartsGrid} style={{ marginTop: '24px' }}>
+            <div className={styles.twoColGrid}>
                 <ActionRecommendations actions={actionRecommendations} loading={loading} />
                 <ResourceAllocationSummary summary={resourceSummary} />
             </div>
 
-            <div className={styles.chartsGrid} style={{ marginTop: '24px' }}>
+            <div className={styles.twoColGrid}>
                 <ForecastTable forecast={forecast} loading={loading} error={error} />
                 <CollectorRecommendationsTable recommendations={recommendations} loading={loading} error={error} />
             </div>
@@ -155,6 +175,7 @@ const SchedulingPanel = () => {
                 selectedAssignments={selectedAssignments}
                 scheduledTimes={scheduledTimes}
                 onSelectAssignment={toggleAssignmentSelection}
+                onSelectAll={handleSelectAll}
                 onTimeChange={handleTimeChange}
                 onOpenConfirmModal={() => setShowConfirmModal(true)}
             />
