@@ -122,18 +122,45 @@ const ensureGeoJsonLocation = (loc) => {
 const createCenter = asyncHandler(async (req, res) => {
     const { name, location, address, qrCode, capacityKg, currentFillKg, status, description, assignedCollector, assignedLgu } = req.body;
 
+    if (!name || !name.trim()) {
+        res.status(400);
+        throw new Error('Bin name is required.');
+    }
+    if (!address || !address.trim() || address === 'Fetching address...') {
+        res.status(400);
+        throw new Error('Valid physical address/location is required.');
+    }
+
+    const trimmedName = name.trim();
+    const existingName = await RecyclingCenter.findOne({
+        name: { $regex: new RegExp(`^${trimmedName}$`, 'i') }
+    });
+    if (existingName) {
+        res.status(400);
+        throw new Error(`A bin named "${trimmedName}" already exists.`);
+    }
+
+    if (qrCode && qrCode.trim()) {
+        const trimmedQr = qrCode.trim();
+        const existingQr = await RecyclingCenter.findOne({ qrCode: trimmedQr });
+        if (existingQr) {
+            res.status(400);
+            throw new Error(`QR Code "${trimmedQr}" is already assigned to bin "${existingQr.name}".`);
+        }
+    }
+
     const formattedLocation = ensureGeoJsonLocation(location);
     const qrCodeImage = await generateQrImage(qrCode);
 
     const center = await RecyclingCenter.create({
-        name,
+        name: trimmedName,
         location: formattedLocation,
-        address,
-        qrCode,
+        address: address.trim(),
+        qrCode: qrCode ? qrCode.trim() : '',
         qrCodeImage,
-        capacityKg,
-        currentFillKg,
-        status,
+        capacityKg: capacityKg ? Number(capacityKg) : 500,
+        currentFillKg: currentFillKg ? Number(currentFillKg) : 0,
+        status: status || 'Empty',
         description,
         assignedCollector,
         assignedLgu
@@ -150,14 +177,54 @@ const updateCenter = asyncHandler(async (req, res) => {
     const { name, location, address, qrCode, capacityKg, currentFillKg, status, description, assignedCollector, assignedLgu } = req.body;
 
     const existingCenter = await RecyclingCenter.findById(req.params.id);
-    const previousStatus = existingCenter?.status;
+    if (!existingCenter) {
+        res.status(404);
+        throw new Error('Bin not found');
+    }
+    const previousStatus = existingCenter.status;
+
+    if (name && name.trim()) {
+        const trimmedName = name.trim();
+        const duplicateName = await RecyclingCenter.findOne({
+            _id: { $ne: req.params.id },
+            name: { $regex: new RegExp(`^${trimmedName}$`, 'i') }
+        });
+        if (duplicateName) {
+            res.status(400);
+            throw new Error(`A bin named "${trimmedName}" already exists.`);
+        }
+    }
+
+    if (qrCode && qrCode.trim()) {
+        const trimmedQr = qrCode.trim();
+        const duplicateQr = await RecyclingCenter.findOne({
+            _id: { $ne: req.params.id },
+            qrCode: trimmedQr
+        });
+        if (duplicateQr) {
+            res.status(400);
+            throw new Error(`QR Code "${trimmedQr}" is already assigned to bin "${duplicateQr.name}".`);
+        }
+    }
 
     const formattedLocation = ensureGeoJsonLocation(location);
-    const qrCodeImage = await generateQrImage(qrCode);
+    const qrCodeImage = qrCode ? await generateQrImage(qrCode) : existingCenter.qrCodeImage;
 
     const updatedCenter = await RecyclingCenter.findByIdAndUpdate(
         req.params.id,
-        { name, location: formattedLocation, address, qrCode, qrCodeImage, capacityKg, currentFillKg, status, description, assignedCollector, assignedLgu },
+        { 
+            name: name ? name.trim() : existingCenter.name, 
+            location: formattedLocation || existingCenter.location, 
+            address: address ? address.trim() : existingCenter.address, 
+            qrCode: qrCode !== undefined ? qrCode.trim() : existingCenter.qrCode, 
+            qrCodeImage, 
+            capacityKg: capacityKg !== undefined ? Number(capacityKg) : existingCenter.capacityKg, 
+            currentFillKg: currentFillKg !== undefined ? Number(currentFillKg) : existingCenter.currentFillKg, 
+            status: status || existingCenter.status, 
+            description: description !== undefined ? description : existingCenter.description, 
+            assignedCollector, 
+            assignedLgu 
+        },
         { new: true }
     ).populate('assignedCollector', 'firstName lastName phone vehiclePlate status')
      .populate('assignedLgu', 'name contactPerson phone email jurisdiction status');

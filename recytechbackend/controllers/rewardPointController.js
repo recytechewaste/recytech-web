@@ -60,17 +60,18 @@ const createRewardPoint = asyncHandler(async (req, res) => {
         throw new Error('pointsPerItem must be a non-negative number'); // Changed pointsPerKg to pointsPerItem
     }
 
+    const trimmedWasteType = wasteType.trim();
     const existingPoint = await RewardPoint.findOne({
-        wasteType: wasteType.trim()
+        wasteType: { $regex: new RegExp(`^${trimmedWasteType}$`, 'i') }
     });
 
     if (existingPoint) {
         res.status(409);
-        throw new Error(`Reward point rule for "${wasteType}" already exists`);
+        throw new Error(`Reward point rule for "${trimmedWasteType}" already exists`);
     }
 
     const newPoint = await RewardPoint.create({
-        wasteType: wasteType.trim(),
+        wasteType: trimmedWasteType,
         pointsPerItem, // Changed pointsPerKg to pointsPerItem
         description: description || '',
         isActive: isActive !== undefined ? isActive : true
@@ -107,7 +108,7 @@ const updateRewardPoint = asyncHandler(async (req, res) => {
         }
 
         const existingPoint = await RewardPoint.findOne({
-            wasteType,
+            wasteType: { $regex: new RegExp(`^${wasteType}$`, 'i') },
             _id: { $ne: req.params.id }
         });
 

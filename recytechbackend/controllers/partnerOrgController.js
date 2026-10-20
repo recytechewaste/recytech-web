@@ -271,24 +271,42 @@ const getPartnerOrgStats = asyncHandler(async (req, res) => {
 const createPartnerOrg = asyncHandler(async (req, res) => {
   const { name, contactPerson, email, phone, password, jurisdiction, status } = req.body;
 
-  const orgExists = await PartnerOrganization.findOne({ email });
-
-  if (orgExists) {
+  if (!name || !name.trim() || !contactPerson || !contactPerson.trim() || !email || !email.trim() || !password) {
     res.status(400);
-    throw new Error('Partner organization with that email already exists');
+    throw new Error('Please enter all required fields: Partner Organization Name, Contact Person, Email, and Password.');
+  }
+
+  const trimmedName = name.trim();
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Check duplicate organization name
+  const nameExists = await PartnerOrganization.findOne({
+    name: { $regex: new RegExp(`^${trimmedName}$`, 'i') }
+  });
+  if (nameExists) {
+    res.status(400);
+    throw new Error(`A Partner Organization named "${trimmedName}" already exists.`);
+  }
+
+  // Check system-wide unique email across PartnerOrganization and User
+  const orgExists = await PartnerOrganization.findOne({ email: normalizedEmail });
+  const userExists = await User.findOne({ email: normalizedEmail });
+  if (orgExists || userExists) {
+    res.status(400);
+    throw new Error('An account with that email address already exists in the system.');
   }
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
   const partnerOrg = await PartnerOrganization.create({
-    name,
-    contactPerson,
-    email,
-    phone,
+    name: trimmedName,
+    contactPerson: contactPerson.trim(),
+    email: normalizedEmail,
+    phone: phone ? phone.trim() : '',
     password: hashedPassword,
-    jurisdiction,
-    status,
+    jurisdiction: jurisdiction ? jurisdiction.trim() : '',
+    status: status || 'Active',
   });
 
   if (partnerOrg) {
@@ -351,11 +369,22 @@ const updatePartnerOrg = asyncHandler(async (req, res) => {
   const partnerOrg = await PartnerOrganization.findById(req.params.id);
 
   if (partnerOrg) {
-    partnerOrg.name = req.body.name || partnerOrg.name;
-    partnerOrg.contactPerson = req.body.contactPerson || partnerOrg.contactPerson;
-    partnerOrg.email = req.body.email || partnerOrg.email;
-    partnerOrg.phone = req.body.phone || partnerOrg.phone;
-    partnerOrg.jurisdiction = req.body.jurisdiction || partnerOrg.jurisdiction;
+    if (req.body.name && req.body.name.trim() !== partnerOrg.name) {
+      const trimmedName = req.body.name.trim();
+      const nameExists = await PartnerOrganization.findOne({
+        _id: { $ne: req.params.id },
+        name: { $regex: new RegExp(`^${trimmedName}$`, 'i') }
+      });
+      if (nameExists) {
+        res.status(400);
+        throw new Error(`A Partner Organization named "${trimmedName}" already exists.`);
+      }
+      partnerOrg.name = trimmedName;
+    }
+    partnerOrg.contactPerson = req.body.contactPerson ? req.body.contactPerson.trim() : partnerOrg.contactPerson;
+    partnerOrg.email = req.body.email ? req.body.email.toLowerCase().trim() : partnerOrg.email;
+    partnerOrg.phone = req.body.phone !== undefined ? req.body.phone.trim() : partnerOrg.phone;
+    partnerOrg.jurisdiction = req.body.jurisdiction !== undefined ? req.body.jurisdiction.trim() : partnerOrg.jurisdiction;
     partnerOrg.status = req.body.status || partnerOrg.status;
     
     if (req.body.password) {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Calculator, FileSpreadsheet } from 'lucide-react';
+import InfoTooltip from '../../components/InfoTooltip';
 
 export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictionConfidence }) => {
     if (!isOpen) return null;
@@ -123,17 +124,44 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                         gap: '12px'
                     }}>
                         <div>
-                            <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Time-Series Model</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Time-Series Model</span>
+                                <InfoTooltip
+                                    title="Holt's Linear Trend Model"
+                                    content="Computes dual exponential smoothing equations: Level (α=0.3) for baseline volume and Trend (β=0.2) for growth velocity. Directly drives predictive forecasting and prescriptive dispatching."
+                                    size={13}
+                                    position="bottom"
+                                    width={250}
+                                />
+                            </div>
                             <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>{modelName}</div>
                             <span style={{ fontSize: '11px', color: '#059669' }}>Captures baseline level & trending velocity</span>
                         </div>
                         <div>
-                            <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Validation Protocol</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Validation Protocol</span>
+                                <InfoTooltip
+                                    title="Walk-Forward Validation"
+                                    content="Simulates real-world forecasting by training strictly on past data and testing on the next unseen period (1-step ahead), eliminating lookahead bias and proving true predictive accuracy."
+                                    size={13}
+                                    position="bottom"
+                                    width={250}
+                                />
+                            </div>
                             <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>{evalMethod}</div>
                             <span style={{ fontSize: '11px', color: '#2563eb' }}>Strict out-of-sample simulation (zero lookahead)</span>
                         </div>
                         <div>
-                            <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Historical Testing Sample</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Historical Testing Sample</span>
+                                <InfoTooltip
+                                    title="Backtest Sample Horizon"
+                                    content="Number of historical operating cycles evaluated against the model under the expanding window. Higher sample size increases statistical confidence in production forecasts."
+                                    size={13}
+                                    position="bottom"
+                                    width={250}
+                                />
+                            </div>
                             <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>
                                 {testPoints} Historical Period{testPoints !== 1 ? 's' : ''} Backtested
                             </div>
@@ -154,7 +182,18 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                             border: '1.5px solid #a7f3d0',
                             textAlign: 'center'
                         }}>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#047857' }}>MODEL ACCURACY</span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#047857' }}>MODEL ACCURACY</span>
+                                <InfoTooltip
+                                    title="Forecast Accuracy (100% − MAPE)"
+                                    content="Overall prediction reliability score. Higher accuracy validates that municipal staff and partner orgs can safely rely on projected e-waste volumes for collection schedules."
+                                    size={12}
+                                    iconColor="#059669"
+                                    hoverColor="#047857"
+                                    position="bottom"
+                                    width={250}
+                                />
+                            </div>
                             <div style={{ fontSize: '26px', fontWeight: 800, color: '#065f46', margin: '4px 0' }}>
                                 {accuracy}%
                             </div>
@@ -170,7 +209,18 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                             border: '1px solid #bae6fd',
                             textAlign: 'center'
                         }}>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#0369a1' }}>MAPE</span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#0369a1' }}>MAPE</span>
+                                <InfoTooltip
+                                    title="Mean Absolute Percentage Error"
+                                    content="The average relative percentage deviation between forecast and actual collections. Lower MAPE indicates tightly calibrated waste generation estimates."
+                                    size={12}
+                                    iconColor="#0284c7"
+                                    hoverColor="#0369a1"
+                                    position="bottom"
+                                    width={250}
+                                />
+                            </div>
                             <div style={{ fontSize: '26px', fontWeight: 800, color: '#0c4a6e', margin: '4px 0' }}>
                                 {mape}%
                             </div>
@@ -186,7 +236,18 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                             border: '1px solid #e2e8f0',
                             textAlign: 'center'
                         }}>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>RMSE</span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>RMSE</span>
+                                <InfoTooltip
+                                    title="Root Mean Squared Error"
+                                    content="Measures residual variance while heavily penalizing large forecast misses. Critical for ensuring the system does not severely underestimate sudden e-waste surges."
+                                    size={12}
+                                    iconColor="#64748b"
+                                    hoverColor="#1e293b"
+                                    position="bottom"
+                                    width={250}
+                                />
+                            </div>
                             <div style={{ fontSize: '26px', fontWeight: 800, color: '#1e293b', margin: '4px 0' }}>
                                 {rmse}
                             </div>
@@ -202,7 +263,18 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                             border: '1px solid #e2e8f0',
                             textAlign: 'center'
                         }}>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>MAE</span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>MAE</span>
+                                <InfoTooltip
+                                    title="Mean Absolute Error"
+                                    content="The average absolute error magnitude in kilograms or units. Informs planners of the expected physical volume variance when allocating vehicle capacities."
+                                    size={12}
+                                    iconColor="#64748b"
+                                    hoverColor="#1e293b"
+                                    position="bottom"
+                                    width={250}
+                                />
+                            </div>
                             <div style={{ fontSize: '26px', fontWeight: 800, color: '#1e293b', margin: '4px 0' }}>
                                 {mae}
                             </div>
@@ -218,7 +290,18 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                             border: '1px solid #e2e8f0',
                             textAlign: 'center'
                         }}>
-                            <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>GOODNESS OF FIT (R²)</span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>GOODNESS OF FIT (R²)</span>
+                                <InfoTooltip
+                                    title="Coefficient of Determination (R²)"
+                                    content="Proportion of collection volume variance explained by the trend model. Higher R² values confirm that collection patterns are driven by systematic trends rather than random noise."
+                                    size={12}
+                                    iconColor="#64748b"
+                                    hoverColor="#1e293b"
+                                    position="bottom"
+                                    width={260}
+                                />
+                            </div>
                             <div style={{ fontSize: '26px', fontWeight: 800, color: '#1e293b', margin: '4px 0' }}>
                                 {rSquared}
                             </div>
@@ -251,12 +334,78 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                                     <thead>
                                         <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                                            <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#475569' }}>Period</th>
-                                            <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: '#475569' }}>Actual (y)</th>
-                                            <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: '#475569' }}>Forecast (ŷ)</th>
-                                            <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: '#475569' }}>Abs Error (|y - ŷ|)</th>
-                                            <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: '#475569' }}>APE (%)</th>
-                                            <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 600, color: '#475569' }}>Evaluation</th>
+                                            <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#475569' }}>
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                                    Period
+                                                    <InfoTooltip
+                                                        title="Evaluation Period"
+                                                        content="Specific historical calendar month backtested chronologically in sequence."
+                                                        size={11}
+                                                        position="bottom"
+                                                        width={210}
+                                                    />
+                                                </span>
+                                            </th>
+                                            <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: '#475569' }}>
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                                                    Actual (y)
+                                                    <InfoTooltip
+                                                        title="Actual Ground Truth (y)"
+                                                        content="True observed e-waste disposal recorded in the database during this period."
+                                                        size={11}
+                                                        position="bottom"
+                                                        width={220}
+                                                    />
+                                                </span>
+                                            </th>
+                                            <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: '#475569' }}>
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                                                    Forecast (ŷ)
+                                                    <InfoTooltip
+                                                        title="Model Forecast (ŷ)"
+                                                        content="Predicted collection volume generated strictly using data available before this period started."
+                                                        size={11}
+                                                        position="bottom"
+                                                        width={240}
+                                                    />
+                                                </span>
+                                            </th>
+                                            <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: '#475569' }}>
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                                                    Abs Error (|y - ŷ|)
+                                                    <InfoTooltip
+                                                        title="Absolute Error"
+                                                        content="Numerical variance |y - ŷ| in units/kg between actual intake and model prediction."
+                                                        size={11}
+                                                        position="bottom"
+                                                        width={230}
+                                                    />
+                                                </span>
+                                            </th>
+                                            <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: '#475569' }}>
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                                                    APE (%)
+                                                    <InfoTooltip
+                                                        title="Absolute Percentage Error"
+                                                        content="Error normalized against actual volume: (|y - ŷ| / y) × 100%. Lower percentage reflects higher precision."
+                                                        size={11}
+                                                        position="bottom"
+                                                        width={240}
+                                                    />
+                                                </span>
+                                            </th>
+                                            <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 600, color: '#475569' }}>
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                                    Evaluation
+                                                    <InfoTooltip
+                                                        title="Forecast Grade"
+                                                        content="Standardized benchmark rating (Lewis 1982): Highly Accurate (≤10%), Good (11–20%), Acceptable (21–50%), or Low (>50%)."
+                                                        size={11}
+                                                        position="bottom"
+                                                        width={260}
+                                                    />
+                                                </span>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
