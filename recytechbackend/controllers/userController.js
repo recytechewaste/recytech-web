@@ -43,6 +43,10 @@ const createUser = asyncHandler(async (req, res) => {
         throw new Error('Please enter all required fields: First Name, Last Name, Email, Password, and Role');
     }
 
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const normalizedEmail = email.toLowerCase().trim();
+
     const requesterRole = normalizeRole(req.user.role);
     const targetRole = normalizeRole(role || 'Staff');
 
@@ -52,19 +56,20 @@ const createUser = asyncHandler(async (req, res) => {
         throw new Error('Forbidden: Only Super Administrators can provision Administrator or Super Administrator accounts.');
     }
 
-    const userExists = await User.findOne({ email });
-    if (userExists) {
+    const userExists = await User.findOne({ email: normalizedEmail });
+    const orgExists = await PartnerOrganization.findOne({ email: normalizedEmail });
+    if (userExists || orgExists) {
         res.status(400);
-        throw new Error('User with that email already exists');
+        throw new Error('An account with that email address already exists in the system.');
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const user = await User.create({
-        firstName,
-        lastName,
-        email,
+        firstName: trimmedFirstName,
+        lastName: trimmedLastName,
+        email: normalizedEmail,
         password: hashedPassword,
         role: targetRole,
         status: status || 'Active'

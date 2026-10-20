@@ -48,7 +48,13 @@ const PartnerOrgFormModal = ({ lgu, onSave, onClose }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let finalValue = value;
+    if (name === 'contactPerson') {
+      finalValue = value.replace(/\d/g, ''); // Instantly strip digits from contact name
+    } else if (name === 'phone') {
+      finalValue = value.replace(/\D/g, '').slice(0, 11); // Auto-format digits only up to 11 digits
+    }
+    setFormData((prev) => ({ ...prev, [name]: finalValue }));
     if(errors[name]) {
         setErrors(prev => ({...prev, [name]: null}));
     }
@@ -62,14 +68,21 @@ const PartnerOrgFormModal = ({ lgu, onSave, onClose }) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
         newErrors.email = 'Email is required';
-    } else if (!emailRegex.test(formData.email)) {
+    } else if (!emailRegex.test(formData.email.trim())) {
         newErrors.email = 'Invalid email format';
+    }
+
+    if (formData.phone && formData.phone.trim() && !/^\d{11}$/.test(formData.phone.trim())) {
+        newErrors.phone = 'Phone number must be an 11-digit mobile number (e.g., 09171234567)';
     }
     
     if (!isEditing && !formData.password) {
         newErrors.password = 'Password is required for new accounts';
-    } else if (formData.password && formData.password.length < 8) {
-        newErrors.password = 'Password must be at least 8 characters long';
+    } else if (formData.password) {
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+        if (!passwordRegex.test(formData.password)) {
+            newErrors.password = 'Must be at least 8 chars, including uppercase, lowercase, number, and special character';
+        }
     }
 
     if (formData.password && formData.password !== formData.confirmPassword) {
@@ -129,8 +142,9 @@ const PartnerOrgFormModal = ({ lgu, onSave, onClose }) => {
                 <label>Phone Number</label>
                 <div className={sharedStyles.inputWrapper}>
                     <Phone size={16} className={sharedStyles.inputIcon} />
-                    <input name="phone" value={formData.phone} onChange={handleChange} placeholder="Optional contact number" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon}`} />
+                    <input name="phone" value={formData.phone} onChange={handleChange} placeholder="e.g. 09171234567" className={`${sharedStyles.input} ${sharedStyles.inputWithIcon} ${errors.phone ? sharedStyles.inputError + ' ' + sharedStyles.shake : ''}`} />
                 </div>
+                {errors.phone && <span className={styles.error}>{errors.phone}</span>}
             </div>
 
             <div className={sharedStyles.formGroup}>

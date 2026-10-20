@@ -21,8 +21,14 @@ const RewardPointFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmi
         e.preventDefault();
         const errors = {};
 
-        if (!formData.wasteType.trim()) errors.wasteType = true;
-        if (formData.pointsPerItem < 0) errors.pointsPerItem = true;
+        if (!formData.wasteType || !formData.wasteType.trim()) {
+            errors.wasteType = 'Material / Waste Type is required.';
+        }
+        
+        const pts = Number(formData.pointsPerItem);
+        if (formData.pointsPerItem === '' || formData.pointsPerItem === null || isNaN(pts) || pts < 0) {
+            errors.pointsPerItem = 'Points per item must be a non-negative number (0 or higher).';
+        }
 
         if (Object.keys(errors).length > 0) {
             setFormErrors(errors);
@@ -30,7 +36,11 @@ const RewardPointFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmi
         }
 
         setIsSubmitting(true);
-        await onSubmit(formData);
+        await onSubmit({
+            ...formData,
+            wasteType: formData.wasteType.trim(),
+            pointsPerItem: pts
+        });
         setIsSubmitting(false);
     };
 
@@ -38,18 +48,40 @@ const RewardPointFormModal = ({ isOpen, isEditing, initialData, onClose, onSubmi
         <Modal isOpen={isOpen} onClose={onClose} title={isEditing ? 'Edit Reward Points' : 'New Reward Points'} maxWidth="450px">
                 <form onSubmit={handleSubmit} className={styles.form} noValidate>
                     <div className={styles.formGroup}>
-                        <label>Waste Type</label>
+                        <label>Waste Type <span style={{ color: '#ef4444' }}>*</span></label>
                         <div className={styles.inputWrapper}>
                             <Recycle size={16} className={styles.inputIcon} />
-                            <input required value={formData.wasteType} onChange={(e) => setFormData({...formData, wasteType: e.target.value})} className={`${styles.input} ${styles.inputWithIcon} ${formErrors.wasteType ? styles.inputError + ' ' + styles.shake : ''}`} placeholder="e.g. Plastics, Electronics" />
+                            <input 
+                                required 
+                                value={formData.wasteType} 
+                                onChange={(e) => {
+                                    setFormData({...formData, wasteType: e.target.value});
+                                    if (formErrors.wasteType) setFormErrors({...formErrors, wasteType: ''});
+                                }} 
+                                className={`${styles.input} ${styles.inputWithIcon} ${formErrors.wasteType ? styles.inputError + ' ' + styles.shake : ''}`} 
+                                placeholder="e.g. Plastics, Electronics" 
+                            />
                         </div>
+                        {formErrors.wasteType && <span style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px', display: 'block' }}>{formErrors.wasteType}</span>}
                     </div>
                     <div className={styles.formGroup}>
-                        <label>Points per Item</label>
+                        <label>Points per Item <span style={{ color: '#ef4444' }}>*</span></label>
                         <div className={styles.inputWrapper}>
                             <Coins size={16} className={styles.inputIcon} />
-                            <input type="number" step="1" min="0" required value={formData.pointsPerItem ?? 0} onChange={(e) => setFormData({...formData, pointsPerItem: parseInt(e.target.value, 10)})} className={`${styles.input} ${styles.inputWithIcon} ${formErrors.pointsPerItem ? styles.inputError + ' ' + styles.shake : ''}`} />
+                            <input 
+                                type="number" 
+                                step="1" 
+                                min="0" 
+                                required 
+                                value={formData.pointsPerItem ?? ''} 
+                                onChange={(e) => {
+                                    setFormData({...formData, pointsPerItem: e.target.value === '' ? '' : parseInt(e.target.value, 10)});
+                                    if (formErrors.pointsPerItem) setFormErrors({...formErrors, pointsPerItem: ''});
+                                }} 
+                                className={`${styles.input} ${styles.inputWithIcon} ${formErrors.pointsPerItem ? styles.inputError + ' ' + styles.shake : ''}`} 
+                            />
                         </div>
+                        {formErrors.pointsPerItem && <span style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px', display: 'block' }}>{formErrors.pointsPerItem}</span>}
                     </div>
                     <div className={styles.formGroup}>
                         <label>Description</label>
