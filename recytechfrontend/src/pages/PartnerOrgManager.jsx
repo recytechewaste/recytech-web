@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Users2 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import PageHeader from '../components/PageHeader';
 import PartnerOrgTable from '../features/partnerOrgs/PartnerOrgTable';
 import PartnerOrgFormModal from '../features/partnerOrgs/PartnerOrgFormModal';
 import usePartnerOrgs from '../features/partnerOrgs/usePartnerOrgs';
@@ -75,20 +76,19 @@ const PartnerOrgManager = () => {
     <div className={styles.container}>
       <Sidebar activePage="Partner Organization Management" />
       <main className={styles.main}>
-        <header className={styles.header}>
-            <div className={styles.titleGroup}>
-                <h1 className={styles.pageTitle}>Partner Organization Management</h1>
-                <p className={styles.subTitle}>Oversee and manage all verified partner organizations and institutions.</p>
-            </div>
-            {canManage && (
-              <div className={styles.actionButtons}>
+        <PageHeader
+            icon={<Users2 size={24} />}
+            title="Partner Organizations"
+            tooltipTitle="Institutional & Commercial Partners"
+            tooltipContent="Directory of approved municipal units, corporate sponsors, and authorized recovery facilities managing downstream e-waste streams."
+            subtitle="Oversee and manage all verified partner organizations and institutions."
+            actions={canManage && (
                 <button onClick={() => handleOpenModal()} className={styles.addBtn}>
                     <Plus size={16} />
                     Add Partner Organization
                 </button>
-              </div>
             )}
-        </header>
+        />
 
         <PartnerOrgFilterBar
             searchTerm={searchTerm} setSearchTerm={setSearchTerm}

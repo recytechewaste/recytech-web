@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { RefreshCw, Users, CheckCircle, Award, Layers } from 'lucide-react';
+import { RefreshCw, Users, CheckCircle, Award, Layers, BookOpen } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
+import PageHeader from '../components/PageHeader';
 import ResidentTable from '../features/residents/ResidentTable';
 import ResidentFilterBar from '../features/residents/ResidentFilterBar';
 import ResidentDetailModal from '../features/residents/ResidentDetailModal';
@@ -53,21 +54,13 @@ const ResidentManagement = () => {
             <Sidebar activePage="Registered Users" />
             
             <main className={styles.main}>
-                {/* ── Header ── */}
-                <header className={styles.header}>
-                    <div className={styles.titleGroup}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <h1 className={styles.pageTitle}>Registered Users</h1>
-                            <InfoTooltip
-                                title="Community Resident Registry"
-                                content="Central directory of registered community members eligible to deposit e-waste, accumulate reward points, and schedule collections."
-                                position="bottom"
-                                width={270}
-                            />
-                        </div>
-                        <p className={styles.subTitle}>Manage and monitor registered community residents and account statuses.</p>
-                    </div>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <PageHeader
+                    icon={<BookOpen size={24} />}
+                    title="Registered Users"
+                    tooltipTitle="Community Resident Registry"
+                    tooltipContent="Central directory of registered community members eligible to deposit e-waste, accumulate reward points, and schedule collections."
+                    subtitle="Manage and monitor registered community residents and account statuses."
+                    actions={
                         <button 
                             className={styles.clearBtn} 
                             onClick={fetchResidents} 
@@ -76,8 +69,8 @@ const ResidentManagement = () => {
                         >
                             <RefreshCw size={14} /> Refresh
                         </button>
-                    </div>
-                </header>
+                    }
+                />
 
                 {/* ── Stats Summary Bar ── */}
                 <div className={rpStyles.statsBar} style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>

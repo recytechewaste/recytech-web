@@ -1,11 +1,12 @@
 import Sidebar from '../components/Sidebar';
 import styles from '../styles/UserManagement.module.css';
-import { ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, Coins } from 'lucide-react';
 import { usePointHistory } from '../features/point-history/usePointHistory';
 import Skeleton from '../components/Skeleton';
 import Pagination from '../components/Pagination';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
+import PageHeader from '../components/PageHeader';
 
 const PointHistory = () => {
     const { loading, error, searchTerm, setSearchTerm, page, pages, goToPage, hasNextPage, filteredTransactions } = usePointHistory();
@@ -17,12 +18,13 @@ const PointHistory = () => {
         <div className={styles.container}>
             <Sidebar activePage="Point History" />
             <div className={styles.main}>
-                <div className={styles.header}>
-                    <div className={styles.titleGroup}>
-                        <h1 className={styles.pageTitle}>Point History</h1>
-                        <p className={styles.subTitle}>Complete audit trail of incentive points, adjustments, and bin contribution activity.</p>
-                    </div>
-                </div>
+                <PageHeader
+                    icon={<Coins size={24} />}
+                    title="Point Transaction History"
+                    tooltipTitle="Incentive Transaction Ledger"
+                    tooltipContent="Detailed ledger of earned and redeemed resident incentive points across all municipal bin drop-off events."
+                    subtitle="Complete audit trail of incentive points, adjustments, and bin contribution activity."
+                />
 
                 <div className={styles.filterBar}>
                     <div className={styles.searchGroup}>

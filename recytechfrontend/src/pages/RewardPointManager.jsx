@@ -3,7 +3,7 @@ import api from '../api/client';
 import Sidebar from '../components/Sidebar';
 import styles from '../styles/Layout.module.css';
 import rpStyles from '../styles/RewardPointManager.module.css';
-import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight, Search, Star, Zap, TrendingUp, Filter, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight, Search, Star, Zap, TrendingUp, Filter, X, Coins } from 'lucide-react';
 import { useRewardPoints } from '../features/reward-points/useRewardPoints';
 import RewardPointFormModal from '../features/reward-points/RewardPointFormModal';
 import Modal from '../components/Modal';
@@ -12,6 +12,7 @@ import Skeleton from '../components/Skeleton';
 import Pagination from '../components/Pagination';
 import EmptyState from '../components/EmptyState';
 import InfoTooltip from '../components/InfoTooltip';
+import PageHeader from '../components/PageHeader';
 
 const WASTE_TYPE_COLORS = {
     'Plastics':     { bg: '#eff6ff', accent: '#3b82f6', text: '#1d4ed8' },
@@ -103,25 +104,18 @@ const RewardPointManager = () => {
         <div className={styles.container}>
             <Sidebar activePage="Reward Points" />
         <main className={styles.main}>
-
-                {/* ── Page Header ── */}
-                <div className={styles.header}>
-                    <div className={styles.titleGroup}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <h1 className={styles.pageTitle}>Reward Point Rules</h1>
-                            <InfoTooltip
-                                title="Incentive Point System"
-                                content="Rules configuring points credited to resident accounts upon verified e-waste disposal across all standard waste classifications."
-                                position="bottom"
-                                width={270}
-                            />
-                        </div>
-                        <p className={styles.subTitle}>Configure incentive points per item for each material category.</p>
-                    </div>
+            <PageHeader
+                icon={<Coins size={24} />}
+                title="Reward Point Rules"
+                tooltipTitle="Incentive Point System"
+                tooltipContent="Rules configuring points credited to resident accounts upon verified e-waste disposal across all standard waste classifications."
+                subtitle="Configure incentive points per item for each material category."
+                actions={
                     <button onClick={openCreateModal} className={styles.addBtn} id="add-reward-rule-btn">
                         <Plus size={18} /> Add New Rule
                     </button>
-                </div>
+                }
+            />
 
                 {/* ── Stats Bar ── */}
                 <div className={rpStyles.statsBar}>

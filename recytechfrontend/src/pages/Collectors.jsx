@@ -12,6 +12,7 @@ import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import Pagination from '../components/Pagination';
 import InfoTooltip from '../components/InfoTooltip';
+import PageHeader from '../components/PageHeader';
 
 const Collectors = () => {
     const { 
@@ -85,19 +86,18 @@ const Collectors = () => {
             <Sidebar activePage="Collector Management" />
 
             <main className={styles.main}>
-                
-                {/* HEADER */}
-                <div className={styles.header}>
-                    <div className={styles.titleGroup}>
-                        <h1 className={styles.pageTitle}>Collector Management</h1>
-                        <p className={styles.subTitle}>Manage collector profiles and bin service assignments.</p>
-                    </div>
-                    {canManage && (
+                <PageHeader
+                    icon={<Truck size={24} />}
+                    title="Collector Management"
+                    tooltipTitle="Logistics & Fleet Personnel"
+                    tooltipContent="Directory of drivers, vehicle payload specifications, active route readiness, and collector credentials."
+                    subtitle="Manage collector profiles, vehicle types, and bin service assignments."
+                    actions={canManage && (
                         <button onClick={handleOpenAdd} className={styles.addBtn} style={{backgroundColor: '#2563EB'}}>
                             <Plus size={18} /> Add Bin Collector
                         </button>
                     )}
-                </div>
+                />
 
                 {/* FILTERS */}
                 <div className={styles.filterBar}>

@@ -19,6 +19,7 @@ import {
 import styles from '../styles/AuditLogs.module.css';
 import InfoTooltip from '../components/InfoTooltip';
 import Skeleton from '../components/Skeleton';
+import PageHeader from '../components/PageHeader';
 
 const CATEGORIES = [
     { id: 'ALL', label: 'All Categories' },
@@ -167,29 +168,25 @@ export const AuditLogs = () => {
             <main style={{ flex: 1, padding: '32px 36px', overflowY: 'auto' }}>
                 <div className={styles.container}>
                     {/* Header */}
-                    <div className={styles.header}>
-                        <div className={styles.titleArea}>
-                            <div className={styles.iconWrapper}>
-                                <History size={24} />
+                    <PageHeader
+                        icon={<History size={24} />}
+                        title="System Audit Logs"
+                        tooltipTitle="Immutable Regulatory Ledger"
+                        tooltipContent="Cryptographically linked, immutable trail capturing administrative modifications, authentication logs, and dispatch actions."
+                        subtitle="Immutable historical audit trail documenting system mutations, access control, and compliance events."
+                        actions={
+                            <div className={styles.headerActions}>
+                                <button 
+                                    className={styles.refreshBtn}
+                                    onClick={() => { fetchSummary(); fetchLogs(); }}
+                                    title="Refresh Logs"
+                                >
+                                    <RefreshCw size={14} className={loading ? 'spin' : ''} />
+                                    <span>Refresh</span>
+                                </button>
                             </div>
-                            <div>
-                                <h1 className={styles.title}>System Audit Logs</h1>
-                                <p className={styles.subtitle}>
-                                    Immutable historical audit trail documenting system mutations, access control, and compliance events.
-                                </p>
-                            </div>
-                        </div>
-                        <div className={styles.headerActions}>
-                            <button 
-                                className={styles.refreshBtn}
-                                onClick={() => { fetchSummary(); fetchLogs(); }}
-                                title="Refresh Logs"
-                            >
-                                <RefreshCw size={14} className={loading ? 'spin' : ''} />
-                                <span>Refresh</span>
-                            </button>
-                        </div>
-                    </div>
+                        }
+                    />
 
                     {/* KPI Summary Cards */}
                     <div className={styles.kpiGrid}>

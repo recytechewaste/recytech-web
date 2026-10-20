@@ -8,7 +8,8 @@ import BinForm from '../features/bins/BinForm';
 import BinList from '../features/bins/BinList';
 import styles from '../styles/BinNetwork.module.css';
 import sharedStyles from '../styles/Layout.module.css';
-import { ListFilter, ArrowDownUp } from 'lucide-react';
+import PageHeader from '../components/PageHeader';
+import { ListFilter, ArrowDownUp, Warehouse } from 'lucide-react';
 
 const DEFAULT_COORDINATES = [14.5995, 120.9842];
 
@@ -151,17 +152,18 @@ const BinNetwork = () => {
             <Sidebar activePage="Bin Location Network" />
 
             <main className={styles.main}>
-                <header className={styles.header}>
-                    <div>
-                        <h1 className={styles.pageTitle}>Bin Location Network</h1>
-                        <p className={styles.subtitle}>Manage bins across the city.</p>
-                    </div>
-                    {canManage && (
+                <PageHeader
+                    icon={<Warehouse size={24} />}
+                    title="Bin Location Network"
+                    tooltipTitle="Smart Bin Infrastructure"
+                    tooltipContent="Geographic distribution, hardware health, and real-time fill level telemetry across all deployed municipal e-waste bins."
+                    subtitle="Physical locations, hardware statuses, and fill capacities across the municipality."
+                    actions={canManage && (
                         <button className={styles.addBtn} type="button" onClick={openCreateModal}>
                             + Add Bin
                         </button>
                     )}
-                </header>
+                />
 
                 <div className={styles.missionControl}>
                     <div className={styles.leftPanel}>

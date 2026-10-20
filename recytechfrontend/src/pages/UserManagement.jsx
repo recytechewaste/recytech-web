@@ -8,6 +8,8 @@ import UserFormModal from '../features/users/UserFormModal';
 import UserTable from '../features/users/UserTable';
 import UserFilterBar from '../features/users/UserFilterBar';
 import ErrorState from '../components/ErrorState';
+import PageHeader from '../components/PageHeader';
+import { Users } from 'lucide-react';
 import styles from '../styles/UserManagement.module.css'; // Changed to Collectors styles
 
 const BLANK_USER_FORM = {
@@ -70,14 +72,16 @@ const UserManagement = () => {
         <div className={styles.container}>
             <Sidebar activePage="User Management" />
             <main className={styles.main}>
-                
-                <header className={styles.header}>
-                    <div className={styles.titleGroup}>
-                        <h1 className={styles.pageTitle}>User Management</h1>
-                        <p className={styles.subTitle}>Manage and monitor registered system users</p>
-                    </div>
-                    <button className={styles.addBtn} onClick={openAddModal}><Plus size={18}/> Add User</button>
-                </header>
+                <PageHeader
+                    icon={<Users size={24} />}
+                    title="User Management"
+                    tooltipTitle="Administrative Access Directory"
+                    tooltipContent="Directory of authorized staff and administrator accounts. Manage roles, access levels, and security credentials."
+                    subtitle="Manage and monitor registered administrative system users."
+                    actions={
+                        <button className={styles.addBtn} onClick={openAddModal}><Plus size={18}/> Add User</button>
+                    }
+                />
 
                 <UserFilterBar
                     searchTerm={searchTerm} setSearchTerm={setSearchTerm}
