@@ -1,6 +1,7 @@
 import { CheckCircle } from 'lucide-react';
 import styles from '../../styles/Dashboard.module.css';
 import RequestPriorityTags from './RequestPriorityTags';
+import InfoTooltip from '../../components/InfoTooltip';
 
 const AssignmentReview = ({
     recommendations,
@@ -16,7 +17,16 @@ const AssignmentReview = ({
 
     return (
         <div className={styles.chartCard} style={{ marginTop: '24px' }}>
-            <h3 className={styles.cardTitle}>Review & Confirm Assignments</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <h3 className={styles.cardTitle} style={{ margin: 0 }}>Review & Confirm Assignments</h3>
+                <InfoTooltip
+                    title="Prescriptive Dispatch Execution"
+                    content="Interactive dispatch console where staff can review the AI-assigned requests, adjust scheduled pickup times, and click Confirm to commit dispatches to active collectors."
+                    size={16}
+                    position="bottom"
+                    width={270}
+                />
+            </div>
             <span className={styles.chartSub}>Select assignments and set scheduled times before confirming</span>
 
             <div style={{ marginTop: '16px' }}>

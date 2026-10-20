@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import RequestTable from '../features/requests/RequestTable';
 import RequestActionModal from '../features/requests/RequestActionModal';
@@ -7,7 +8,7 @@ import RequestFilterBar from '../features/requests/RequestFilterBar';
 import Pagination from '../components/Pagination';
 import ErrorState from '../components/ErrorState';
 import api from '../api/client';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, CalendarClock } from 'lucide-react';
 import styles from '../styles/BinCollectionRequests.module.css';
 
 const ITEMS_PER_PAGE = 10;
@@ -29,6 +30,7 @@ const BinCollectionRequests = () => {
 
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const navigate = useNavigate();
 
   const handleUpdateRequest = async (requestId, updateData) => {
     try {
@@ -49,11 +51,35 @@ const BinCollectionRequests = () => {
     <div className={styles.container}>
       <Sidebar activePage="Bin Collections" />
       <main className={styles.main}>
-        <header className={styles.header}>
+        <header className={styles.header} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div className={styles.titleGroup}>
             <h1 className={styles.pageTitle}>Bin Collection Requests</h1>
             <p className={styles.subTitle}>Monitor all automated and manual collection requests for bins.</p>
           </div>
+          <button
+            type="button"
+            onClick={() => navigate('/scheduling')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 18px',
+              backgroundColor: '#0f766e',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: '600',
+              fontSize: '13px',
+              cursor: 'pointer',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              transition: 'background 0.15s ease'
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#0d9488'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#0f766e'; }}
+          >
+            <CalendarClock size={16} />
+            <span>Prescriptive Scheduling & Dispatch</span>
+          </button>
         </header>
 
         {successMessage && (
