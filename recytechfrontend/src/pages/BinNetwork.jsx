@@ -157,7 +157,7 @@ const BinNetwork = () => {
                     title="Bin Location Network"
                     tooltipTitle="Smart Bin Infrastructure"
                     tooltipContent="Geographic distribution, hardware health, and real-time fill level telemetry across all deployed municipal e-waste bins."
-                    subtitle="Physical locations, hardware statuses, and fill capacities across the municipality."
+                    subtitle="Manage bins across the city."
                     actions={canManage && (
                         <button className={styles.addBtn} type="button" onClick={openCreateModal}>
                             + Add Bin
