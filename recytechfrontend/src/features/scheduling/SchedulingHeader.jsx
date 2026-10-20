@@ -32,11 +32,6 @@ const SchedulingHeader = ({ forecastTotal = 0, recommendationCount = 0, resource
                         </p>
                     </div>
                 </div>
-
-                <div className={styles.liveIndicator}>
-                    <span className={styles.pulseDot} />
-                    <span>Live Optimization Active</span>
-                </div>
             </header>
 
             {/* 4-Card Overview KPI Grid */}
