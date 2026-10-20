@@ -86,6 +86,22 @@ const SchedulingPanel = () => {
         });
     };
 
+    const handleSelectAll = (shouldSelectAll) => {
+        if (!shouldSelectAll) {
+            setSelectedAssignments({});
+            return;
+        }
+
+        const all = {};
+        recommendations.forEach((collector) => {
+            collector.assignedRequests?.forEach((request) => {
+                const key = `${request.requestId}-${collector.collectorId}`;
+                all[key] = { requestId: request.requestId, collectorId: collector.collectorId };
+            });
+        });
+        setSelectedAssignments(all);
+    };
+
     const handleTimeChange = (requestId, value) => {
         setScheduledTimes((previousTimes) => ({
             ...previousTimes,
@@ -159,6 +175,7 @@ const SchedulingPanel = () => {
                 selectedAssignments={selectedAssignments}
                 scheduledTimes={scheduledTimes}
                 onSelectAssignment={toggleAssignmentSelection}
+                onSelectAll={handleSelectAll}
                 onTimeChange={handleTimeChange}
                 onOpenConfirmModal={() => setShowConfirmModal(true)}
             />
