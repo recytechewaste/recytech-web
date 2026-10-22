@@ -507,12 +507,21 @@ const getReportData = asyncHandler(async (req, res) => {
         requestLguFilter = { $or: reqOrConditions };
     }
 
-    const requestDateFilter = {
-        $or: [
-            { completionDate: dateFilter },
-            { createdAt: dateFilter }
-        ]
-    };
+    // Use the effective date (completionDate if set, otherwise createdAt) so that
+    // only records whose actual event date falls within the selected period are returned.
+    const effectiveDateExpr = { $ifNull: ['$completionDate', '$createdAt'] };
+    const requestDateFilter = dateFilter.$gte
+        ? {
+              $expr: {
+                  $and: [
+                      { $gte: [effectiveDateExpr, dateFilter.$gte] },
+                      { $lte: [effectiveDateExpr, dateFilter.$lte] }
+                  ]
+              }
+          }
+        : {
+              $expr: { $lte: [effectiveDateExpr, dateFilter.$lte] }
+          };
 
     const completedRequestMatch = {
         ...requestDateFilter,
@@ -660,6 +669,7 @@ const getReportData = asyncHandler(async (req, res) => {
                     _id: {
                         $dateToString: {
                             format: '%Y-%m-%d',
+                            // Group by completionDate (the actual completion event) when available
                             date: { $ifNull: ['$completionDate', '$createdAt'] }
                         }
                     },
