@@ -54,12 +54,13 @@ const getAllRequests = asyncHandler(async (req, res) => {
     const populateLgu = { path: 'lgu', select: 'name email contactPerson phone address organizationType' };
     const populateCollector = { path: 'assignedCollector', select: 'firstName lastName phone vehiclePlate vehicleType status' };
 
-    // 5. Fetch documents
+    // 5. Fetch documents — sort by effective date (completionDate when available, else createdAt)
+    // so recently completed records (including seeded demo data) surface to the top.
     let requestQuery = Request.find(query)
         .populate(populateBin)
         .populate(populateLgu)
         .populate(populateCollector)
-        .sort({ createdAt: -1 });
+        .sort({ completionDate: -1, scheduledDate: -1, createdAt: -1 });
 
     const allMatching = await requestQuery.exec();
 
