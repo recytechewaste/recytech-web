@@ -467,9 +467,7 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                     justifyContent: 'space-between',
                     background: '#f8fafc'
                 }}>
-                    <span style={{ fontSize: '11px', color: '#64748b' }}>
-                        Evaluated using IEEE / INFORMS standard time-series forecast assessment
-                    </span>
+                
                     <button
                         onClick={onClose}
                         style={{
