@@ -253,6 +253,40 @@ async function runSeed() {
                 completionDate: monthsAgo(0, -3),
                 createdAt: monthsAgo(0, -6),
                 notes: MOCK_TAG
+            },
+
+            // --- LAST 7 DAYS (recent, so the "Last 7 Days" filter always has data) ---
+            {
+                bin: binId,
+                binModel: 'RecyclingCenter',
+                lgu: lguId,
+                assignedCollector: collectorId,
+                status: 'completed',
+                requestType: 'manual',
+                collectedWaste: [
+                    { category: 'Smartphone', quantity: 12, unit: 'items' },
+                    { category: 'Cables & Chargers', quantity: 20, unit: 'items' }
+                ],
+                // ~4 days ago relative to today
+                completionDate: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000),
+                createdAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
+                notes: MOCK_TAG
+            },
+            {
+                bin: binId,
+                binModel: 'RecyclingCenter',
+                lgu: lguId,
+                assignedCollector: collectorId,
+                status: 'completed',
+                requestType: 'manual',
+                collectedWaste: [
+                    { category: 'Laptop', quantity: 4, unit: 'items' },
+                    { category: 'Batteries', quantity: 18, unit: 'items' }
+                ],
+                // ~2 days ago relative to today
+                completionDate: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
+                createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
+                notes: MOCK_TAG
             }
         ];
 
