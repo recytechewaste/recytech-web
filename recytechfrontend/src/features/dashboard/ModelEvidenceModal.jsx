@@ -127,11 +127,11 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                                 <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Time-Series Model</span>
                                 <InfoTooltip
-                                    title="Holt's Linear Trend Model"
-                                    content="Computes dual exponential smoothing equations: Level (α=0.3) for baseline volume and Trend (β=0.2) for growth velocity. Directly drives predictive forecasting and prescriptive dispatching."
+                                    title="Holt's Double Exponential Smoothing"
+                                    content="Tracks two factors: current baseline level (α=0.3) and growth trend (β=0.2) to predict the next 3 months. Formula: Forecast = Level + (h × Trend)"
                                     size={13}
                                     position="bottom"
-                                    width={250}
+                                    width={280}
                                 />
                             </div>
                             <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>{modelName}</div>
@@ -142,10 +142,10 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                                 <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Validation Protocol</span>
                                 <InfoTooltip
                                     title="Walk-Forward Validation"
-                                    content="Simulates real-world forecasting by training strictly on past data and testing on the next unseen period (1-step ahead), eliminating lookahead bias and proving true predictive accuracy."
+                                    content="Tests the model step-by-step using only past data to predict the next month, ensuring a realistic test with zero lookahead cheating."
                                     size={13}
                                     position="bottom"
-                                    width={250}
+                                    width={270}
                                 />
                             </div>
                             <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>{evalMethod}</div>
@@ -155,11 +155,11 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                                 <span style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Historical Testing Sample</span>
                                 <InfoTooltip
-                                    title="Backtest Sample Horizon"
-                                    content="Number of historical operating cycles evaluated against the model under the expanding window. Higher sample size increases statistical confidence in production forecasts."
+                                    title="Testing Sample Horizon"
+                                    content="The number of past operating months evaluated. As more monthly records are collected, accuracy numbers naturally become more stable and reliable."
                                     size={13}
                                     position="bottom"
-                                    width={250}
+                                    width={270}
                                 />
                             </div>
                             <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', marginTop: '2px' }}>
@@ -185,13 +185,13 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                                 <span style={{ fontSize: '11px', fontWeight: 700, color: '#047857' }}>MODEL ACCURACY</span>
                                 <InfoTooltip
-                                    title="Forecast Accuracy (100% − MAPE)"
-                                    content="Overall prediction reliability score. Higher accuracy validates that municipal staff and partner orgs can safely rely on projected e-waste volumes for collection schedules."
+                                    title="Model Accuracy"
+                                    content="Overall forecast correctness. Formula: 100% − MAPE. Tells you how closely predictions match actual collections on a 0–100% scale."
                                     size={12}
                                     iconColor="#059669"
                                     hoverColor="#047857"
                                     position="bottom"
-                                    width={250}
+                                    width={260}
                                 />
                             </div>
                             <div style={{ fontSize: '26px', fontWeight: 800, color: '#065f46', margin: '4px 0' }}>
@@ -212,13 +212,13 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                                 <span style={{ fontSize: '11px', fontWeight: 700, color: '#0369a1' }}>MAPE</span>
                                 <InfoTooltip
-                                    title="Mean Absolute Percentage Error"
-                                    content="The average relative percentage deviation between forecast and actual collections. Lower MAPE indicates tightly calibrated waste generation estimates."
+                                    title="Mean Absolute Percentage Error (MAPE)"
+                                    content="Average percentage error across all test months. Lower is better. Formula: Average of (|Actual − Forecast| / Actual) × 100%."
                                     size={12}
                                     iconColor="#0284c7"
                                     hoverColor="#0369a1"
                                     position="bottom"
-                                    width={250}
+                                    width={280}
                                 />
                             </div>
                             <div style={{ fontSize: '26px', fontWeight: 800, color: '#0c4a6e', margin: '4px 0' }}>
@@ -239,13 +239,13 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                                 <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>RMSE</span>
                                 <InfoTooltip
-                                    title="Root Mean Squared Error"
-                                    content="Measures residual variance while heavily penalizing large forecast misses. Critical for ensuring the system does not severely underestimate sudden e-waste surges."
+                                    title="Root Mean Squared Error (RMSE)"
+                                    content="Measures error magnitude, heavily penalizing large misses. Formula: √[Average of (Actual − Forecast)²]. Lower is better."
                                     size={12}
                                     iconColor="#64748b"
                                     hoverColor="#1e293b"
                                     position="bottom"
-                                    width={250}
+                                    width={280}
                                 />
                             </div>
                             <div style={{ fontSize: '26px', fontWeight: 800, color: '#1e293b', margin: '4px 0' }}>
@@ -266,13 +266,13 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                                 <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>MAE</span>
                                 <InfoTooltip
-                                    title="Mean Absolute Error"
-                                    content="The average absolute error magnitude in kilograms or units. Informs planners of the expected physical volume variance when allocating vehicle capacities."
+                                    title="Mean Absolute Error (MAE)"
+                                    content="Average prediction error in plain drop-off count. Formula: Average of |Actual − Forecast|. Indicates how many items the forecast missed by."
                                     size={12}
                                     iconColor="#64748b"
                                     hoverColor="#1e293b"
                                     position="bottom"
-                                    width={250}
+                                    width={280}
                                 />
                             </div>
                             <div style={{ fontSize: '26px', fontWeight: 800, color: '#1e293b', margin: '4px 0' }}>
@@ -294,12 +294,12 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                                 <span style={{ fontSize: '11px', fontWeight: 700, color: '#475569' }}>GOODNESS OF FIT (R²)</span>
                                 <InfoTooltip
                                     title="Coefficient of Determination (R²)"
-                                    content="Proportion of collection volume variance explained by the trend model. Higher R² values confirm that collection patterns are driven by systematic trends rather than random noise."
+                                    content="How well the trend fits the data (0 to 1). Formula: 1 − [Sum of (Actual − Forecast)² / Sum of (Actual − Mean)²]. Closer to 1 means a strong fit."
                                     size={12}
                                     iconColor="#64748b"
                                     hoverColor="#1e293b"
                                     position="bottom"
-                                    width={260}
+                                    width={300}
                                 />
                             </div>
                             <div style={{ fontSize: '26px', fontWeight: 800, color: '#1e293b', margin: '4px 0' }}>
@@ -339,10 +339,10 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                                                     Period
                                                     <InfoTooltip
                                                         title="Evaluation Period"
-                                                        content="Specific historical calendar month backtested chronologically in sequence."
+                                                        content="The specific historical month tested in chronological order."
                                                         size={11}
                                                         position="bottom"
-                                                        width={210}
+                                                        width={220}
                                                     />
                                                 </span>
                                             </th>
@@ -350,8 +350,8 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                                                 <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
                                                     Actual (y)
                                                     <InfoTooltip
-                                                        title="Actual Ground Truth (y)"
-                                                        content="True observed e-waste disposal recorded in the database during this period."
+                                                        title="Actual Drop-Offs (y)"
+                                                        content="The real number of e-waste items recorded in the database for this month."
                                                         size={11}
                                                         position="bottom"
                                                         width={220}
@@ -362,20 +362,8 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                                                 <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
                                                     Forecast (ŷ)
                                                     <InfoTooltip
-                                                        title="Model Forecast (ŷ)"
-                                                        content="Predicted collection volume generated strictly using data available before this period started."
-                                                        size={11}
-                                                        position="bottom"
-                                                        width={240}
-                                                    />
-                                                </span>
-                                            </th>
-                                            <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: '#475569' }}>
-                                                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
-                                                    Abs Error (|y - ŷ|)
-                                                    <InfoTooltip
-                                                        title="Absolute Error"
-                                                        content="Numerical variance |y - ŷ| in units/kg between actual intake and model prediction."
+                                                        title="Model Prediction (ŷ)"
+                                                        content="The volume predicted by Holt's model using only data recorded before this month."
                                                         size={11}
                                                         position="bottom"
                                                         width={230}
@@ -384,13 +372,25 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                                             </th>
                                             <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: '#475569' }}>
                                                 <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
-                                                    APE (%)
+                                                    Abs Error (|y - ŷ|)
                                                     <InfoTooltip
-                                                        title="Absolute Percentage Error"
-                                                        content="Error normalized against actual volume: (|y - ŷ| / y) × 100%. Lower percentage reflects higher precision."
+                                                        title="Absolute Error"
+                                                        content="Raw difference in item count: |Actual − Forecast|. Shows the exact number missed by."
                                                         size={11}
                                                         position="bottom"
                                                         width={240}
+                                                    />
+                                                </span>
+                                            </th>
+                                            <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 600, color: '#475569' }}>
+                                                <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                                                    APE (%)
+                                                    <InfoTooltip
+                                                        title="Absolute Percentage Error"
+                                                        content="Error percentage for this month. Formula: (|Actual − Forecast| / Actual) × 100%."
+                                                        size={11}
+                                                        position="bottom"
+                                                        width={250}
                                                     />
                                                 </span>
                                             </th>
@@ -399,10 +399,10 @@ export const ModelEvidenceModal = ({ isOpen, onClose, modelEvaluation, predictio
                                                     Evaluation
                                                     <InfoTooltip
                                                         title="Forecast Grade"
-                                                        content="Standardized benchmark rating (Lewis 1982): Highly Accurate (≤10%), Good (11–20%), Acceptable (21–50%), or Low (>50%)."
+                                                        content="Accuracy rating based on error: Accurate (≤20% error) or Acceptable (>20% error)."
                                                         size={11}
                                                         position="bottom"
-                                                        width={260}
+                                                        width={240}
                                                     />
                                                 </span>
                                             </th>
