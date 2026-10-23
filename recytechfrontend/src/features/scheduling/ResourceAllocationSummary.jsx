@@ -121,7 +121,7 @@ const ResourceAllocationSummary = ({ summary = {} }) => {
                             </span>
                         </td>
                     </tr>
-                    <tr>
+                    {/*<tr>
                         <td className={styles.summaryLabel}>
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                                 Estimated recyclable value
@@ -137,7 +137,7 @@ const ResourceAllocationSummary = ({ summary = {} }) => {
                         <td className={styles.summaryVal} style={{ color: '#047857' }}>
                             PHP {(summary.totalEstimatedValue || 0).toLocaleString()}
                         </td>
-                    </tr>
+                    </tr>*/}
                 </tbody>
             </table>
         </div>

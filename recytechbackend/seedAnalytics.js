@@ -55,7 +55,7 @@ async function runSeed() {
         }
 
         // Prioritize finding 'Mango St. Bin' or any operational bin
-        let sampleBin = await RecyclingCenter.findOne({ name: 'Mango St. Bin' }) 
+        let sampleBin = await RecyclingCenter.findOne({ name: 'Mango St. Bin' })
             || await RecyclingCenter.findOne({ status: 'Operational' })
             || await RecyclingCenter.findOne();
 
