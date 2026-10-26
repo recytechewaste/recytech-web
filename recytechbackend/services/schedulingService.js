@@ -124,7 +124,7 @@ async function confirmCollectorAssignments(assignments = []) {
         Collector.find({ _id: { $in: collectorIds } }),
         Request.find({
             assignedCollector: { $in: collectorIds },
-            status: { $in: ['Scheduled', 'In Progress'] }
+            status: { $in: ['Scheduled', 'scheduled', 'In Progress', 'in_progress', 'In-Progress'] }
         }).select('_id assignedCollector scheduledDate')
     ]);
 
@@ -150,7 +150,12 @@ async function confirmCollectorAssignments(assignments = []) {
 
         const request = requestsMap.get(reqStr);
         if (!request) { errors.push({ requestId, error: 'Request not found' }); continue; }
-        if (request.status !== 'Pending') { errors.push({ requestId, error: `Request status is ${request.status}, not Pending` }); continue; }
+        
+        const currentStatus = request.status ? request.status.toLowerCase() : '';
+        if (currentStatus !== 'pending' && currentStatus !== 'approved') {
+            errors.push({ requestId, error: `Request status is '${request.status}', but must be 'pending' or 'approved'` });
+            continue;
+        }
 
         const collector = collectorsMap.get(colStr);
         if (!collector) { errors.push({ requestId, error: 'Collector not found' }); continue; }
@@ -167,7 +172,7 @@ async function confirmCollectorAssignments(assignments = []) {
 
         request.assignedCollector = collectorId;
         request.scheduledDate = scheduledDate;
-        request.status = 'Scheduled';
+        request.status = 'scheduled';
         
         // Update local map to prevent conflicts within this batch
         collectorSchedules.push({ requestId: reqStr, time: newTime });
