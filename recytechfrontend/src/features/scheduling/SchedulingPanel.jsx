@@ -139,7 +139,10 @@ const SchedulingPanel = () => {
             }
 
             if (response.data.failed > 0) {
-                setConfirmMessage(`${response.data.failed} assignment(s) failed. Check details below.`);
+                const errorDetail = response.data.errors?.[0]?.error;
+                setConfirmMessage(errorDetail 
+                    ? `Error: ${response.data.failed} assignment(s) failed — ${errorDetail}`
+                    : `Error: ${response.data.failed} assignment(s) failed.`);
             }
         } catch (err) {
             setConfirmMessage(`Error: ${err.response?.data?.message || err.message}`);
