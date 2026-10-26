@@ -11,8 +11,18 @@ function getVehicleCapacity(vehicleType) {
     return VEHICLE_CAPACITY[vehicleType] || 8;
 }
 
+function getFillLevel(bin) {
+    if (!bin) return 0;
+    if (typeof bin.fillLevel === 'number' && !Number.isNaN(bin.fillLevel)) return bin.fillLevel;
+    if (typeof bin.fillPercentage === 'number' && !Number.isNaN(bin.fillPercentage)) return bin.fillPercentage;
+    if (bin.capacityKg && typeof bin.currentFillKg === 'number') {
+        return Math.min(100, Math.round((bin.currentFillKg / bin.capacityKg) * 100));
+    }
+    return 0;
+}
+
 function getRequestLoad(request) {
-    const fillLevel = request.bin?.fillLevel || 0;
+    const fillLevel = getFillLevel(request.bin);
     if (fillLevel >= 90) return 25; // Critical load
     if (fillLevel >= 70) return 15; // High load
     return 10; // Standard load
@@ -48,7 +58,7 @@ function buildPriorityTags({ fillLevel, ageDays }) {
 function scoreRequestPriority(request, now = new Date()) {
     const load = getRequestLoad(request);
     const ageDays = getRequestAgeDays(request, now);
-    const fillLevel = request.bin?.fillLevel || 0;
+    const fillLevel = getFillLevel(request.bin);
 
     // Score components: fill level is dominant, age is secondary
     const fillScore = Math.min(60, (fillLevel / 100) * 60);
@@ -250,8 +260,8 @@ function buildCollectionRecommendations(pendingRequests, collectors) {
 
         target.assignedRequests.push({
             requestId: request._id,
-            binId: request.bin?.binId,
-            address: request.bin?.address,
+            binId: request.bin?.binId || request.bin?.name || 'Smart Collection Bin',
+            address: request.bin?.address || 'Designated Collection Point',
             load: requestWeight,
             priorityScore: request.priority.priorityScore,
             priorityLevel: request.priority.priorityLevel,
