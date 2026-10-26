@@ -1,6 +1,8 @@
 const Request = require('../models/Request');
 const Collector = require('../models/Collector');
 const RewardPoint = require('../models/RewardPoint');
+require('../models/RecyclingCenter');
+require('../models/Bin');
 const {
     buildDailySeries,
     buildForecast,
@@ -57,7 +59,11 @@ async function getCollectionForecast(days = 7) {
 
 async function getSchedulingRecommendations() {
     const pendingRequests = await Request.find({
-        status: 'Pending',
+        status: { $in: ['pending', 'Pending', 'approved', 'Approved'] },
+        $or: [
+            { assignedCollector: null },
+            { assignedCollector: { $exists: false } }
+        ]
     }).populate('bin').lean();
 
     const collectors = await Collector.find({ status: 'Active' }).lean();

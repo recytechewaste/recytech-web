@@ -41,7 +41,7 @@ async function runSeed() {
         await Request.deleteMany({ notes: MOCK_TAG });
         await BinDropoff.deleteMany({ notes: MOCK_TAG });
 
-        // 2. FETCH OR CREATE VALID PARTNER ORGANIZATION & BIN
+        // 2. FETCH OR CREATE VALID PARTNER ORGANIZATION & BINS
         let sampleLgu = await PartnerOrganization.findOne({ name: 'Trevor Philips Industries' }) || await PartnerOrganization.findOne();
         if (!sampleLgu) {
             console.log('ℹ️ Creating demo Partner Organization...');
@@ -54,55 +54,93 @@ async function runSeed() {
             });
         }
 
-        // Prioritize finding 'Mango St. Bin' or any operational bin
-        let sampleBin = await RecyclingCenter.findOne({ name: 'Mango St. Bin' })
-            || await RecyclingCenter.findOne({ status: 'Operational' })
-            || await RecyclingCenter.findOne();
-
-        if (!sampleBin) {
-            console.log('ℹ️ Creating demo Bin...');
-            sampleBin = await RecyclingCenter.create({
+        // Setup 3 Realistic Bins with calibrated fill levels for scheduling demo:
+        // 1. Mango St. Bin: 94% (Critically Full, >=90%)
+        // 2. Rizal Ave. Drop-off: 78% (Nearing Capacity, >=75%)
+        // 3. Quezon Blvd. Hub: 55% (Moderate Load)
+        let binMango = await RecyclingCenter.findOne({ name: 'Mango St. Bin' });
+        if (!binMango) {
+            binMango = await RecyclingCenter.create({
                 name: 'Mango St. Bin',
                 address: '123 Mango St., Barangay Central',
                 status: 'Operational',
                 capacityKg: 80,
-                currentFillKg: 20,
+                currentFillKg: 75,
+                fillPercentage: 94,
                 assignedLgu: sampleLgu._id
             });
+        } else {
+            await RecyclingCenter.updateOne({ _id: binMango._id }, { $set: { fillPercentage: 94, currentFillKg: 75, capacityKg: 80 } });
         }
 
-        // 3. FETCH OR CREATE ACTIVE COLLECTOR
-        let sampleCollector = await Collector.findOne({ firstName: 'John', lastName: 'Gonzales' })
-            || await Collector.findOne({ status: 'Active' })
-            || await Collector.findOne();
+        let binRizal = await RecyclingCenter.findOne({ name: 'Rizal Ave. Drop-off' });
+        if (!binRizal) {
+            binRizal = await RecyclingCenter.create({
+                name: 'Rizal Ave. Drop-off',
+                address: '456 Rizal Ave., Barangay San Jose',
+                status: 'Operational',
+                capacityKg: 80,
+                currentFillKg: 62,
+                fillPercentage: 78,
+                assignedLgu: sampleLgu._id
+            });
+        } else {
+            await RecyclingCenter.updateOne({ _id: binRizal._id }, { $set: { fillPercentage: 78, currentFillKg: 62, capacityKg: 80 } });
+        }
 
-        if (!sampleCollector) {
-            console.log('ℹ️ Creating demo Collector profile...');
-            let collectorUser = await User.findOne({ role: 'Collector' });
-            if (!collectorUser) {
-                collectorUser = await User.create({
-                    firstName: 'John',
-                    lastName: 'Gonzales',
-                    email: 'john.gonzales@recytech.org',
-                    password: 'HashedPassword123!',
-                    role: 'Collector',
+        let binQuezon = await RecyclingCenter.findOne({ name: 'Quezon Blvd. Hub' });
+        if (!binQuezon) {
+            binQuezon = await RecyclingCenter.create({
+                name: 'Quezon Blvd. Hub',
+                address: '789 Quezon Blvd., Barangay Poblacion',
+                status: 'Operational',
+                capacityKg: 80,
+                currentFillKg: 44,
+                fillPercentage: 55,
+                assignedLgu: sampleLgu._id
+            });
+        } else {
+            await RecyclingCenter.updateOne({ _id: binQuezon._id }, { $set: { fillPercentage: 55, currentFillKg: 44, capacityKg: 80 } });
+        }
+
+        const binId = binMango._id;
+        const lguId = sampleLgu._id;
+
+        // 3. FETCH OR CREATE ACTIVE COLLECTOR FLEET (Truck, Van, Van/Motorcycle)
+        const createCollectorIfMissing = async (firstName, lastName, email, phone, plate, vehicleType) => {
+            let col = await Collector.findOne({ firstName, lastName });
+            if (!col) {
+                let user = await User.findOne({ email });
+                if (!user) {
+                    user = await User.create({
+                        firstName,
+                        lastName,
+                        email,
+                        password: 'HashedPassword123!',
+                        role: 'Collector',
+                        status: 'Active'
+                    });
+                }
+                col = await Collector.create({
+                    user: user._id,
+                    firstName,
+                    lastName,
+                    phone,
+                    vehiclePlate: plate,
+                    vehicleType,
                     status: 'Active'
                 });
+            } else {
+                await Collector.updateOne({ _id: col._id }, { $set: { status: 'Active', vehicleType } });
             }
-            sampleCollector = await Collector.create({
-                user: collectorUser._id,
-                firstName: 'John',
-                lastName: 'Gonzales',
-                phone: '09171234567',
-                vehiclePlate: 'RCY-2026',
-                vehicleType: 'Truck',
-                status: 'Active'
-            });
-        }
+            return col;
+        };
 
-        const binId = sampleBin._id;
-        const lguId = sampleLgu._id;
-        const collectorId = sampleCollector._id;
+        const collectorJohn = await createCollectorIfMissing('John', 'Gonzales', 'john.gonzales@recytech.org', '09171234567', 'RCY-2026', 'Truck');
+        const collectorMaria = await createCollectorIfMissing('Maria', 'Santos', 'maria.santos@recytech.org', '09177654321', 'RCY-3012', 'Van');
+        const collectorCarlos = await createCollectorIfMissing('Carlos', 'Reyes', 'carlos.reyes@recytech.org', '09189876543', 'RCY-1108', 'Van');
+
+        const collectorId = collectorJohn._id;
 
         // 3.5 REPAIR ORPHANED REQUESTS (Fixes the "N/A" issue in Bin Collection Requests)
         const allValidRc = await RecyclingCenter.find().select('_id');
@@ -112,13 +150,13 @@ async function runSeed() {
             { $set: { bin: binId, lgu: lguId } }
         );
         if (orphanedFix.modifiedCount > 0) {
-            console.log(`🔧 Repaired ${orphanedFix.modifiedCount} legacy requests with missing bins (now linked to "${sampleBin.name}").`);
+            console.log(`🔧 Repaired ${orphanedFix.modifiedCount} legacy requests with missing bins (now linked to "${binMango.name}").`);
         }
 
-        console.log(`📍 Using Bin       : "${sampleBin.name}" (${binId})`);
-        console.log(`🏛️ Using Partner Org: "${sampleLgu.name}" (${lguId})`);
-        console.log(`🚚 Using Collector  : "${sampleCollector.firstName} ${sampleCollector.lastName}" (${collectorId})`);
-        console.log('🌱 Generating 4 months of steady collection data (calibrated for ~83% model accuracy)...');
+        console.log(`📍 Using Demo Bins   : "${binMango.name}" (94%), "${binRizal.name}" (78%), "${binQuezon.name}" (55%)`);
+        console.log(`🏛️ Using Partner Org : "${sampleLgu.name}" (${lguId})`);
+        console.log(`🚚 Active Fleet (3) : John Gonzales (Truck: 30), Maria Santos (Van: 15), Carlos Reyes (Van: 15)`);
+        console.log('🌱 Generating 4 months of collection data + pending requests for Smart Scheduling...');
 
         const now = new Date();
         const monthsAgo = (m, dayOffset = 0) => {
@@ -290,6 +328,97 @@ async function runSeed() {
             }
         ];
 
+        // 4.2 PENDING COLLECTION REQUESTS FOR SMART SCHEDULING SHOWCASE
+        // Specifically crafted to demonstrate Prescriptive Priority Scoring & Vehicle Load Balancing:
+        // - Mango St. Bin (94% full -> Critical Load 25)
+        // - Rizal Ave. Drop-off (78% full -> High Load 15)
+        // - Quezon Blvd. Hub (55% full -> Standard Load 10)
+        const pendingSchedulingRequests = [
+            // 🚨 Critical Priority: Critically full bin (94%) + 4 days waiting -> Score: ~86 (Critical), Tags: ['Critically Full', 'Aging Request']
+            {
+                bin: binMango._id,
+                binModel: 'RecyclingCenter',
+                lgu: lguId,
+                status: 'pending',
+                requestType: 'automated',
+                collectedWaste: [
+                    { category: 'Laptop', quantity: 6, unit: 'items' },
+                    { category: 'Smartphone', quantity: 18, unit: 'items' }
+                ],
+                createdAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
+                notes: MOCK_TAG
+            },
+            // ⚠️ High Priority: Nearing capacity (78%) + 3 days waiting -> Score: ~75 (High), Tags: ['Nearing Capacity', 'Aging Request']
+            {
+                bin: binRizal._id,
+                binModel: 'RecyclingCenter',
+                lgu: lguId,
+                status: 'pending',
+                requestType: 'automated',
+                collectedWaste: [
+                    { category: 'Batteries', quantity: 35, unit: 'items' },
+                    { category: 'Cables & Chargers', quantity: 22, unit: 'items' }
+                ],
+                createdAt: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+                notes: MOCK_TAG
+            },
+            // 🚨 Critical/High: Critically full bin (94%) + 1 day waiting -> Score: ~78 (High), Tag: ['Critically Full']
+            {
+                bin: binMango._id,
+                binModel: 'RecyclingCenter',
+                lgu: lguId,
+                status: 'pending',
+                requestType: 'manual',
+                collectedWaste: [
+                    { category: 'Keyboard', quantity: 12, unit: 'items' },
+                    { category: 'Smartphone', quantity: 10, unit: 'items' }
+                ],
+                createdAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+                notes: MOCK_TAG
+            },
+            // ⚠️ High: Nearing capacity (78%) + recent -> Score: ~65 (High), Tag: ['Nearing Capacity']
+            {
+                bin: binRizal._id,
+                binModel: 'RecyclingCenter',
+                lgu: lguId,
+                status: 'pending',
+                requestType: 'manual',
+                collectedWaste: [
+                    { category: 'Laptop', quantity: 3, unit: 'items' },
+                    { category: 'Batteries', quantity: 25, unit: 'items' }
+                ],
+                createdAt: new Date(now.getTime() - 12 * 60 * 60 * 1000), // 12 hours ago
+                notes: MOCK_TAG
+            },
+            // ℹ️ Medium: Quezon Blvd. Hub (55%) + 2 days waiting -> Score: ~50 (Medium)
+            {
+                bin: binQuezon._id,
+                binModel: 'RecyclingCenter',
+                lgu: lguId,
+                status: 'pending',
+                requestType: 'manual',
+                collectedWaste: [
+                    { category: 'Cables & Chargers', quantity: 16, unit: 'items' },
+                    { category: 'Smartphone', quantity: 7, unit: 'items' }
+                ],
+                createdAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+                notes: MOCK_TAG
+            },
+            // ℹ️ Standard: Quezon Blvd. Hub (55%) + just requested -> Score: ~38 (Standard)
+            {
+                bin: binQuezon._id,
+                binModel: 'RecyclingCenter',
+                lgu: lguId,
+                status: 'pending',
+                requestType: 'manual',
+                collectedWaste: [
+                    { category: 'Keyboard', quantity: 5, unit: 'items' }
+                ],
+                createdAt: new Date(now.getTime() - 3 * 60 * 60 * 1000), // 3 hours ago
+                notes: MOCK_TAG
+            }
+        ];
+
         // 5. MOCK BIN DROPOFFS (Calibrated across 4 months: ~17, ~21, ~20, ~26)
         const mockDropoffs = [];
 
@@ -338,16 +467,19 @@ async function runSeed() {
         addDropoffs(0, 2, 'Cables & Chargers', 0.15, 5);
 
         // 6. INSERT TO DATABASE
-        await Request.insertMany(mockRequests);
+        const allRequestsToInsert = [...mockRequests, ...pendingSchedulingRequests];
+        await Request.insertMany(allRequestsToInsert);
         await BinDropoff.insertMany(mockDropoffs);
 
         console.log('\n======================================================');
         console.log('🎉 SEEDING COMPLETED SUCCESSFULLY!');
         console.log('======================================================');
-        console.log(`📦 Inserted Requests : ${mockRequests.length} completed requests (All assigned to ${sampleCollector.firstName} ${sampleCollector.lastName})`);
-        console.log(`🗑️ Inserted Drop-offs: ${mockDropoffs.length} smart bin drop-offs across 4 months`);
-        console.log(`📍 Assigned Bin      : ${sampleBin.name} (${sampleBin.address})`);
-        console.log(`📊 Forecast Accuracy : Calibrated to ~83% - 86% empirical backtest accuracy!`);
+        console.log(`📦 Completed Requests : ${mockRequests.length} records (across 4 months)`);
+        console.log(`⏱️ Pending Requests   : ${pendingSchedulingRequests.length} requests ready for Smart Scheduling demo!`);
+        console.log(`🚚 Active Fleet (3)   : John Gonzales (Truck: 30), Maria Santos (Van: 15), Carlos Reyes (Van: 15)`);
+        console.log(`🗑️ Smart Drop-offs    : ${mockDropoffs.length} resident drop-offs`);
+        console.log(`📍 Configured Bins    : Mango St. (94%), Rizal Ave. (78%), Quezon Blvd. (55%)`);
+        console.log(`📊 Empirical Accuracy : Calibrated to ~83% - 86% empirical backtest accuracy!`);
         console.log('======================================================\n');
 
         process.exit(0);
