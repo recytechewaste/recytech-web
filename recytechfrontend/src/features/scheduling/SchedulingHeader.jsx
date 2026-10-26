@@ -12,8 +12,8 @@ const SchedulingHeader = ({ forecastTotal = 0, recommendationCount = 0, resource
             <PageHeader
                 icon={<CalendarClock size={24} />}
                 title="Smart Scheduling & Dispatch"
-                badge="Prescriptive AI"
-                tooltipTitle="Prescriptive Scheduling Engine"
+                badge="Prescriptive Analytics"
+                tooltipTitle="Prescriptive Scheduling"
                 tooltipContent="Translates demand forecasts and bin sensor data into optimized collector assignments, balancing vehicle payloads and resolving time conflicts before dispatch."
                 subtitle="Automated collector assignment, workload balancing, and demand-driven route dispatching."
             />
