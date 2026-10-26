@@ -71,14 +71,14 @@ const AssignmentReview = ({
                             }}
                         >
                             <Check size={12} strokeWidth={2.5} />
-                            <span>{isAllSelected ? 'Deselect All' : 'Select All AI Proposed'}</span>
+                            <span>{isAllSelected ? 'Deselect All' : 'Select All Proposed'}</span>
                         </button>
                     )}
                 </div>
             </div>
 
             <span className={styles.cardSub}>
-                Review AI-proposed pickup assignments, adjust scheduled times, and authorize collector dispatches
+                Review proposed pickup assignments, adjust scheduled times, and authorize collector dispatches
             </span>
 
             <div style={{ marginTop: '16px' }}>
