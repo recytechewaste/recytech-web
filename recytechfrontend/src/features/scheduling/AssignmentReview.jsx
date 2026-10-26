@@ -40,7 +40,7 @@ const AssignmentReview = ({
                     <h3 className={styles.cardTitle}>Dispatch Queue & Assignment Console</h3>
                     <InfoTooltip
                         title="Prescriptive Dispatch Execution"
-                        content="Interactive dispatch console where staff can review the AI-assigned requests, adjust scheduled pickup times, and click Confirm to commit dispatches to active collectors."
+                        content="Interactive dispatch console where staff can review the assigned requests, adjust scheduled pickup times, and click Confirm to commit dispatches to active collectors."
                         size={15}
                         position="bottom"
                         width={270}
